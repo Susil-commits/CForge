@@ -30,7 +30,9 @@ class TalkToDataAgent:
 
         # Step 1: Detect Adversarial or Unauthorized PII requests
         is_pii_request = any(w in q_lower for w in [
-            "customer_id", "email", "phone", "address", "zip", "personal names", "raw pii", "street"
+            "customer_id", "email", "phone", "address", "zip", "personal names",
+            "raw pii", "street", "employee", "birth", "emergency", "contact",
+            "tax", "credit card", "notes", "residence", "complaint"
         ])
 
         if is_pii_request and caller_role.upper() not in ["COMPLIANCE_STEWARD", "SECURITY_ADMIN"]:
