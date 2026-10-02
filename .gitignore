@@ -23,6 +23,7 @@ wheels/
 .coverage
 htmlcov/
 *.parquet
+!data/lakehouse/*.parquet
 *.duckdb
 
 # Environments
