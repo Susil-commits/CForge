@@ -1,0 +1,107 @@
+# ContextForge Policy-as-Code Specification
+version: "1.0"
+
+policies:
+  - id: "POL-001"
+    name: "no_sample_values_in_descriptions"
+    description: "Descriptions must not leak or expose raw sample values or unredacted PII."
+    severity: "CRITICAL"
+    action: "BLOCK_AND_REDACT"
+
+  - id: "POL-002"
+    name: "pii_requires_steward_approval"
+    description: "Any asset classified as PII requires human data steward approval before being marked active."
+    severity: "HIGH"
+    action: "REQUIRE_APPROVAL"
+
+  - id: "POL-003"
+    name: "agent_confidence_threshold"
+    description: "Agent proposals with confidence below 0.80 must be routed to human review."
+    severity: "MEDIUM"
+    threshold: 0.80
+    action: "REQUIRE_APPROVAL"
+
+  - id: "POL-004"
+    name: "certification_quality_gate"
+    description: "An asset cannot be CERTIFIED unless its data quality score is at least 0.85."
+    severity: "HIGH"
+    min_quality_score: 0.85
+    action: "BLOCK"
+
+  - id: "POL-005"
+    name: "certification_owner_mandatory"
+    description: "An asset cannot be CERTIFIED without a designated human or team owner."
+    severity: "HIGH"
+    action: "BLOCK"
+
+  - id: "POL-006"
+    name: "restricted_pii_no_public_access"
+    description: "Columns tagged with PII cannot be classified as PUBLIC sensitivity."
+    severity: "CRITICAL"
+    action: "BLOCK"
+
+  - id: "POL-007"
+    name: "tag_propagation_mandatory"
+    description: "PII classifications at source tables must automatically propagate along lineage edges."
+    severity: "HIGH"
+    action: "PROPAGATE"
+
+  - id: "POL-008"
+    name: "pii_reason_chain_required"
+    description: "All propagated sensitivity tags must carry an auditable reason chain."
+    severity: "HIGH"
+    action: "AUDIT"
+
+  - id: "POL-009"
+    name: "prohibit_empty_descriptions"
+    description: "Asset descriptions cannot be empty or pure whitespace."
+    severity: "MEDIUM"
+    action: "BLOCK"
+
+  - id: "POL-010"
+    name: "enforce_valid_pii_types"
+    description: "PII classifications must belong to approved taxonomy enum types."
+    severity: "HIGH"
+    allowed_types:
+      - "CUSTOMER_ID"
+      - "PERSON_NAME"
+      - "EMAIL"
+      - "PHONE_NUMBER"
+      - "PHYSICAL_ADDRESS"
+      - "POSTAL_CODE"
+      - "FINANCIAL"
+      - "CONFIDENTIAL_NOTES"
+      - "NONE"
+    action: "BLOCK"
+
+  - id: "POL-011"
+    name: "high_null_rate_certification_block"
+    description: "Assets with null rates exceeding 95% cannot receive certification."
+    severity: "HIGH"
+    max_null_rate: 95.0
+    action: "BLOCK"
+
+  - id: "POL-012"
+    name: "glossary_mapping_confidence"
+    description: "Glossary term mappings with confidence below 0.85 require review."
+    severity: "LOW"
+    threshold: 0.85
+    action: "REQUIRE_APPROVAL"
+
+  - id: "POL-013"
+    name: "immutable_audit_logging"
+    description: "Every metadata proposal, evaluation, and approval decision must append to the immutable audit log."
+    severity: "CRITICAL"
+    action: "LOG"
+
+  - id: "POL-014"
+    name: "quality_rule_coverage_for_marts"
+    description: "Production analytics marts must have at least one active validation rule before deployment."
+    severity: "MEDIUM"
+    action: "BLOCK"
+
+  - id: "POL-015"
+    name: "disagreement_safety_quarantine"
+    description: "Cross-agent reconciliation disagreements must place the asset in governance quarantine."
+    severity: "HIGH"
+    action: "QUARANTINE"
