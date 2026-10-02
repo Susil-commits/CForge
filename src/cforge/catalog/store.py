@@ -102,8 +102,8 @@ class MetadataStore:
             version,
             change_type,
             changed_by,
-            json.dumps(before_state) if before_state else None,
-            json.dumps(after_state),
+            json.dumps(before_state, default=str) if before_state else None,
+            json.dumps(after_state, default=str),
             reason
         ))
 

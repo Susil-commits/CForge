@@ -55,3 +55,11 @@ This document tracks major design tradeoffs, decisions, and rationale across all
   2. **Cross-Engine Federated Schema Aliasing**: When referencing multi-catalog namespaces across DuckDB attachments (`attach 'estate.duckdb' as fed; select fed.table...`), prefix stripping can cause namespace ambiguity in single-tenant AST visitors without schema metadata binding.
 - **Mitigation**: Implemented schema fallback resolution in `src/cforge/lineage/parser.py` which falls back to parent table schema inspection when AST expression resolution encounters anonymous leaves.
 
+---
+
+## ADR 007: Universal Catalog Adapter Interface and CI Portability
+- **Status**: Accepted
+- **Context**: Real enterprise environments run on diverse metadata backends (files/JSON exports, DuckDB lakehouses, Postgres instances, DataHub, or OpenMetadata). The catalog platform must decouple domain models from persistence and external platform APIs.
+- **Decision**: Define an abstract `CatalogAdapter` base class (`src/cforge/adapters/base.py`) specifying unified push/pull methods for assets, tags, glossary terms, and lineage edges. Ship standard `FileCatalogAdapter` (JSON snapshotting) and `DuckDBCatalogAdapter` (direct lakehouse synchronization), backed by automated GitHub Actions CI.
+- **Tradeoff**: Abstract interfaces require translation between platform-specific schemas and ContextForge's internal Pydantic representations, but ensure clean portability and testability without tight coupling to vendor SDKs.
+

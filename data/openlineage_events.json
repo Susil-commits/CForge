@@ -1,9 +1,9 @@
 [
   {
     "eventType": "COMPLETE",
-    "eventTime": "2026-10-02T14:59:44.126218+00:00",
+    "eventTime": "2026-10-02T15:21:38.993145+00:00",
     "run": {
-      "runId": "4367deb4-580f-4aea-aac8-9ad76077cea0",
+      "runId": "439c6061-49d6-4c67-9229-1d031508e7fa",
       "facets": {}
     },
     "job": {
@@ -19,17 +19,17 @@
       },
       {
         "namespace": "cforge.dataops",
-        "name": "order_spend",
-        "facets": {}
-      },
-      {
-        "namespace": "cforge.dataops",
         "name": "customer_orders",
         "facets": {}
       },
       {
         "namespace": "cforge.dataops",
         "name": "dim_customers",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
+        "name": "order_spend",
         "facets": {}
       }
     ],
@@ -46,12 +46,12 @@
                 "inputFields": [
                   {
                     "namespace": "cforge.dataops",
-                    "name": "customer_orders",
+                    "name": "dim_customers",
                     "field": "customer_unique_id"
                   },
                   {
                     "namespace": "cforge.dataops",
-                    "name": "dim_customers",
+                    "name": "customer_orders",
                     "field": "customer_unique_id"
                   }
                 ],
@@ -142,13 +142,13 @@
                 "inputFields": [
                   {
                     "namespace": "cforge.dataops",
-                    "name": "fct_orders",
-                    "field": "grand_total_brl"
+                    "name": "order_spend",
+                    "field": "average_order_value_brl"
                   },
                   {
                     "namespace": "cforge.dataops",
-                    "name": "order_spend",
-                    "field": "average_order_value_brl"
+                    "name": "fct_orders",
+                    "field": "grand_total_brl"
                   }
                 ],
                 "transformationDescription": "ROUND(COALESCE(s.average_order_value_brl, 0.0), 2) AS avg_order_ticket_brl",
@@ -174,12 +174,12 @@
                 "inputFields": [
                   {
                     "namespace": "cforge.dataops",
-                    "name": "customer_orders",
+                    "name": "dim_customers",
                     "field": "first_order_date"
                   },
                   {
                     "namespace": "cforge.dataops",
-                    "name": "dim_customers",
+                    "name": "customer_orders",
                     "field": "first_order_date"
                   }
                 ],
@@ -227,9 +227,9 @@
   },
   {
     "eventType": "COMPLETE",
-    "eventTime": "2026-10-02T14:59:44.126249+00:00",
+    "eventTime": "2026-10-02T15:21:38.993189+00:00",
     "run": {
-      "runId": "192741d1-b3b8-441e-bc5f-d31f56187383",
+      "runId": "8959cd8f-d95f-44d8-b6bc-51b463856148",
       "facets": {}
     },
     "job": {
@@ -240,7 +240,7 @@
     "inputs": [
       {
         "namespace": "cforge.dataops",
-        "name": "stg_orders",
+        "name": "stg_customers",
         "facets": {}
       },
       {
@@ -250,7 +250,7 @@
       },
       {
         "namespace": "cforge.dataops",
-        "name": "stg_customers",
+        "name": "stg_orders",
         "facets": {}
       }
     ],
@@ -267,12 +267,12 @@
                 "inputFields": [
                   {
                     "namespace": "cforge.dataops",
-                    "name": "customer_orders",
+                    "name": "stg_customers",
                     "field": "customer_unique_id"
                   },
                   {
                     "namespace": "cforge.dataops",
-                    "name": "stg_customers",
+                    "name": "customer_orders",
                     "field": "customer_unique_id"
                   }
                 ],
@@ -315,13 +315,13 @@
                 "inputFields": [
                   {
                     "namespace": "cforge.dataops",
-                    "name": "stg_customers",
-                    "field": "zip_code_prefix"
+                    "name": "customer_orders",
+                    "field": "primary_zip"
                   },
                   {
                     "namespace": "cforge.dataops",
-                    "name": "customer_orders",
-                    "field": "primary_zip"
+                    "name": "stg_customers",
+                    "field": "zip_code_prefix"
                   }
                 ],
                 "transformationDescription": "primary_zip",
@@ -331,13 +331,13 @@
                 "inputFields": [
                   {
                     "namespace": "cforge.dataops",
-                    "name": "stg_orders",
-                    "field": "order_id"
+                    "name": "customer_orders",
+                    "field": "total_orders_placed"
                   },
                   {
                     "namespace": "cforge.dataops",
-                    "name": "customer_orders",
-                    "field": "total_orders_placed"
+                    "name": "stg_orders",
+                    "field": "order_id"
                   }
                 ],
                 "transformationDescription": "total_orders_placed",
@@ -347,13 +347,13 @@
                 "inputFields": [
                   {
                     "namespace": "cforge.dataops",
-                    "name": "customer_orders",
-                    "field": "first_order_date"
+                    "name": "stg_orders",
+                    "field": "purchase_timestamp"
                   },
                   {
                     "namespace": "cforge.dataops",
-                    "name": "stg_orders",
-                    "field": "purchase_timestamp"
+                    "name": "customer_orders",
+                    "field": "first_order_date"
                   }
                 ],
                 "transformationDescription": "first_order_date",
@@ -379,13 +379,13 @@
                 "inputFields": [
                   {
                     "namespace": "cforge.dataops",
-                    "name": "stg_orders",
-                    "field": "order_id"
+                    "name": "customer_orders",
+                    "field": "total_orders_placed"
                   },
                   {
                     "namespace": "cforge.dataops",
-                    "name": "customer_orders",
-                    "field": "total_orders_placed"
+                    "name": "stg_orders",
+                    "field": "order_id"
                   }
                 ],
                 "transformationDescription": "CASE WHEN total_orders_placed > 1 THEN 'repeat_buyer' ELSE 'single_buyer' END AS buyer_type",
@@ -400,9 +400,9 @@
   },
   {
     "eventType": "COMPLETE",
-    "eventTime": "2026-10-02T14:59:44.126262+00:00",
+    "eventTime": "2026-10-02T15:21:38.993205+00:00",
     "run": {
-      "runId": "e7654630-bb37-418a-8de0-c386dc4a5cd8",
+      "runId": "626baa4b-56b4-4b4d-8470-3030a55a5adf",
       "facets": {}
     },
     "job": {
@@ -512,9 +512,9 @@
   },
   {
     "eventType": "COMPLETE",
-    "eventTime": "2026-10-02T14:59:44.126272+00:00",
+    "eventTime": "2026-10-02T15:21:38.993218+00:00",
     "run": {
-      "runId": "042c30da-ca79-4709-bfc8-2c0a51d27cb3",
+      "runId": "5b167cc3-9a23-4c2b-b19c-e2f4586e45d5",
       "facets": {}
     },
     "job": {
@@ -525,17 +525,17 @@
     "inputs": [
       {
         "namespace": "cforge.dataops",
+        "name": "seller_sales",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
         "name": "stg_sellers",
         "facets": {}
       },
       {
         "namespace": "cforge.dataops",
         "name": "stg_order_items",
-        "facets": {}
-      },
-      {
-        "namespace": "cforge.dataops",
-        "name": "seller_sales",
         "facets": {}
       }
     ],
@@ -648,13 +648,13 @@
                 "inputFields": [
                   {
                     "namespace": "cforge.dataops",
-                    "name": "stg_order_items",
-                    "field": "item_price"
+                    "name": "seller_sales",
+                    "field": "avg_item_sale_price"
                   },
                   {
                     "namespace": "cforge.dataops",
-                    "name": "seller_sales",
-                    "field": "avg_item_sale_price"
+                    "name": "stg_order_items",
+                    "field": "item_price"
                   }
                 ],
                 "transformationDescription": "ROUND(avg_item_sale_price, 2) AS average_ticket_brl",
@@ -685,9 +685,9 @@
   },
   {
     "eventType": "COMPLETE",
-    "eventTime": "2026-10-02T14:59:44.126285+00:00",
+    "eventTime": "2026-10-02T15:21:38.993235+00:00",
     "run": {
-      "runId": "cf44fdeb-14d1-44f6-81df-7e6f59bc3fe5",
+      "runId": "7bf225c4-163e-4d40-a43b-ab409d0f7122",
       "facets": {}
     },
     "job": {
@@ -698,22 +698,7 @@
     "inputs": [
       {
         "namespace": "cforge.dataops",
-        "name": "stg_reviews",
-        "facets": {}
-      },
-      {
-        "namespace": "cforge.dataops",
-        "name": "stg_order_items",
-        "facets": {}
-      },
-      {
-        "namespace": "cforge.dataops",
         "name": "item_aggregates",
-        "facets": {}
-      },
-      {
-        "namespace": "cforge.dataops",
-        "name": "stg_orders",
         "facets": {}
       },
       {
@@ -723,7 +708,22 @@
       },
       {
         "namespace": "cforge.dataops",
+        "name": "stg_order_items",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
         "name": "stg_customers",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_reviews",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_orders",
         "facets": {}
       }
     ],
@@ -866,13 +866,13 @@
                 "inputFields": [
                   {
                     "namespace": "cforge.dataops",
-                    "name": "item_aggregates",
-                    "field": "distinct_products_count"
+                    "name": "stg_order_items",
+                    "field": "product_id"
                   },
                   {
                     "namespace": "cforge.dataops",
-                    "name": "stg_order_items",
-                    "field": "product_id"
+                    "name": "item_aggregates",
+                    "field": "distinct_products_count"
                   }
                 ],
                 "transformationDescription": "COALESCE(ia.distinct_products_count, 0) AS distinct_products_count",
@@ -882,13 +882,13 @@
                 "inputFields": [
                   {
                     "namespace": "cforge.dataops",
-                    "name": "stg_order_items",
-                    "field": "item_price"
+                    "name": "item_aggregates",
+                    "field": "merchandise_subtotal"
                   },
                   {
                     "namespace": "cforge.dataops",
-                    "name": "item_aggregates",
-                    "field": "merchandise_subtotal"
+                    "name": "stg_order_items",
+                    "field": "item_price"
                   }
                 ],
                 "transformationDescription": "ROUND(COALESCE(ia.merchandise_subtotal, 0.0), 2) AS merchandise_total_brl",
@@ -898,13 +898,13 @@
                 "inputFields": [
                   {
                     "namespace": "cforge.dataops",
-                    "name": "stg_order_items",
-                    "field": "freight_value"
+                    "name": "item_aggregates",
+                    "field": "total_freight_amount"
                   },
                   {
                     "namespace": "cforge.dataops",
-                    "name": "item_aggregates",
-                    "field": "total_freight_amount"
+                    "name": "stg_order_items",
+                    "field": "freight_value"
                   }
                 ],
                 "transformationDescription": "ROUND(COALESCE(ia.total_freight_amount, 0.0), 2) AS freight_total_brl",
@@ -915,11 +915,6 @@
                   {
                     "namespace": "cforge.dataops",
                     "name": "stg_order_items",
-                    "field": "freight_value"
-                  },
-                  {
-                    "namespace": "cforge.dataops",
-                    "name": "stg_order_items",
                     "field": "item_price"
                   },
                   {
@@ -931,6 +926,11 @@
                     "namespace": "cforge.dataops",
                     "name": "item_aggregates",
                     "field": "total_freight_amount"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_order_items",
+                    "field": "freight_value"
                   }
                 ],
                 "transformationDescription": "ROUND(COALESCE(ia.merchandise_subtotal, 0.0) + COALESCE(ia.total_freight_amount, 0.0), 2) AS grand_total_brl",
@@ -957,12 +957,12 @@
                   {
                     "namespace": "cforge.dataops",
                     "name": "stg_orders",
-                    "field": "estimated_delivery_at"
+                    "field": "delivered_customer_at"
                   },
                   {
                     "namespace": "cforge.dataops",
                     "name": "stg_orders",
-                    "field": "delivered_customer_at"
+                    "field": "estimated_delivery_at"
                   }
                 ],
                 "transformationDescription": "CASE WHEN o.delivered_customer_at > o.estimated_delivery_at THEN TRUE ELSE FALSE END AS is_delayed_delivery",
@@ -977,9 +977,9 @@
   },
   {
     "eventType": "COMPLETE",
-    "eventTime": "2026-10-02T14:59:44.126302+00:00",
+    "eventTime": "2026-10-02T15:21:38.993256+00:00",
     "run": {
-      "runId": "f3c2e257-0fcc-4c1c-85e9-39f9a5fb802e",
+      "runId": "f930c663-41e6-4460-9f68-bcecf4a512b6",
       "facets": {}
     },
     "job": {
@@ -1089,9 +1089,9 @@
   },
   {
     "eventType": "COMPLETE",
-    "eventTime": "2026-10-02T14:59:44.126310+00:00",
+    "eventTime": "2026-10-02T15:21:38.993268+00:00",
     "run": {
-      "runId": "588be32d-f63e-45bd-8042-1cc52e1dff0b",
+      "runId": "9ed46c76-608e-4a01-a5e1-157d738ebd42",
       "facets": {}
     },
     "job": {
@@ -1217,9 +1217,9 @@
   },
   {
     "eventType": "COMPLETE",
-    "eventTime": "2026-10-02T14:59:44.126318+00:00",
+    "eventTime": "2026-10-02T15:21:38.993279+00:00",
     "run": {
-      "runId": "c94484d1-caf6-4ab8-a2f6-8e522a3c4f72",
+      "runId": "6859cfa2-1ffa-4da9-bb99-ff213aefdab7",
       "facets": {}
     },
     "job": {
@@ -1307,9 +1307,9 @@
   },
   {
     "eventType": "COMPLETE",
-    "eventTime": "2026-10-02T14:59:44.126326+00:00",
+    "eventTime": "2026-10-02T15:21:38.993289+00:00",
     "run": {
-      "runId": "74e893f8-1b61-4bf7-82c7-a44627731d82",
+      "runId": "0e56a533-4a11-4f9a-8623-efb9e6e5d5d4",
       "facets": {}
     },
     "job": {
@@ -1430,9 +1430,9 @@
   },
   {
     "eventType": "COMPLETE",
-    "eventTime": "2026-10-02T14:59:44.126334+00:00",
+    "eventTime": "2026-10-02T15:21:38.993300+00:00",
     "run": {
-      "runId": "afb56d1d-467d-434e-9322-4a3ca37e6304",
+      "runId": "17826455-fee1-4611-9750-3b7088cc6bcd",
       "facets": {}
     },
     "job": {
@@ -1542,9 +1542,9 @@
   },
   {
     "eventType": "COMPLETE",
-    "eventTime": "2026-10-02T14:59:44.126342+00:00",
+    "eventTime": "2026-10-02T15:21:38.993309+00:00",
     "run": {
-      "runId": "f699f783-eb60-4619-8ea2-21b8689174f5",
+      "runId": "012493dc-a9d2-4bc3-bc72-7fdcabdca624",
       "facets": {}
     },
     "job": {
@@ -1632,9 +1632,9 @@
   },
   {
     "eventType": "COMPLETE",
-    "eventTime": "2026-10-02T14:59:44.126349+00:00",
+    "eventTime": "2026-10-02T15:21:38.993318+00:00",
     "run": {
-      "runId": "669c8d31-ea46-4af8-8134-4ec1f3585bc9",
+      "runId": "bef3254b-18b0-4678-9298-8368399bd0e1",
       "facets": {}
     },
     "job": {
@@ -1645,12 +1645,12 @@
     "inputs": [
       {
         "namespace": "cforge.dataops",
-        "name": "raw_olist_products",
+        "name": "raw_olist_category_translation",
         "facets": {}
       },
       {
         "namespace": "cforge.dataops",
-        "name": "raw_olist_category_translation",
+        "name": "raw_olist_products",
         "facets": {}
       }
     ],
@@ -1808,9 +1808,9 @@
   },
   {
     "eventType": "COMPLETE",
-    "eventTime": "2026-10-02T14:59:44.126359+00:00",
+    "eventTime": "2026-10-02T15:21:38.993330+00:00",
     "run": {
-      "runId": "8a033a61-571a-479e-8b6b-a2cb3229cc51",
+      "runId": "472e1b45-a97f-4592-8e10-da6d1e375625",
       "facets": {}
     },
     "job": {
@@ -1920,9 +1920,9 @@
   },
   {
     "eventType": "COMPLETE",
-    "eventTime": "2026-10-02T14:59:44.126366+00:00",
+    "eventTime": "2026-10-02T15:21:38.993338+00:00",
     "run": {
-      "runId": "27f3a2e5-7d43-4658-8258-f9289cc33235",
+      "runId": "bac01556-1e89-4866-ae09-481867971a3e",
       "facets": {}
     },
     "job": {

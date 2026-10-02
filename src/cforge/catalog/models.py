@@ -2,7 +2,7 @@
 
 from enum import Enum
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 
 
@@ -41,8 +41,8 @@ class Asset(BaseModel):
     certification_status: CertificationStatus = CertificationStatus.DRAFT
     quality_score: float = 1.0
     version: int = 1
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class Tag(BaseModel):
@@ -53,7 +53,7 @@ class Tag(BaseModel):
     confidence: float = 1.0
     source: TagSource = TagSource.AGENT
     reason: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class GlossaryTerm(BaseModel):
@@ -70,7 +70,7 @@ class LineageEdge(BaseModel):
     target_asset_id: str
     transformation_type: str = "TRANSFORMATION"
     transformation_logic: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class AssetHistory(BaseModel):
@@ -82,4 +82,4 @@ class AssetHistory(BaseModel):
     before_state: Optional[Dict[str, Any]] = None
     after_state: Dict[str, Any]
     reason: Optional[str] = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
