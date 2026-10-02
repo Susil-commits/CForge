@@ -7,6 +7,9 @@ from cforge.api.app import app
 
 @pytest.fixture
 def client():
+    from cforge.api.app import app, store
+    if store.conn.execute("SELECT COUNT(*) FROM assets").fetchone()[0] == 0:
+        store.populate_from_estate()
     return TestClient(app)
 
 
@@ -35,6 +38,14 @@ def test_api_list_assets(client):
 
 
 def test_api_approval_queue_lifecycle(client):
+    from cforge.api.app import approval_queue
+    if len(approval_queue.get_pending()) == 0:
+        approval_queue.submit_proposal(
+            asset_id="cforge.public.dim_customers.primary_zip",
+            change_type="ADD_TAG",
+            proposed_by="Agent_Classifier",
+            payload={"is_pii": True, "pii_type": "POSTAL_CODE", "confidence": 0.95, "description": "Postal code prefix"}
+        )
     res = client.get("/api/approval-queue")
     assert res.status_code == 200
     data = res.json()

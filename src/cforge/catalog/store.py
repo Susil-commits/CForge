@@ -14,11 +14,25 @@ from cforge.catalog.models import AssetType, CertificationStatus, TagSource
 
 
 class MetadataStore:
-    def __init__(self, db_path: Optional[Path] = None):
-        self.db_path = db_path or METADATA_DB_PATH
+    def __init__(self, db_path: Optional[Any] = None, auto_populate: bool = True):
+        self.db_path = Path(db_path) if db_path else METADATA_DB_PATH
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.conn = duckdb.connect(str(self.db_path))
         self._init_schema()
+        if auto_populate:
+            self._ensure_populated()
+
+    def _ensure_populated(self):
+        """Ensure catalog is populated if empty and estate exists."""
+        try:
+            count = self.conn.execute("SELECT COUNT(*) FROM assets").fetchone()[0]
+            if count == 0:
+                if not ESTATE_DB_PATH.exists() or ESTATE_DB_PATH.stat().st_size == 0:
+                    from cforge.estate.loader import init_duckdb_estate
+                    init_duckdb_estate()
+                self.populate_from_estate()
+        except Exception:
+            pass
 
     def _init_schema(self):
         """Create metadata relational tables."""

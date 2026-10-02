@@ -11,7 +11,7 @@ from cforge.catalog.lakehouse import MetadataLakehouse
 @pytest.fixture(scope="module")
 def populated_store(tmp_path_factory):
     test_db = tmp_path_factory.mktemp("meta") / "metadata.duckdb"
-    store = MetadataStore(test_db)
+    store = MetadataStore(test_db, auto_populate=False)
     store.populate_from_estate()
     return store
 

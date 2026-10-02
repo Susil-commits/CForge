@@ -13,8 +13,8 @@ from cforge.governance.engine import PolicyEngine
 
 
 class MCPServer:
-    def __init__(self, metadata_db_path: Optional[str] = None):
-        self.store = MetadataStore(metadata_db_path)
+    def __init__(self, metadata_db_path: Optional[Any] = None, store: Optional[MetadataStore] = None):
+        self.store = store or MetadataStore(metadata_db_path, auto_populate=True)
         self.policy_engine = PolicyEngine()
 
     def search_assets(self, query: str, asset_type: Optional[str] = None, limit: int = 10) -> List[Dict[str, Any]]:

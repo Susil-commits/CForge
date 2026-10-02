@@ -35,8 +35,8 @@ app.add_middleware(
 )
 
 # Global instances
-store = MetadataStore()
-mcp_server = MCPServer()
+store = MetadataStore(auto_populate=True)
+mcp_server = MCPServer(store=store)
 agent = TalkToDataAgent(mcp_server=mcp_server)
 policy_engine = PolicyEngine()
 approval_queue = ApprovalQueue(policy_engine)
