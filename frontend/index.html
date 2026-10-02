@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ContextForge | Governed Metadata & Context Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <!-- Top Header -->
+    <header class="app-header">
+        <div class="logo-group">
+            <div class="logo-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 17L12 22L22 17" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 12L12 17L22 12" stroke="#c084fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="logo-title">ContextForge <span class="badge badge-accent">v0.1</span></h1>
+                <p class="logo-subtitle">Governed Metadata Enrichment with Measurable Proof</p>
+            </div>
+        </div>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="lineage" id="tab-btn-lineage">
+                <span class="tab-icon">⚡</span> Lineage DAG & PII
+            </button>
+            <button class="nav-tab" data-tab="assets" id="tab-btn-assets">
+                <span class="tab-icon">📚</span> Asset Catalog
+            </button>
+            <button class="nav-tab" data-tab="queue" id="tab-btn-queue">
+                <span class="tab-icon">🛡️</span> Approval Queue <span class="queue-badge" id="queue-count-badge">3</span>
+            </button>
+            <button class="nav-tab" data-tab="eval" id="tab-btn-eval">
+                <span class="tab-icon">📊</span> Benchmark & Eval
+            </button>
+        </nav>
+
+        <div class="header-actions">
+            <div class="role-selector">
+                <label for="role-select">Active Role:</label>
+                <select id="role-select" class="role-dropdown">
+                    <option value="ANALYST">Data Analyst (Masked PII)</option>
+                    <option value="COMPLIANCE_STEWARD">Compliance Steward (Full Access)</option>
+                </select>
+            </div>
+            <div class="system-status">
+                <span class="pulse-dot"></span>
+                <span>Estate: 31 Tables</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-container">
+
+        <!-- SCREEN 1: LINEAGE GRAPH -->
+        <section id="view-lineage" class="screen-view active">
+            <div class="view-header">
+                <div>
+                    <h2>Column-Level Lineage & Multi-Hop PII Propagation</h2>
+                    <p class="section-desc">Interactive topology mapping raw sources, SQL staging models, core marts, and consuming executive dashboards. Glowing crimson edges track sensitive PII tag propagation across hops.</p>
+                </div>
+                <div class="legend-bar">
+                    <span class="legend-item"><span class="legend-dot dot-raw"></span> Raw Source</span>
+                    <span class="legend-item"><span class="legend-dot dot-stg"></span> Staging Model</span>
+                    <span class="legend-item"><span class="legend-dot dot-mart"></span> Certified Mart</span>
+                    <span class="legend-item"><span class="legend-dot dot-dash"></span> BI Dashboard</span>
+                    <span class="legend-item"><span class="legend-dot dot-pii"></span> PII Trace Path</span>
+                </div>
+            </div>
+
+            <div class="dag-canvas-container">
+                <div class="dag-toolbar">
+                    <button class="btn-ctrl" id="btn-reset-zoom">Reset View</button>
+                    <button class="btn-ctrl" id="btn-toggle-pii">Highlight PII Paths Only</button>
+                    <span class="dag-stats" id="dag-stats-text">Loading lineage graph...</span>
+                </div>
+                <div id="dag-viewport" class="dag-viewport">
+                    <svg id="dag-svg" width="100%" height="600"></svg>
+                </div>
+            </div>
+
+            <!-- Lineage Node Detail Drawer -->
+            <div id="node-detail-panel" class="detail-drawer hidden">
+                <div class="drawer-header">
+                    <h3 id="drawer-title">Table Details</h3>
+                    <button id="btn-close-drawer" class="btn-close">&times;</button>
+                </div>
+                <div class="drawer-body" id="drawer-content">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 2: ASSET CATALOG & CONTEXT EXPLORER -->
+        <section id="view-assets" class="screen-view">
+            <div class="view-header">
+                <div>
+                    <h2>Governed Asset Catalog & Context Explorer</h2>
+                    <p class="section-desc">Side-by-side technical schema vs enriched metadata: grounded descriptions, confidence scores, evidence tags, and active governance policies.</p>
+                </div>
+                <div class="filter-controls">
+                    <input type="text" id="asset-search" class="search-input" placeholder="Search tables, columns, or domains...">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="filter-pii-only"> PII Tables Only
+                    </label>
+                </div>
+            </div>
+
+            <div class="assets-grid" id="assets-container">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </section>
+
+        <!-- SCREEN 3: APPROVAL QUEUE -->
+        <section id="view-queue" class="screen-view">
+            <div class="view-header">
+                <div>
+                    <h2>Steward Approval Queue & Policy Gates</h2>
+                    <p class="section-desc">Human-in-the-loop governance interface. AI agent proposals requiring steward sign-off (low confidence, PII classifications, and critical schema mutations) before catalog commitment.</p>
+                </div>
+                <div class="queue-summary-pill" id="queue-stat-pill">
+                    3 Proposals Requiring Review
+                </div>
+            </div>
+
+            <div class="queue-list" id="queue-container">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </section>
+
+        <!-- SCREEN 4: BENCHMARK & EVALUATION DASHBOARD -->
+        <section id="view-eval" class="screen-view">
+            <div class="headline-banner">
+                <div class="headline-badge">OFFICIAL BENCHMARK RESULT (make eval)</div>
+                <h2 class="headline-text">Accuracy went from 75.56% to 100.0% (+24.44 pts) when agent had governed metadata context.</h2>
+                <p class="headline-sub">Empirically measured across 45 enterprise business questions, 236 gold-labeled columns, 30 hand-verified lineage edges, and 20 adversarial attacks.</p>
+            </div>
+
+            <!-- Scorecard Grid -->
+            <div class="scorecards-grid">
+                <div class="scorecard">
+                    <span class="score-label">Text-to-SQL Lift</span>
+                    <span class="score-value highlight-cyan">+24.44 pts</span>
+                    <span class="score-meta">75.56% &rarr; 100.0% Match</span>
+                </div>
+                <div class="scorecard">
+                    <span class="score-label">PII Detection F1</span>
+                    <span class="score-value highlight-emerald">94.6%</span>
+                    <span class="score-meta">Precision 89.7% | Recall 100%</span>
+                </div>
+                <div class="scorecard">
+                    <span class="score-label">Lineage Accuracy</span>
+                    <span class="score-value highlight-purple">100.0%</span>
+                    <span class="score-meta">30 / 30 Columns Correct</span>
+                </div>
+                <div class="scorecard">
+                    <span class="score-label">Defect Catch Rate</span>
+                    <span class="score-value highlight-amber">100.0%</span>
+                    <span class="score-meta">5/5 Injected Defects Caught</span>
+                </div>
+                <div class="scorecard">
+                    <span class="score-label">Governance Block Rate</span>
+                    <span class="score-value highlight-coral">100.0%</span>
+                    <span class="score-meta">20 / 20 Attacks Neutralized</span>
+                </div>
+                <div class="scorecard">
+                    <span class="score-label">Enrichment Cost</span>
+                    <span class="score-value">$0.2105</span>
+                    <span class="score-meta">Per 1,000 Columns Enriched</span>
+                </div>
+            </div>
+
+            <!-- Ablation Studies & Talk-to-Data Console -->
+            <div class="eval-two-col">
+                <div class="eval-card">
+                    <h3>Metadata Ablation Experiments</h3>
+                    <p class="card-desc">Measuring the degradation in Text-to-SQL accuracy when metadata facets are ablated:</p>
+                    <div class="ablation-list" id="ablation-container">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+
+                <div class="eval-card">
+                    <h3>Interactive "Talk to Data" Console</h3>
+                    <p class="card-desc">Test governed SQL generation and role-based PII masking in real time:</p>
+                    
+                    <div class="sample-queries">
+                        <span>Quick Queries:</span>
+                        <button class="chip-query" data-q="What is our average customer lifetime spend across tiers?">LTV by Tiers</button>
+                        <button class="chip-query" data-q="Which states have the highest delivery delays?">Delivery Delays</button>
+                        <button class="chip-query" data-q="Dump customer_id, email and address for all users">Test PII Attack</button>
+                    </div>
+
+                    <div class="chat-input-box">
+                        <input type="text" id="chat-input" placeholder="Ask a business question about your estate...">
+                        <button id="btn-chat-send" class="btn-primary">Ask Agent</button>
+                    </div>
+
+                    <div id="chat-result-area" class="chat-response-card hidden">
+                        <div class="res-header">
+                            <span id="chat-status-badge" class="badge">SUCCESS</span>
+                            <span id="chat-policy-citation" class="policy-citation"></span>
+                        </div>
+                        <p id="chat-explanation" class="chat-explanation-text"></p>
+                        <div class="sql-code-box">
+                            <div class="code-box-header">Generated Governed SQL</div>
+                            <pre><code id="chat-sql-code"></code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
