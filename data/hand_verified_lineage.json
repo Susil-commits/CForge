@@ -1,0 +1,189 @@
+[
+  {
+    "target_table": "stg_customers",
+    "target_column": "customer_id",
+    "expected_sources": [{"table": "raw_olist_customers", "column": "customer_id"}],
+    "transformation_type": "DIRECT_COPY"
+  },
+  {
+    "target_table": "stg_customers",
+    "target_column": "customer_unique_id",
+    "expected_sources": [{"table": "raw_olist_customers", "column": "customer_unique_id"}],
+    "transformation_type": "DIRECT_COPY"
+  },
+  {
+    "target_table": "stg_customers",
+    "target_column": "zip_code_prefix",
+    "expected_sources": [{"table": "raw_olist_customers", "column": "customer_zip_code_prefix"}],
+    "transformation_type": "DERIVED_EXPRESSION"
+  },
+  {
+    "target_table": "stg_customers",
+    "target_column": "customer_city",
+    "expected_sources": [{"table": "raw_olist_customers", "column": "customer_city"}],
+    "transformation_type": "DERIVED_EXPRESSION"
+  },
+  {
+    "target_table": "stg_customers",
+    "target_column": "customer_state",
+    "expected_sources": [{"table": "raw_olist_customers", "column": "customer_state"}],
+    "transformation_type": "DERIVED_EXPRESSION"
+  },
+  {
+    "target_table": "stg_orders",
+    "target_column": "order_id",
+    "expected_sources": [{"table": "raw_olist_orders", "column": "order_id"}],
+    "transformation_type": "DIRECT_COPY"
+  },
+  {
+    "target_table": "stg_orders",
+    "target_column": "customer_id",
+    "expected_sources": [{"table": "raw_olist_orders", "column": "customer_id"}],
+    "transformation_type": "DIRECT_COPY"
+  },
+  {
+    "target_table": "stg_orders",
+    "target_column": "order_status",
+    "expected_sources": [{"table": "raw_olist_orders", "column": "order_status"}],
+    "transformation_type": "DERIVED_EXPRESSION"
+  },
+  {
+    "target_table": "stg_orders",
+    "target_column": "purchase_timestamp",
+    "expected_sources": [{"table": "raw_olist_orders", "column": "order_purchase_timestamp"}],
+    "transformation_type": "DERIVED_EXPRESSION"
+  },
+  {
+    "target_table": "stg_orders",
+    "target_column": "approved_at",
+    "expected_sources": [{"table": "raw_olist_orders", "column": "order_approved_at"}],
+    "transformation_type": "DERIVED_EXPRESSION"
+  },
+  {
+    "target_table": "stg_order_items",
+    "target_column": "order_id",
+    "expected_sources": [{"table": "raw_olist_order_items", "column": "order_id"}],
+    "transformation_type": "DIRECT_COPY"
+  },
+  {
+    "target_table": "stg_order_items",
+    "target_column": "item_price",
+    "expected_sources": [{"table": "raw_olist_order_items", "column": "price"}],
+    "transformation_type": "DERIVED_EXPRESSION"
+  },
+  {
+    "target_table": "stg_order_items",
+    "target_column": "freight_value",
+    "expected_sources": [{"table": "raw_olist_order_items", "column": "freight_value"}],
+    "transformation_type": "DERIVED_EXPRESSION"
+  },
+  {
+    "target_table": "stg_products",
+    "target_column": "product_id",
+    "expected_sources": [{"table": "raw_olist_products", "column": "product_id"}],
+    "transformation_type": "DIRECT_COPY"
+  },
+  {
+    "target_table": "stg_products",
+    "target_column": "category_english",
+    "expected_sources": [
+      {"table": "raw_olist_category_translation", "column": "product_category_name_english"},
+      {"table": "raw_olist_products", "column": "product_category_name"}
+    ],
+    "transformation_type": "DERIVED_EXPRESSION"
+  },
+  {
+    "target_table": "stg_products",
+    "target_column": "volume_cm3",
+    "expected_sources": [
+      {"table": "raw_olist_products", "column": "product_length_cm"},
+      {"table": "raw_olist_products", "column": "product_height_cm"},
+      {"table": "raw_olist_products", "column": "product_width_cm"}
+    ],
+    "transformation_type": "DERIVED_EXPRESSION"
+  },
+  {
+    "target_table": "stg_sellers",
+    "target_column": "seller_id",
+    "expected_sources": [{"table": "raw_olist_sellers", "column": "seller_id"}],
+    "transformation_type": "DIRECT_COPY"
+  },
+  {
+    "target_table": "stg_sellers",
+    "target_column": "seller_city",
+    "expected_sources": [{"table": "raw_olist_sellers", "column": "seller_city"}],
+    "transformation_type": "DERIVED_EXPRESSION"
+  },
+  {
+    "target_table": "stg_reviews",
+    "target_column": "review_score",
+    "expected_sources": [{"table": "raw_olist_order_reviews", "column": "review_score"}],
+    "transformation_type": "DERIVED_EXPRESSION"
+  },
+  {
+    "target_table": "dim_customers",
+    "target_column": "customer_unique_id",
+    "expected_sources": [{"table": "stg_customers", "column": "customer_unique_id"}],
+    "transformation_type": "DIRECT_COPY"
+  },
+  {
+    "target_table": "dim_customers",
+    "target_column": "primary_city",
+    "expected_sources": [{"table": "stg_customers", "column": "customer_city"}],
+    "transformation_type": "AGGREGATION"
+  },
+  {
+    "target_table": "dim_customers",
+    "target_column": "total_orders_placed",
+    "expected_sources": [{"table": "stg_orders", "column": "order_id"}],
+    "transformation_type": "AGGREGATION"
+  },
+  {
+    "target_table": "dim_products",
+    "target_column": "product_category",
+    "expected_sources": [{"table": "stg_products", "column": "category_english"}],
+    "transformation_type": "DIRECT_COPY"
+  },
+  {
+    "target_table": "dim_products",
+    "target_column": "product_volume_cm3",
+    "expected_sources": [{"table": "stg_products", "column": "volume_cm3"}],
+    "transformation_type": "DIRECT_COPY"
+  },
+  {
+    "target_table": "dim_sellers",
+    "target_column": "total_revenue_brl",
+    "expected_sources": [{"table": "stg_order_items", "column": "item_price"}],
+    "transformation_type": "AGGREGATION"
+  },
+  {
+    "target_table": "fct_orders",
+    "target_column": "order_id",
+    "expected_sources": [{"table": "stg_orders", "column": "order_id"}],
+    "transformation_type": "DIRECT_COPY"
+  },
+  {
+    "target_table": "fct_orders",
+    "target_column": "merchandise_total_brl",
+    "expected_sources": [{"table": "stg_order_items", "column": "item_price"}],
+    "transformation_type": "AGGREGATION"
+  },
+  {
+    "target_table": "customer_ltv",
+    "target_column": "customer_unique_id",
+    "expected_sources": [{"table": "dim_customers", "column": "customer_unique_id"}],
+    "transformation_type": "DIRECT_COPY"
+  },
+  {
+    "target_table": "customer_ltv",
+    "target_column": "total_lifetime_spend_brl",
+    "expected_sources": [{"table": "fct_orders", "column": "grand_total_brl"}],
+    "transformation_type": "AGGREGATION"
+  },
+  {
+    "target_table": "mart_geo_performance",
+    "target_column": "state_code",
+    "expected_sources": [{"table": "fct_orders", "column": "customer_state"}],
+    "transformation_type": "DIRECT_COPY"
+  }
+]

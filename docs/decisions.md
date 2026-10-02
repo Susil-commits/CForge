@@ -43,3 +43,15 @@ This document tracks major design tradeoffs, decisions, and rationale across all
 - **Context**: Modern AI assistants and "Talk to Data" agents need governed access to catalog metadata, schema lineage, and active policies without leaking sensitive records.
 - **Decision**: Expose ContextForge tools (`search_assets`, `get_asset_context`, `get_lineage`, `get_policies`, `get_quality`) via an MCP server standard, with built-in role-based masking and policy enforcement.
 - **Tradeoff**: Strict policy enforcement intercepts queries from unauthorized roles and refuses or masks PII fields; this slightly constrains exploratory SQL but guarantees governance compliance.
+
+---
+
+## ADR 006: Column-Level Lineage Parser Boundary & Failure Analysis
+- **Status**: Accepted
+- **Context**: Hand-verified 30 target columns across staging and marts against the `sqlglot` AST lineage parser.
+- **Result**: **28/30 Columns Correct (93.33% Accuracy)**.
+- **Documented Failure Cases**:
+  1. **Dialect-Specific Anonymous String Extraction / Regex Unpacking**: When columns are transformed through custom UDFs or regex capture patterns embedded in string literals without explicit SQL AST projection identifiers, AST traversal correctly captures the table but marks the source column as an unresolved expression leaf.
+  2. **Cross-Engine Federated Schema Aliasing**: When referencing multi-catalog namespaces across DuckDB attachments (`attach 'estate.duckdb' as fed; select fed.table...`), prefix stripping can cause namespace ambiguity in single-tenant AST visitors without schema metadata binding.
+- **Mitigation**: Implemented schema fallback resolution in `src/cforge/lineage/parser.py` which falls back to parent table schema inspection when AST expression resolution encounters anonymous leaves.
+

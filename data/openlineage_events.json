@@ -1,0 +1,2000 @@
+[
+  {
+    "eventType": "COMPLETE",
+    "eventTime": "2026-10-02T14:59:44.126218+00:00",
+    "run": {
+      "runId": "4367deb4-580f-4aea-aac8-9ad76077cea0",
+      "facets": {}
+    },
+    "job": {
+      "namespace": "cforge.dataops",
+      "name": "model.customer_ltv",
+      "facets": {}
+    },
+    "inputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "fct_orders",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
+        "name": "order_spend",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
+        "name": "customer_orders",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
+        "name": "dim_customers",
+        "facets": {}
+      }
+    ],
+    "outputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "customer_ltv",
+        "facets": {
+          "columnLineage": {
+            "_producer": "https://github.com/Susil-commits/CForge",
+            "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/ColumnLineageDatasetFacet.json",
+            "fields": {
+              "customer_unique_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "customer_orders",
+                    "field": "customer_unique_id"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "dim_customers",
+                    "field": "customer_unique_id"
+                  }
+                ],
+                "transformationDescription": "c.customer_unique_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "primary_city": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "dim_customers",
+                    "field": "primary_city"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "customer_orders",
+                    "field": "primary_city"
+                  }
+                ],
+                "transformationDescription": "c.primary_city",
+                "transformationType": "DIRECT_COPY"
+              },
+              "primary_state": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "customer_orders",
+                    "field": "primary_state"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "dim_customers",
+                    "field": "primary_state"
+                  }
+                ],
+                "transformationDescription": "c.primary_state",
+                "transformationType": "DIRECT_COPY"
+              },
+              "primary_zip": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "dim_customers",
+                    "field": "primary_zip"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "customer_orders",
+                    "field": "primary_zip"
+                  }
+                ],
+                "transformationDescription": "c.primary_zip",
+                "transformationType": "DIRECT_COPY"
+              },
+              "total_orders_placed": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "customer_orders",
+                    "field": "total_orders_placed"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "dim_customers",
+                    "field": "total_orders_placed"
+                  }
+                ],
+                "transformationDescription": "c.total_orders_placed",
+                "transformationType": "DIRECT_COPY"
+              },
+              "total_lifetime_spend_brl": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "fct_orders",
+                    "field": "grand_total_brl"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "order_spend",
+                    "field": "lifetime_spend_brl"
+                  }
+                ],
+                "transformationDescription": "ROUND(COALESCE(s.lifetime_spend_brl, 0.0), 2) AS total_lifetime_spend_brl",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "avg_order_ticket_brl": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "fct_orders",
+                    "field": "grand_total_brl"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "order_spend",
+                    "field": "average_order_value_brl"
+                  }
+                ],
+                "transformationDescription": "ROUND(COALESCE(s.average_order_value_brl, 0.0), 2) AS avg_order_ticket_brl",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "satisfaction_score": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "fct_orders",
+                    "field": "customer_review_score"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "order_spend",
+                    "field": "avg_customer_rating"
+                  }
+                ],
+                "transformationDescription": "ROUND(s.avg_customer_rating, 2) AS satisfaction_score",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "first_order_date": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "customer_orders",
+                    "field": "first_order_date"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "dim_customers",
+                    "field": "first_order_date"
+                  }
+                ],
+                "transformationDescription": "c.first_order_date",
+                "transformationType": "DIRECT_COPY"
+              },
+              "latest_order_date": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "customer_orders",
+                    "field": "latest_order_date"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "dim_customers",
+                    "field": "latest_order_date"
+                  }
+                ],
+                "transformationDescription": "c.latest_order_date",
+                "transformationType": "DIRECT_COPY"
+              },
+              "ltv_segment": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "fct_orders",
+                    "field": "grand_total_brl"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "order_spend",
+                    "field": "lifetime_spend_brl"
+                  }
+                ],
+                "transformationDescription": "CASE WHEN COALESCE(s.lifetime_spend_brl, 0.0) >= 500.0 THEN 'High Value VIP' WHEN COALESCE(s.lifetime_spend_brl, 0.0) >= 150.0 THEN 'Mid Tier Core' ELSE 'Low Tier Standard' END AS ltv_segment",
+                "transformationType": "DERIVED_EXPRESSION"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "producer": "https://github.com/Susil-commits/CForge"
+  },
+  {
+    "eventType": "COMPLETE",
+    "eventTime": "2026-10-02T14:59:44.126249+00:00",
+    "run": {
+      "runId": "192741d1-b3b8-441e-bc5f-d31f56187383",
+      "facets": {}
+    },
+    "job": {
+      "namespace": "cforge.dataops",
+      "name": "model.dim_customers",
+      "facets": {}
+    },
+    "inputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_orders",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
+        "name": "customer_orders",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_customers",
+        "facets": {}
+      }
+    ],
+    "outputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "dim_customers",
+        "facets": {
+          "columnLineage": {
+            "_producer": "https://github.com/Susil-commits/CForge",
+            "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/ColumnLineageDatasetFacet.json",
+            "fields": {
+              "customer_unique_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "customer_orders",
+                    "field": "customer_unique_id"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_customers",
+                    "field": "customer_unique_id"
+                  }
+                ],
+                "transformationDescription": "customer_unique_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "primary_city": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_customers",
+                    "field": "customer_city"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "customer_orders",
+                    "field": "primary_city"
+                  }
+                ],
+                "transformationDescription": "primary_city",
+                "transformationType": "DIRECT_COPY"
+              },
+              "primary_state": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "customer_orders",
+                    "field": "primary_state"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_customers",
+                    "field": "customer_state"
+                  }
+                ],
+                "transformationDescription": "primary_state",
+                "transformationType": "DIRECT_COPY"
+              },
+              "primary_zip": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_customers",
+                    "field": "zip_code_prefix"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "customer_orders",
+                    "field": "primary_zip"
+                  }
+                ],
+                "transformationDescription": "primary_zip",
+                "transformationType": "DIRECT_COPY"
+              },
+              "total_orders_placed": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_orders",
+                    "field": "order_id"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "customer_orders",
+                    "field": "total_orders_placed"
+                  }
+                ],
+                "transformationDescription": "total_orders_placed",
+                "transformationType": "DIRECT_COPY"
+              },
+              "first_order_date": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "customer_orders",
+                    "field": "first_order_date"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_orders",
+                    "field": "purchase_timestamp"
+                  }
+                ],
+                "transformationDescription": "first_order_date",
+                "transformationType": "DIRECT_COPY"
+              },
+              "latest_order_date": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "customer_orders",
+                    "field": "latest_order_date"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_orders",
+                    "field": "purchase_timestamp"
+                  }
+                ],
+                "transformationDescription": "latest_order_date",
+                "transformationType": "DIRECT_COPY"
+              },
+              "buyer_type": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_orders",
+                    "field": "order_id"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "customer_orders",
+                    "field": "total_orders_placed"
+                  }
+                ],
+                "transformationDescription": "CASE WHEN total_orders_placed > 1 THEN 'repeat_buyer' ELSE 'single_buyer' END AS buyer_type",
+                "transformationType": "DERIVED_EXPRESSION"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "producer": "https://github.com/Susil-commits/CForge"
+  },
+  {
+    "eventType": "COMPLETE",
+    "eventTime": "2026-10-02T14:59:44.126262+00:00",
+    "run": {
+      "runId": "e7654630-bb37-418a-8de0-c386dc4a5cd8",
+      "facets": {}
+    },
+    "job": {
+      "namespace": "cforge.dataops",
+      "name": "model.dim_products",
+      "facets": {}
+    },
+    "inputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_products",
+        "facets": {}
+      }
+    ],
+    "outputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "dim_products",
+        "facets": {
+          "columnLineage": {
+            "_producer": "https://github.com/Susil-commits/CForge",
+            "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/ColumnLineageDatasetFacet.json",
+            "fields": {
+              "product_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_products",
+                    "field": "product_id"
+                  }
+                ],
+                "transformationDescription": "product_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "product_category": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_products",
+                    "field": "category_english"
+                  }
+                ],
+                "transformationDescription": "category_english AS product_category",
+                "transformationType": "DIRECT_COPY"
+              },
+              "raw_category_name": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_products",
+                    "field": "category_portuguese"
+                  }
+                ],
+                "transformationDescription": "category_portuguese AS raw_category_name",
+                "transformationType": "DIRECT_COPY"
+              },
+              "product_weight_grams": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_products",
+                    "field": "weight_g"
+                  }
+                ],
+                "transformationDescription": "weight_g AS product_weight_grams",
+                "transformationType": "DIRECT_COPY"
+              },
+              "product_volume_cm3": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_products",
+                    "field": "volume_cm3"
+                  }
+                ],
+                "transformationDescription": "volume_cm3 AS product_volume_cm3",
+                "transformationType": "DIRECT_COPY"
+              },
+              "catalog_photo_count": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_products",
+                    "field": "photos_count"
+                  }
+                ],
+                "transformationDescription": "photos_count AS catalog_photo_count",
+                "transformationType": "DIRECT_COPY"
+              },
+              "weight_class": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_products",
+                    "field": "weight_g"
+                  }
+                ],
+                "transformationDescription": "CASE WHEN weight_g IS NULL THEN 'unknown' WHEN weight_g < 500 THEN 'lightweight' WHEN weight_g < 2000 THEN 'medium_weight' ELSE 'heavyweight' END AS weight_class",
+                "transformationType": "DERIVED_EXPRESSION"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "producer": "https://github.com/Susil-commits/CForge"
+  },
+  {
+    "eventType": "COMPLETE",
+    "eventTime": "2026-10-02T14:59:44.126272+00:00",
+    "run": {
+      "runId": "042c30da-ca79-4709-bfc8-2c0a51d27cb3",
+      "facets": {}
+    },
+    "job": {
+      "namespace": "cforge.dataops",
+      "name": "model.dim_sellers",
+      "facets": {}
+    },
+    "inputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_sellers",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_order_items",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
+        "name": "seller_sales",
+        "facets": {}
+      }
+    ],
+    "outputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "dim_sellers",
+        "facets": {
+          "columnLineage": {
+            "_producer": "https://github.com/Susil-commits/CForge",
+            "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/ColumnLineageDatasetFacet.json",
+            "fields": {
+              "seller_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_sellers",
+                    "field": "seller_id"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "seller_sales",
+                    "field": "seller_id"
+                  }
+                ],
+                "transformationDescription": "seller_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "seller_city": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_sellers",
+                    "field": "seller_city"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "seller_sales",
+                    "field": "seller_city"
+                  }
+                ],
+                "transformationDescription": "seller_city",
+                "transformationType": "DIRECT_COPY"
+              },
+              "seller_state": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_sellers",
+                    "field": "seller_state"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "seller_sales",
+                    "field": "seller_state"
+                  }
+                ],
+                "transformationDescription": "seller_state",
+                "transformationType": "DIRECT_COPY"
+              },
+              "seller_zip": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "seller_sales",
+                    "field": "seller_zip"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_sellers",
+                    "field": "zip_code_prefix"
+                  }
+                ],
+                "transformationDescription": "seller_zip",
+                "transformationType": "DIRECT_COPY"
+              },
+              "total_items_sold": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "seller_sales",
+                    "field": "total_items_sold"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_order_items",
+                    "field": "order_id"
+                  }
+                ],
+                "transformationDescription": "total_items_sold",
+                "transformationType": "DIRECT_COPY"
+              },
+              "total_revenue_brl": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_order_items",
+                    "field": "item_price"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "seller_sales",
+                    "field": "total_merchandise_revenue"
+                  }
+                ],
+                "transformationDescription": "ROUND(total_merchandise_revenue, 2) AS total_revenue_brl",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "average_ticket_brl": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_order_items",
+                    "field": "item_price"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "seller_sales",
+                    "field": "avg_item_sale_price"
+                  }
+                ],
+                "transformationDescription": "ROUND(avg_item_sale_price, 2) AS average_ticket_brl",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "seller_tier": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_order_items",
+                    "field": "item_price"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "seller_sales",
+                    "field": "total_merchandise_revenue"
+                  }
+                ],
+                "transformationDescription": "CASE WHEN total_merchandise_revenue > 10000 THEN 'tier_1_top_seller' WHEN total_merchandise_revenue > 2000 THEN 'tier_2_growth_seller' ELSE 'tier_3_standard_seller' END AS seller_tier",
+                "transformationType": "DERIVED_EXPRESSION"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "producer": "https://github.com/Susil-commits/CForge"
+  },
+  {
+    "eventType": "COMPLETE",
+    "eventTime": "2026-10-02T14:59:44.126285+00:00",
+    "run": {
+      "runId": "cf44fdeb-14d1-44f6-81df-7e6f59bc3fe5",
+      "facets": {}
+    },
+    "job": {
+      "namespace": "cforge.dataops",
+      "name": "model.fct_orders",
+      "facets": {}
+    },
+    "inputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_reviews",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_order_items",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
+        "name": "item_aggregates",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_orders",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
+        "name": "review_aggregates",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_customers",
+        "facets": {}
+      }
+    ],
+    "outputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "fct_orders",
+        "facets": {
+          "columnLineage": {
+            "_producer": "https://github.com/Susil-commits/CForge",
+            "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/ColumnLineageDatasetFacet.json",
+            "fields": {
+              "order_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_orders",
+                    "field": "order_id"
+                  }
+                ],
+                "transformationDescription": "o.order_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "customer_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_orders",
+                    "field": "customer_id"
+                  }
+                ],
+                "transformationDescription": "o.customer_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "customer_unique_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_customers",
+                    "field": "customer_unique_id"
+                  }
+                ],
+                "transformationDescription": "c.customer_unique_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "customer_state": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_customers",
+                    "field": "customer_state"
+                  }
+                ],
+                "transformationDescription": "c.customer_state",
+                "transformationType": "DIRECT_COPY"
+              },
+              "customer_city": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_customers",
+                    "field": "customer_city"
+                  }
+                ],
+                "transformationDescription": "c.customer_city",
+                "transformationType": "DIRECT_COPY"
+              },
+              "order_status": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_orders",
+                    "field": "order_status"
+                  }
+                ],
+                "transformationDescription": "o.order_status",
+                "transformationType": "DIRECT_COPY"
+              },
+              "purchase_timestamp": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_orders",
+                    "field": "purchase_timestamp"
+                  }
+                ],
+                "transformationDescription": "o.purchase_timestamp",
+                "transformationType": "DIRECT_COPY"
+              },
+              "approved_at": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_orders",
+                    "field": "approved_at"
+                  }
+                ],
+                "transformationDescription": "o.approved_at",
+                "transformationType": "DIRECT_COPY"
+              },
+              "delivered_customer_at": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_orders",
+                    "field": "delivered_customer_at"
+                  }
+                ],
+                "transformationDescription": "o.delivered_customer_at",
+                "transformationType": "DIRECT_COPY"
+              },
+              "estimated_delivery_at": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_orders",
+                    "field": "estimated_delivery_at"
+                  }
+                ],
+                "transformationDescription": "o.estimated_delivery_at",
+                "transformationType": "DIRECT_COPY"
+              },
+              "total_order_items": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_order_items",
+                    "field": "order_item_id"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "item_aggregates",
+                    "field": "total_items"
+                  }
+                ],
+                "transformationDescription": "COALESCE(ia.total_items, 0) AS total_order_items",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "distinct_products_count": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "item_aggregates",
+                    "field": "distinct_products_count"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_order_items",
+                    "field": "product_id"
+                  }
+                ],
+                "transformationDescription": "COALESCE(ia.distinct_products_count, 0) AS distinct_products_count",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "merchandise_total_brl": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_order_items",
+                    "field": "item_price"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "item_aggregates",
+                    "field": "merchandise_subtotal"
+                  }
+                ],
+                "transformationDescription": "ROUND(COALESCE(ia.merchandise_subtotal, 0.0), 2) AS merchandise_total_brl",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "freight_total_brl": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_order_items",
+                    "field": "freight_value"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "item_aggregates",
+                    "field": "total_freight_amount"
+                  }
+                ],
+                "transformationDescription": "ROUND(COALESCE(ia.total_freight_amount, 0.0), 2) AS freight_total_brl",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "grand_total_brl": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_order_items",
+                    "field": "freight_value"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_order_items",
+                    "field": "item_price"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "item_aggregates",
+                    "field": "merchandise_subtotal"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "item_aggregates",
+                    "field": "total_freight_amount"
+                  }
+                ],
+                "transformationDescription": "ROUND(COALESCE(ia.merchandise_subtotal, 0.0) + COALESCE(ia.total_freight_amount, 0.0), 2) AS grand_total_brl",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "customer_review_score": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "review_aggregates",
+                    "field": "average_review_score"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_reviews",
+                    "field": "review_score"
+                  }
+                ],
+                "transformationDescription": "ROUND(ra.average_review_score, 1) AS customer_review_score",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "is_delayed_delivery": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_orders",
+                    "field": "estimated_delivery_at"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_orders",
+                    "field": "delivered_customer_at"
+                  }
+                ],
+                "transformationDescription": "CASE WHEN o.delivered_customer_at > o.estimated_delivery_at THEN TRUE ELSE FALSE END AS is_delayed_delivery",
+                "transformationType": "DERIVED_EXPRESSION"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "producer": "https://github.com/Susil-commits/CForge"
+  },
+  {
+    "eventType": "COMPLETE",
+    "eventTime": "2026-10-02T14:59:44.126302+00:00",
+    "run": {
+      "runId": "f3c2e257-0fcc-4c1c-85e9-39f9a5fb802e",
+      "facets": {}
+    },
+    "job": {
+      "namespace": "cforge.dataops",
+      "name": "model.fct_order_payments",
+      "facets": {}
+    },
+    "inputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_payments",
+        "facets": {}
+      }
+    ],
+    "outputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "fct_order_payments",
+        "facets": {
+          "columnLineage": {
+            "_producer": "https://github.com/Susil-commits/CForge",
+            "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/ColumnLineageDatasetFacet.json",
+            "fields": {
+              "order_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_payments",
+                    "field": "order_id"
+                  }
+                ],
+                "transformationDescription": "p.order_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "payment_sequential": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_payments",
+                    "field": "payment_sequential"
+                  }
+                ],
+                "transformationDescription": "p.payment_sequential",
+                "transformationType": "DIRECT_COPY"
+              },
+              "payment_type": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_payments",
+                    "field": "payment_type"
+                  }
+                ],
+                "transformationDescription": "p.payment_type",
+                "transformationType": "DIRECT_COPY"
+              },
+              "payment_installments": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_payments",
+                    "field": "payment_installments"
+                  }
+                ],
+                "transformationDescription": "p.payment_installments",
+                "transformationType": "DIRECT_COPY"
+              },
+              "payment_amount": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_payments",
+                    "field": "payment_amount"
+                  }
+                ],
+                "transformationDescription": "ROUND(p.payment_amount, 2) AS payment_amount",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "is_credit_card_payment": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_payments",
+                    "field": "payment_type"
+                  }
+                ],
+                "transformationDescription": "CASE WHEN p.payment_type = 'credit_card' THEN TRUE ELSE FALSE END AS is_credit_card_payment",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "is_split_installment": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "stg_payments",
+                    "field": "payment_installments"
+                  }
+                ],
+                "transformationDescription": "CASE WHEN p.payment_installments > 1 THEN TRUE ELSE FALSE END AS is_split_installment",
+                "transformationType": "DERIVED_EXPRESSION"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "producer": "https://github.com/Susil-commits/CForge"
+  },
+  {
+    "eventType": "COMPLETE",
+    "eventTime": "2026-10-02T14:59:44.126310+00:00",
+    "run": {
+      "runId": "588be32d-f63e-45bd-8042-1cc52e1dff0b",
+      "facets": {}
+    },
+    "job": {
+      "namespace": "cforge.dataops",
+      "name": "model.mart_geo_performance",
+      "facets": {}
+    },
+    "inputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "fct_orders",
+        "facets": {}
+      }
+    ],
+    "outputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "mart_geo_performance",
+        "facets": {
+          "columnLineage": {
+            "_producer": "https://github.com/Susil-commits/CForge",
+            "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/ColumnLineageDatasetFacet.json",
+            "fields": {
+              "state_code": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "fct_orders",
+                    "field": "customer_state"
+                  }
+                ],
+                "transformationDescription": "customer_state AS state_code",
+                "transformationType": "DIRECT_COPY"
+              },
+              "customer_city": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "fct_orders",
+                    "field": "customer_city"
+                  }
+                ],
+                "transformationDescription": "customer_city",
+                "transformationType": "DIRECT_COPY"
+              },
+              "total_orders": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "fct_orders",
+                    "field": "order_id"
+                  }
+                ],
+                "transformationDescription": "COUNT(order_id) AS total_orders",
+                "transformationType": "AGGREGATION"
+              },
+              "regional_gmv_brl": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "fct_orders",
+                    "field": "grand_total_brl"
+                  }
+                ],
+                "transformationDescription": "ROUND(SUM(grand_total_brl), 2) AS regional_gmv_brl",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "avg_freight_cost_brl": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "fct_orders",
+                    "field": "freight_total_brl"
+                  }
+                ],
+                "transformationDescription": "ROUND(AVG(freight_total_brl), 2) AS avg_freight_cost_brl",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "avg_regional_satisfaction": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "fct_orders",
+                    "field": "customer_review_score"
+                  }
+                ],
+                "transformationDescription": "ROUND(AVG(customer_review_score), 2) AS avg_regional_satisfaction",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "delayed_orders_count": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "fct_orders",
+                    "field": "is_delayed_delivery"
+                  }
+                ],
+                "transformationDescription": "SUM(CASE WHEN is_delayed_delivery THEN 1 ELSE 0 END) AS delayed_orders_count",
+                "transformationType": "AGGREGATION"
+              },
+              "delay_rate_percentage": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "fct_orders",
+                    "field": "order_id"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "fct_orders",
+                    "field": "is_delayed_delivery"
+                  }
+                ],
+                "transformationDescription": "ROUND(100.0 * SUM(CASE WHEN is_delayed_delivery THEN 1 ELSE 0 END) / NULLIF(COUNT(order_id), 0), 2) AS delay_rate_percentage",
+                "transformationType": "DERIVED_EXPRESSION"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "producer": "https://github.com/Susil-commits/CForge"
+  },
+  {
+    "eventType": "COMPLETE",
+    "eventTime": "2026-10-02T14:59:44.126318+00:00",
+    "run": {
+      "runId": "c94484d1-caf6-4ab8-a2f6-8e522a3c4f72",
+      "facets": {}
+    },
+    "job": {
+      "namespace": "cforge.dataops",
+      "name": "model.stg_customers",
+      "facets": {}
+    },
+    "inputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "raw_olist_customers",
+        "facets": {}
+      }
+    ],
+    "outputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_customers",
+        "facets": {
+          "columnLineage": {
+            "_producer": "https://github.com/Susil-commits/CForge",
+            "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/ColumnLineageDatasetFacet.json",
+            "fields": {
+              "customer_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_customers",
+                    "field": "customer_id"
+                  }
+                ],
+                "transformationDescription": "customer_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "customer_unique_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_customers",
+                    "field": "customer_unique_id"
+                  }
+                ],
+                "transformationDescription": "customer_unique_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "zip_code_prefix": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_customers",
+                    "field": "customer_zip_code_prefix"
+                  }
+                ],
+                "transformationDescription": "CAST(customer_zip_code_prefix AS TEXT) AS zip_code_prefix",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "customer_city": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_customers",
+                    "field": "customer_city"
+                  }
+                ],
+                "transformationDescription": "LOWER(TRIM(customer_city)) AS customer_city",
+                "transformationType": "COMPUTED"
+              },
+              "customer_state": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_customers",
+                    "field": "customer_state"
+                  }
+                ],
+                "transformationDescription": "UPPER(TRIM(customer_state)) AS customer_state",
+                "transformationType": "COMPUTED"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "producer": "https://github.com/Susil-commits/CForge"
+  },
+  {
+    "eventType": "COMPLETE",
+    "eventTime": "2026-10-02T14:59:44.126326+00:00",
+    "run": {
+      "runId": "74e893f8-1b61-4bf7-82c7-a44627731d82",
+      "facets": {}
+    },
+    "job": {
+      "namespace": "cforge.dataops",
+      "name": "model.stg_orders",
+      "facets": {}
+    },
+    "inputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "raw_olist_orders",
+        "facets": {}
+      }
+    ],
+    "outputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_orders",
+        "facets": {
+          "columnLineage": {
+            "_producer": "https://github.com/Susil-commits/CForge",
+            "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/ColumnLineageDatasetFacet.json",
+            "fields": {
+              "order_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_orders",
+                    "field": "order_id"
+                  }
+                ],
+                "transformationDescription": "order_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "customer_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_orders",
+                    "field": "customer_id"
+                  }
+                ],
+                "transformationDescription": "customer_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "order_status": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_orders",
+                    "field": "order_status"
+                  }
+                ],
+                "transformationDescription": "LOWER(TRIM(order_status)) AS order_status",
+                "transformationType": "COMPUTED"
+              },
+              "purchase_timestamp": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_orders",
+                    "field": "order_purchase_timestamp"
+                  }
+                ],
+                "transformationDescription": "CAST(order_purchase_timestamp AS TIMESTAMPNTZ) AS purchase_timestamp",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "approved_at": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_orders",
+                    "field": "order_approved_at"
+                  }
+                ],
+                "transformationDescription": "CAST(order_approved_at AS TIMESTAMPNTZ) AS approved_at",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "delivered_carrier_at": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_orders",
+                    "field": "order_delivered_carrier_date"
+                  }
+                ],
+                "transformationDescription": "CAST(order_delivered_carrier_date AS TIMESTAMPNTZ) AS delivered_carrier_at",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "delivered_customer_at": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_orders",
+                    "field": "order_delivered_customer_date"
+                  }
+                ],
+                "transformationDescription": "CAST(order_delivered_customer_date AS TIMESTAMPNTZ) AS delivered_customer_at",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "estimated_delivery_at": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_orders",
+                    "field": "order_estimated_delivery_date"
+                  }
+                ],
+                "transformationDescription": "CAST(order_estimated_delivery_date AS TIMESTAMPNTZ) AS estimated_delivery_at",
+                "transformationType": "DERIVED_EXPRESSION"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "producer": "https://github.com/Susil-commits/CForge"
+  },
+  {
+    "eventType": "COMPLETE",
+    "eventTime": "2026-10-02T14:59:44.126334+00:00",
+    "run": {
+      "runId": "afb56d1d-467d-434e-9322-4a3ca37e6304",
+      "facets": {}
+    },
+    "job": {
+      "namespace": "cforge.dataops",
+      "name": "model.stg_order_items",
+      "facets": {}
+    },
+    "inputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "raw_olist_order_items",
+        "facets": {}
+      }
+    ],
+    "outputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_order_items",
+        "facets": {
+          "columnLineage": {
+            "_producer": "https://github.com/Susil-commits/CForge",
+            "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/ColumnLineageDatasetFacet.json",
+            "fields": {
+              "order_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_items",
+                    "field": "order_id"
+                  }
+                ],
+                "transformationDescription": "order_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "order_item_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_items",
+                    "field": "order_item_id"
+                  }
+                ],
+                "transformationDescription": "CAST(order_item_id AS INT) AS order_item_id",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "product_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_items",
+                    "field": "product_id"
+                  }
+                ],
+                "transformationDescription": "product_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "seller_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_items",
+                    "field": "seller_id"
+                  }
+                ],
+                "transformationDescription": "seller_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "shipping_limit_timestamp": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_items",
+                    "field": "shipping_limit_date"
+                  }
+                ],
+                "transformationDescription": "CAST(shipping_limit_date AS TIMESTAMPNTZ) AS shipping_limit_timestamp",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "item_price": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_items",
+                    "field": "price"
+                  }
+                ],
+                "transformationDescription": "CAST(price AS DOUBLE) AS item_price",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "freight_value": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_items",
+                    "field": "freight_value"
+                  }
+                ],
+                "transformationDescription": "CAST(freight_value AS DOUBLE) AS freight_value",
+                "transformationType": "DERIVED_EXPRESSION"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "producer": "https://github.com/Susil-commits/CForge"
+  },
+  {
+    "eventType": "COMPLETE",
+    "eventTime": "2026-10-02T14:59:44.126342+00:00",
+    "run": {
+      "runId": "f699f783-eb60-4619-8ea2-21b8689174f5",
+      "facets": {}
+    },
+    "job": {
+      "namespace": "cforge.dataops",
+      "name": "model.stg_payments",
+      "facets": {}
+    },
+    "inputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "raw_olist_order_payments",
+        "facets": {}
+      }
+    ],
+    "outputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_payments",
+        "facets": {
+          "columnLineage": {
+            "_producer": "https://github.com/Susil-commits/CForge",
+            "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/ColumnLineageDatasetFacet.json",
+            "fields": {
+              "order_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_payments",
+                    "field": "order_id"
+                  }
+                ],
+                "transformationDescription": "order_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "payment_sequential": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_payments",
+                    "field": "payment_sequential"
+                  }
+                ],
+                "transformationDescription": "CAST(payment_sequential AS INT) AS payment_sequential",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "payment_type": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_payments",
+                    "field": "payment_type"
+                  }
+                ],
+                "transformationDescription": "LOWER(TRIM(payment_type)) AS payment_type",
+                "transformationType": "COMPUTED"
+              },
+              "payment_installments": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_payments",
+                    "field": "payment_installments"
+                  }
+                ],
+                "transformationDescription": "CAST(payment_installments AS INT) AS payment_installments",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "payment_amount": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_payments",
+                    "field": "payment_value"
+                  }
+                ],
+                "transformationDescription": "CAST(payment_value AS DOUBLE) AS payment_amount",
+                "transformationType": "DERIVED_EXPRESSION"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "producer": "https://github.com/Susil-commits/CForge"
+  },
+  {
+    "eventType": "COMPLETE",
+    "eventTime": "2026-10-02T14:59:44.126349+00:00",
+    "run": {
+      "runId": "669c8d31-ea46-4af8-8134-4ec1f3585bc9",
+      "facets": {}
+    },
+    "job": {
+      "namespace": "cforge.dataops",
+      "name": "model.stg_products",
+      "facets": {}
+    },
+    "inputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "raw_olist_products",
+        "facets": {}
+      },
+      {
+        "namespace": "cforge.dataops",
+        "name": "raw_olist_category_translation",
+        "facets": {}
+      }
+    ],
+    "outputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_products",
+        "facets": {
+          "columnLineage": {
+            "_producer": "https://github.com/Susil-commits/CForge",
+            "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/ColumnLineageDatasetFacet.json",
+            "fields": {
+              "product_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_products",
+                    "field": "product_id"
+                  }
+                ],
+                "transformationDescription": "p.product_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "category_portuguese": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_products",
+                    "field": "product_category_name"
+                  }
+                ],
+                "transformationDescription": "p.product_category_name AS category_portuguese",
+                "transformationType": "DIRECT_COPY"
+              },
+              "category_english": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_products",
+                    "field": "product_category_name"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_category_translation",
+                    "field": "product_category_name_english"
+                  }
+                ],
+                "transformationDescription": "COALESCE(t.product_category_name_english, p.product_category_name, 'unspecified') AS category_english",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "name_char_length": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_products",
+                    "field": "product_name_lenght"
+                  }
+                ],
+                "transformationDescription": "CAST(p.product_name_lenght AS INT) AS name_char_length",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "description_char_length": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_products",
+                    "field": "product_description_lenght"
+                  }
+                ],
+                "transformationDescription": "CAST(p.product_description_lenght AS INT) AS description_char_length",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "photos_count": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_products",
+                    "field": "product_photos_qty"
+                  }
+                ],
+                "transformationDescription": "CAST(p.product_photos_qty AS INT) AS photos_count",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "weight_g": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_products",
+                    "field": "product_weight_g"
+                  }
+                ],
+                "transformationDescription": "CAST(p.product_weight_g AS DOUBLE) AS weight_g",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "length_cm": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_products",
+                    "field": "product_length_cm"
+                  }
+                ],
+                "transformationDescription": "CAST(p.product_length_cm AS DOUBLE) AS length_cm",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "height_cm": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_products",
+                    "field": "product_height_cm"
+                  }
+                ],
+                "transformationDescription": "CAST(p.product_height_cm AS DOUBLE) AS height_cm",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "width_cm": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_products",
+                    "field": "product_width_cm"
+                  }
+                ],
+                "transformationDescription": "CAST(p.product_width_cm AS DOUBLE) AS width_cm",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "volume_cm3": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_products",
+                    "field": "product_height_cm"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_products",
+                    "field": "product_length_cm"
+                  },
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_products",
+                    "field": "product_width_cm"
+                  }
+                ],
+                "transformationDescription": "CAST(COALESCE(p.product_length_cm, 0) * COALESCE(p.product_height_cm, 0) * COALESCE(p.product_width_cm, 0) AS DOUBLE) AS volume_cm3",
+                "transformationType": "DERIVED_EXPRESSION"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "producer": "https://github.com/Susil-commits/CForge"
+  },
+  {
+    "eventType": "COMPLETE",
+    "eventTime": "2026-10-02T14:59:44.126359+00:00",
+    "run": {
+      "runId": "8a033a61-571a-479e-8b6b-a2cb3229cc51",
+      "facets": {}
+    },
+    "job": {
+      "namespace": "cforge.dataops",
+      "name": "model.stg_reviews",
+      "facets": {}
+    },
+    "inputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "raw_olist_order_reviews",
+        "facets": {}
+      }
+    ],
+    "outputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_reviews",
+        "facets": {
+          "columnLineage": {
+            "_producer": "https://github.com/Susil-commits/CForge",
+            "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/ColumnLineageDatasetFacet.json",
+            "fields": {
+              "review_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_reviews",
+                    "field": "review_id"
+                  }
+                ],
+                "transformationDescription": "review_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "order_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_reviews",
+                    "field": "order_id"
+                  }
+                ],
+                "transformationDescription": "order_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "review_score": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_reviews",
+                    "field": "review_score"
+                  }
+                ],
+                "transformationDescription": "CAST(review_score AS INT) AS review_score",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "review_title": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_reviews",
+                    "field": "review_comment_title"
+                  }
+                ],
+                "transformationDescription": "TRIM(review_comment_title) AS review_title",
+                "transformationType": "COMPUTED"
+              },
+              "review_comment": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_reviews",
+                    "field": "review_comment_message"
+                  }
+                ],
+                "transformationDescription": "TRIM(review_comment_message) AS review_comment",
+                "transformationType": "COMPUTED"
+              },
+              "review_created_at": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_reviews",
+                    "field": "review_creation_date"
+                  }
+                ],
+                "transformationDescription": "CAST(review_creation_date AS TIMESTAMPNTZ) AS review_created_at",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "review_answered_at": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_order_reviews",
+                    "field": "review_answer_timestamp"
+                  }
+                ],
+                "transformationDescription": "CAST(review_answer_timestamp AS TIMESTAMPNTZ) AS review_answered_at",
+                "transformationType": "DERIVED_EXPRESSION"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "producer": "https://github.com/Susil-commits/CForge"
+  },
+  {
+    "eventType": "COMPLETE",
+    "eventTime": "2026-10-02T14:59:44.126366+00:00",
+    "run": {
+      "runId": "27f3a2e5-7d43-4658-8258-f9289cc33235",
+      "facets": {}
+    },
+    "job": {
+      "namespace": "cforge.dataops",
+      "name": "model.stg_sellers",
+      "facets": {}
+    },
+    "inputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "raw_olist_sellers",
+        "facets": {}
+      }
+    ],
+    "outputs": [
+      {
+        "namespace": "cforge.dataops",
+        "name": "stg_sellers",
+        "facets": {
+          "columnLineage": {
+            "_producer": "https://github.com/Susil-commits/CForge",
+            "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/ColumnLineageDatasetFacet.json",
+            "fields": {
+              "seller_id": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_sellers",
+                    "field": "seller_id"
+                  }
+                ],
+                "transformationDescription": "seller_id",
+                "transformationType": "DIRECT_COPY"
+              },
+              "zip_code_prefix": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_sellers",
+                    "field": "seller_zip_code_prefix"
+                  }
+                ],
+                "transformationDescription": "CAST(seller_zip_code_prefix AS TEXT) AS zip_code_prefix",
+                "transformationType": "DERIVED_EXPRESSION"
+              },
+              "seller_city": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_sellers",
+                    "field": "seller_city"
+                  }
+                ],
+                "transformationDescription": "LOWER(TRIM(seller_city)) AS seller_city",
+                "transformationType": "COMPUTED"
+              },
+              "seller_state": {
+                "inputFields": [
+                  {
+                    "namespace": "cforge.dataops",
+                    "name": "raw_olist_sellers",
+                    "field": "seller_state"
+                  }
+                ],
+                "transformationDescription": "UPPER(TRIM(seller_state)) AS seller_state",
+                "transformationType": "COMPUTED"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "producer": "https://github.com/Susil-commits/CForge"
+  }
+]
