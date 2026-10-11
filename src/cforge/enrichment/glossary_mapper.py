@@ -126,7 +126,7 @@ Map this column to an approved glossary term or propose a canonical standardized
 class GlossaryMapperAgent:
     """Facade Glossary Mapper Agent with configurable execution mode ('auto', 'llm', 'heuristic')."""
 
-    def __init__(self, model_name: str = "cforge-glossary-mapper-v1", mode: str = "auto"):
+    def __init__(self, model_name: str = "cforge-glossary-mapper-v1", mode: str = "heuristic"):
         self.model_name = model_name
         self.mode = mode
         self.heuristic_agent = HeuristicGlossaryMapperAgent(model_name)

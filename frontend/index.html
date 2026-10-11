@@ -139,7 +139,7 @@
         <section id="view-eval" class="screen-view">
             <div class="headline-banner">
                 <div class="headline-badge">OFFICIAL BENCHMARK RESULT (make eval)</div>
-                <h2 id="eval-headline" class="headline-text">Accuracy went from 64.44% to 86.67% (+22.23 pts) when agent had governed metadata context.</h2>
+                <h2 id="eval-headline" class="headline-text">Accuracy went from 73.33% to 86.67% (+13.34 pts) when agent had governed metadata context.</h2>
                 <p class="headline-sub">Empirically measured across 45 enterprise business questions, 236 gold-labeled columns, 30 hand-verified lineage edges, and 20 adversarial attacks.</p>
             </div>
 
@@ -147,13 +147,13 @@
             <div class="scorecards-grid">
                 <div class="scorecard">
                     <span class="score-label">Text-to-SQL Lift</span>
-                    <span id="score-sql-lift" class="score-value highlight-cyan">+22.23 pts</span>
-                    <span id="score-sql-meta" class="score-meta">64.44% &rarr; 86.67% Match</span>
+                    <span id="score-sql-lift" class="score-value highlight-cyan">+13.34 pts</span>
+                    <span id="score-sql-meta" class="score-meta">73.33% &rarr; 86.67% Match</span>
                 </div>
                 <div class="scorecard">
                     <span class="score-label">PII Detection F1</span>
-                    <span id="score-pii-val" class="score-value highlight-emerald">95.7%</span>
-                    <span id="score-pii-meta" class="score-meta">Precision 91.7% | Recall 100%</span>
+                    <span id="score-pii-val" class="score-value highlight-emerald">100.0%</span>
+                    <span id="score-pii-meta" class="score-meta">Precision 100% | Recall 100%</span>
                 </div>
                 <div class="scorecard">
                     <span class="score-label">Lineage Accuracy</span>
@@ -172,8 +172,8 @@
                 </div>
                 <div class="scorecard">
                     <span class="score-label">Enrichment Cost</span>
-                    <span id="score-cost-val" class="score-value">$0.1220</span>
-                    <span id="score-cost-meta" class="score-meta">Per 1,000 Columns Enriched</span>
+                    <span id="score-cost-val" class="score-value">$0.1086</span>
+                    <span id="score-cost-meta" class="score-meta">Per 1,000 API Calls (Gemini)</span>
                 </div>
             </div>
 

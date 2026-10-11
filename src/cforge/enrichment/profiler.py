@@ -50,15 +50,17 @@ class EstateProfiler:
         
         # Get table schema & neighbors
         cols_info = conn.execute(f"DESCRIBE {table_name}").fetchall()
-        neighbors = [c[0] for c in cols_info if c[0] != column_name]
-        data_type = next((c[1] for c in cols_info if c[0] == column_name), "UNKNOWN")
+        norm_target = re.sub(r"[^a-zA-Z0-9]", "", column_name).lower()
+        actual_col = next((c[0] for c in cols_info if re.sub(r"[^a-zA-Z0-9]", "", c[0]).lower() == norm_target), column_name)
+        neighbors = [c[0] for c in cols_info if c[0] != actual_col]
+        data_type = next((c[1] for c in cols_info if c[0] == actual_col), "UNKNOWN")
 
         # Basic counts
         stats = conn.execute(f"""
             SELECT 
                 COUNT(*) AS total_rows,
-                COUNT(*) - COUNT("{column_name}") AS null_count,
-                COUNT(DISTINCT "{column_name}") AS distinct_count
+                COUNT(*) - COUNT("{actual_col}") AS null_count,
+                COUNT(DISTINCT "{actual_col}") AS distinct_count
             FROM {table_name}
         """).fetchone()
 
@@ -76,8 +78,8 @@ class EstateProfiler:
         try:
             val_bounds = conn.execute(f"""
                 SELECT 
-                    CAST(MIN("{column_name}") AS VARCHAR),
-                    CAST(MAX("{column_name}") AS VARCHAR)
+                    CAST(MIN("{actual_col}") AS VARCHAR),
+                    CAST(MAX("{actual_col}") AS VARCHAR)
                 FROM {table_name}
             """).fetchone()
             min_val = str(val_bounds[0]) if val_bounds[0] is not None else None
@@ -88,16 +90,16 @@ class EstateProfiler:
         t_upper = data_type.upper()
         if any(n in t_upper for n in ["INT", "DOUBLE", "FLOAT", "DECIMAL", "NUMERIC"]):
             try:
-                avg_res = conn.execute(f"SELECT AVG(\"{column_name}\") FROM {table_name}").fetchone()[0]
+                avg_res = conn.execute(f"SELECT AVG(\"{actual_col}\") FROM {table_name}").fetchone()[0]
                 avg_val = round(float(avg_res), 2) if avg_res is not None else None
             except Exception:
                 pass
 
         # Samples
         samples_res = conn.execute(f"""
-            SELECT DISTINCT CAST("{column_name}" AS VARCHAR)
+            SELECT DISTINCT CAST("{actual_col}" AS VARCHAR)
             FROM {table_name}
-            WHERE "{column_name}" IS NOT NULL
+            WHERE "{actual_col}" IS NOT NULL
             LIMIT 5
         """).fetchall()
         samples = [str(r[0]) for r in samples_res if r[0] is not None]

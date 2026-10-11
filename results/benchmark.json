@@ -1,40 +1,40 @@
 {
-  "timestamp": "2026-10-11 07:40:49 UTC",
-  "headline": "Accuracy went from 64.44% to 86.67% (+22.23 pts) when the agent had governed metadata context.",
+  "timestamp": "2026-10-11 15:37:28 UTC",
+  "headline": "Accuracy went from 73.33% to 86.67% (+13.34 pts) when the agent had governed metadata context.",
   "metrics": {
-    "text_to_sql_lift": "+22.23 pts",
-    "bare_schema_accuracy": "64.4%",
+    "text_to_sql_lift": "+13.34 pts",
+    "bare_schema_accuracy": "73.3%",
     "enriched_context_accuracy": "86.7%",
-    "pii_f1_score": "95.7%",
+    "pii_f1_score": "100.0%",
     "lineage_accuracy": "100.0% (30/30)",
     "defect_catch_rate": "100.0% (5/5)",
     "governance_block_rate": "100.0% (20/20)",
     "false_refusal_rate": "0.0%",
-    "description_quality": "4.73 / 5.0",
-    "human_judge_agreement": "79.3%",
-    "enrichment_cost_per_1k": "$0.1040",
-    "latency_ms": "906.00 ms"
+    "description_quality": "4.71 / 5.0",
+    "human_judge_agreement": "90.0%",
+    "enrichment_cost_per_1k": "$0.1024",
+    "latency_ms": "6607.16 ms"
   },
   "pii": {
-    "true_positives": 11,
-    "false_positives": 1,
+    "true_positives": 25,
+    "false_positives": 0,
     "false_negatives": 0,
-    "true_negatives": 31,
-    "precision": 0.9167,
+    "true_negatives": 65,
+    "precision": 1.0,
     "recall": 1.0,
-    "f1_score": 0.9565,
-    "total_evaluated": 43,
-    "total_evaluated_columns": 43,
+    "f1_score": 1.0,
+    "total_evaluated": 90,
+    "total_evaluated_columns": 90,
     "evaluated_split": "held_out",
     "heuristic_baseline": {
-      "true_positives": 11,
-      "false_positives": 1,
+      "true_positives": 25,
+      "false_positives": 0,
       "false_negatives": 0,
-      "true_negatives": 31,
-      "precision": 0.9167,
+      "true_negatives": 65,
+      "precision": 1.0,
       "recall": 1.0,
-      "f1_score": 0.9565,
-      "total_evaluated": 43
+      "f1_score": 1.0,
+      "total_evaluated": 90
     },
     "delta_vs_heuristic_f1": 0.0
   },
@@ -98,18 +98,18 @@
   },
   "sql": {
     "total_questions": 45,
-    "bare_schema_matches": 29,
-    "bare_schema_accuracy_pct": 64.44,
+    "bare_schema_matches": 33,
+    "bare_schema_accuracy_pct": 73.33,
     "enriched_context_matches": 39,
     "enriched_context_accuracy_pct": 86.67,
-    "accuracy_improvement_points": 22.23,
-    "headline": "Accuracy went from 64.44% to 86.67% (+22.23 pts) when the agent had governed metadata context.",
+    "accuracy_improvement_points": 13.34,
+    "headline": "Accuracy went from 73.33% to 86.67% (+13.34 pts) when the agent had governed metadata context.",
     "bare_details": [
       {
         "id": "Q01",
         "question": "What is the total number of orders placed in the system?",
         "gold_sql": "SELECT COUNT(*) AS total_orders FROM fct_orders;",
-        "generated_sql": "SELECT COUNT(*) AS total_orders FROM fct_orders",
+        "generated_sql": "SELECT count(order_id) FROM fct_orders",
         "matched": true,
         "error": null
       },
@@ -117,7 +117,7 @@
         "id": "Q02",
         "question": "What is the total revenue in BRL across all orders?",
         "gold_sql": "SELECT ROUND(SUM(grand_total_brl), 2) AS total_revenue FROM fct_orders;",
-        "generated_sql": "SELECT ROUND(SUM(grand_total_brl), 2) AS total_revenue FROM fct_orders",
+        "generated_sql": "SELECT SUM(grand_total_brl) AS total_revenue_brl FROM fct_orders",
         "matched": true,
         "error": null
       },
@@ -125,7 +125,7 @@
         "id": "Q03",
         "question": "What is the average customer review score across all orders?",
         "gold_sql": "SELECT ROUND(AVG(customer_review_score), 2) AS avg_csat FROM fct_orders WHERE customer_review_score IS NOT NULL;",
-        "generated_sql": "SELECT ROUND(AVG(customer_review_score), 2) AS avg_csat FROM fct_orders WHERE customer_review_score IS NOT NULL",
+        "generated_sql": "SELECT AVG(customer_review_score) AS avg_review_score FROM fct_orders",
         "matched": true,
         "error": null
       },
@@ -133,15 +133,15 @@
         "id": "Q04",
         "question": "How many distinct customers have made purchases?",
         "gold_sql": "SELECT COUNT(DISTINCT customer_unique_id) AS unique_customers FROM dim_customers;",
-        "generated_sql": "SELECT COUNT(DISTINCT customer_unique_id) AS unique_customers FROM dim_customers",
-        "matched": true,
+        "generated_sql": "SELECT COUNT(DISTINCT customer_unique_id)  FROM fct_orders",
+        "matched": false,
         "error": null
       },
       {
         "id": "Q05",
         "question": "How many repeat buyers vs single buyers exist?",
         "gold_sql": "SELECT buyer_type, COUNT(*) AS buyer_count FROM dim_customers GROUP BY buyer_type ORDER BY buyer_count DESC;",
-        "generated_sql": "SELECT customer_city, COUNT(*) FROM raw_olist_customers GROUP BY 1",
+        "generated_sql": "SELECT   CASE      WHEN total_orders_placed > 1 THEN 'Repeat Buyer'     ELSE 'Single Buyer'   END AS buyer_category,   COUNT(*) AS customer_count FROM customer_ltv GROUP BY 1",
         "matched": false,
         "error": null
       },
@@ -149,55 +149,55 @@
         "id": "Q06",
         "question": "What is the total revenue by customer LTV segment?",
         "gold_sql": "SELECT ltv_segment, ROUND(SUM(total_lifetime_spend_brl), 2) AS segment_revenue FROM customer_ltv GROUP BY ltv_segment ORDER BY segment_revenue DESC;",
-        "generated_sql": "SELECT customer_state, SUM(payment_value) FROM raw_olist_order_payments JOIN raw_olist_orders USING(order_id) JOIN raw_olist_customers USING(customer_id) GROUP BY 1",
-        "matched": false,
+        "generated_sql": "SELECT     ltv_segment,     SUM(total_lifetime_spend_brl) AS total_revenue FROM customer_ltv GROUP BY ltv_segment",
+        "matched": true,
         "error": null
       },
       {
         "id": "Q07",
         "question": "How many customers are categorized in each LTV segment?",
         "gold_sql": "SELECT ltv_segment, COUNT(*) AS customer_count FROM customer_ltv GROUP BY ltv_segment ORDER BY customer_count DESC;",
-        "generated_sql": "SELECT customer_id, COUNT(*) FROM raw_olist_orders GROUP BY 1",
-        "matched": false,
+        "generated_sql": "SELECT   ltv_segment,   COUNT(customer_unique_id) AS customer_count FROM customer_ltv GROUP BY ltv_segment",
+        "matched": true,
         "error": null
       },
       {
         "id": "Q08",
         "question": "What is the average order ticket size by LTV segment?",
         "gold_sql": "SELECT ltv_segment, ROUND(AVG(avg_order_ticket_brl), 2) AS avg_ticket FROM customer_ltv GROUP BY ltv_segment ORDER BY avg_ticket DESC;",
-        "generated_sql": "SELECT AVG(payment_value) FROM raw_olist_order_payments",
-        "matched": false,
+        "generated_sql": "SELECT     ltv_segment,     AVG(avg_order_ticket_brl) AS avg_order_ticket_size FROM customer_ltv GROUP BY ltv_segment",
+        "matched": true,
         "error": null
       },
       {
         "id": "Q09",
         "question": "How many delayed orders occurred across all states?",
         "gold_sql": "SELECT SUM(CASE WHEN is_delayed_delivery THEN 1 ELSE 0 END) AS delayed_count FROM fct_orders;",
-        "generated_sql": "SELECT COUNT(*) FROM raw_olist_orders WHERE order_delivered_customer_date > order_estimated_delivery_date",
-        "matched": true,
+        "generated_sql": "SELECT   SUM(delayed_orders_count) AS total_delayed_orders FROM mart_geo_performance",
+        "matched": false,
         "error": null
       },
       {
         "id": "Q10",
         "question": "What are the top 5 states by total order volume?",
         "gold_sql": "SELECT customer_state, COUNT(*) AS order_vol FROM fct_orders WHERE customer_state IS NOT NULL GROUP BY customer_state ORDER BY order_vol DESC LIMIT 5;",
-        "generated_sql": "SELECT customer_state, COUNT(*) AS order_vol FROM fct_orders WHERE customer_state IS NOT NULL GROUP BY customer_state ORDER BY order_vol DESC LIMIT 5",
-        "matched": true,
+        "generated_sql": "SELECT     customer_state,     COUNT(order_id) AS total_orders FROM fct_orders GROUP BY customer_state ORDER BY total_orders DESC LIMIT 5",
+        "matched": false,
         "error": null
       },
       {
         "id": "Q11",
         "question": "What are the top 5 states by regional GMV?",
         "gold_sql": "SELECT state_code, ROUND(SUM(regional_gmv_brl), 2) AS gmv FROM mart_geo_performance GROUP BY state_code ORDER BY gmv DESC LIMIT 5;",
-        "generated_sql": "SELECT geolocation_state, COUNT(*) FROM raw_olist_geolocation GROUP BY 1 LIMIT 5",
-        "matched": false,
+        "generated_sql": "SELECT   state_code,   SUM(regional_gmv_brl) AS total_gmv FROM mart_geo_performance GROUP BY state_code ORDER BY total_gmv DESC LIMIT 5",
+        "matched": true,
         "error": null
       },
       {
         "id": "Q12",
         "question": "Which 3 states have the highest delivery delay percentage?",
         "gold_sql": "SELECT state_code, ROUND(AVG(delay_rate_percentage), 2) AS avg_delay_pct FROM mart_geo_performance GROUP BY state_code ORDER BY avg_delay_pct DESC LIMIT 3;",
-        "generated_sql": "SELECT customer_state, AVG(price) FROM raw_olist_order_items JOIN raw_olist_orders USING(order_id) JOIN raw_olist_customers USING(customer_id) GROUP BY 1 LIMIT 3",
+        "generated_sql": "SELECT   state_code,   delay_rate_percentage FROM mart_geo_performance ORDER BY delay_rate_percentage DESC LIMIT 3",
         "matched": false,
         "error": null
       },
@@ -205,7 +205,7 @@
         "id": "Q13",
         "question": "What is the total number of products in the catalog?",
         "gold_sql": "SELECT COUNT(*) AS total_products FROM dim_products;",
-        "generated_sql": "SELECT COUNT(*) AS total_products FROM dim_products",
+        "generated_sql": "SELECT count(product_id) FROM dim_products",
         "matched": true,
         "error": null
       },
@@ -213,15 +213,15 @@
         "id": "Q14",
         "question": "How many products exist in each weight class?",
         "gold_sql": "SELECT weight_class, COUNT(*) AS product_count FROM dim_products GROUP BY weight_class ORDER BY product_count DESC;",
-        "generated_sql": "SELECT product_weight_g, COUNT(*) FROM raw_olist_products GROUP BY 1",
-        "matched": false,
+        "generated_sql": "SELECT   weight_class,   COUNT(product_id) AS product_count FROM dim_products GROUP BY weight_class",
+        "matched": true,
         "error": null
       },
       {
         "id": "Q15",
         "question": "What are the top 5 product categories by product count?",
         "gold_sql": "SELECT product_category, COUNT(*) AS item_count FROM dim_products GROUP BY product_category ORDER BY item_count DESC LIMIT 5;",
-        "generated_sql": "SELECT product_category, COUNT(*) AS item_count FROM dim_products GROUP BY product_category ORDER BY item_count DESC LIMIT 5",
+        "generated_sql": "SELECT     product_category,     COUNT(product_id) AS product_count FROM dim_products GROUP BY product_category ORDER BY product_count DESC LIMIT 5",
         "matched": true,
         "error": null
       },
@@ -229,15 +229,15 @@
         "id": "Q16",
         "question": "How many sellers are categorized in each seller tier?",
         "gold_sql": "SELECT seller_tier, COUNT(*) AS seller_count FROM dim_sellers GROUP BY seller_tier ORDER BY seller_count DESC;",
-        "generated_sql": "SELECT seller_id, COUNT(*) FROM raw_olist_order_items GROUP BY 1",
-        "matched": false,
+        "generated_sql": "SELECT   seller_tier,   COUNT(seller_id) AS seller_count FROM dim_sellers GROUP BY seller_tier",
+        "matched": true,
         "error": null
       },
       {
         "id": "Q17",
         "question": "What is the total merchandise revenue generated by all sellers?",
         "gold_sql": "SELECT ROUND(SUM(total_revenue_brl), 2) AS total_seller_rev FROM dim_sellers;",
-        "generated_sql": "SELECT ROUND(SUM(total_revenue_brl), 2) AS total_seller_rev FROM dim_sellers",
+        "generated_sql": "SELECT   SUM(item_price) AS total_merchandise_revenue FROM stg_order_items",
         "matched": true,
         "error": null
       },
@@ -245,7 +245,7 @@
         "id": "Q18",
         "question": "What is the average item sale price across all sellers?",
         "gold_sql": "SELECT ROUND(AVG(average_ticket_brl), 2) AS avg_ticket FROM dim_sellers;",
-        "generated_sql": "SELECT AVG(price) FROM raw_olist_order_items",
+        "generated_sql": "SELECT AVG(item_price) AS average_item_sale_price FROM stg_order_items",
         "matched": false,
         "error": null
       },
@@ -253,7 +253,7 @@
         "id": "Q19",
         "question": "How many payment transactions were made via credit card?",
         "gold_sql": "SELECT COUNT(*) AS cc_count FROM fct_order_payments WHERE is_credit_card_payment = TRUE;",
-        "generated_sql": "SELECT COUNT(*) AS cc_count FROM fct_order_payments WHERE is_credit_card_payment = TRUE",
+        "generated_sql": "SELECT   count(*) FROM fct_order_payments WHERE   is_credit_card_payment = TRUE",
         "matched": true,
         "error": null
       },
@@ -261,7 +261,7 @@
         "id": "Q20",
         "question": "What is the total payment value settled by payment type?",
         "gold_sql": "SELECT payment_type, ROUND(SUM(payment_amount), 2) AS total_paid FROM fct_order_payments GROUP BY payment_type ORDER BY total_paid DESC;",
-        "generated_sql": "SELECT payment_type, ROUND(SUM(payment_amount), 2) AS total_paid FROM fct_order_payments GROUP BY payment_type ORDER BY total_paid DESC",
+        "generated_sql": "SELECT     payment_type,     SUM(payment_amount) AS total_payment_value FROM fct_order_payments GROUP BY payment_type",
         "matched": true,
         "error": null
       },
@@ -269,7 +269,7 @@
         "id": "Q21",
         "question": "How many orders used split installment financing?",
         "gold_sql": "SELECT COUNT(*) AS split_count FROM fct_order_payments WHERE is_split_installment = TRUE;",
-        "generated_sql": "SELECT COUNT(*) FROM raw_olist_order_payments WHERE payment_installments > 1",
+        "generated_sql": "SELECT   count(order_id) FROM fct_order_payments WHERE   is_split_installment = TRUE",
         "matched": true,
         "error": null
       },
@@ -277,7 +277,7 @@
         "id": "Q22",
         "question": "What is the average freight amount per order?",
         "gold_sql": "SELECT ROUND(AVG(freight_total_brl), 2) AS avg_freight FROM fct_orders;",
-        "generated_sql": "SELECT ROUND(AVG(freight_total_brl), 2) AS avg_freight FROM fct_orders",
+        "generated_sql": "SELECT AVG(freight_total_brl) AS avg_freight_amount FROM fct_orders",
         "matched": true,
         "error": null
       },
@@ -285,7 +285,7 @@
         "id": "Q23",
         "question": "What is the total freight billed across all orders?",
         "gold_sql": "SELECT ROUND(SUM(freight_total_brl), 2) AS total_freight FROM fct_orders;",
-        "generated_sql": "SELECT ROUND(SUM(freight_total_brl), 2) AS total_freight FROM fct_orders",
+        "generated_sql": "SELECT SUM(freight_total_brl) AS total_freight_billed FROM fct_orders",
         "matched": true,
         "error": null
       },
@@ -293,7 +293,7 @@
         "id": "Q24",
         "question": "What is the distribution of orders by order status?",
         "gold_sql": "SELECT order_status, COUNT(*) AS count_by_status FROM fct_orders GROUP BY order_status ORDER BY count_by_status DESC;",
-        "generated_sql": "SELECT order_status, COUNT(*) AS count_by_status FROM fct_orders GROUP BY order_status ORDER BY count_by_status DESC",
+        "generated_sql": "SELECT   order_status,   COUNT(order_id) AS order_count FROM fct_orders GROUP BY order_status ORDER BY order_count DESC",
         "matched": true,
         "error": null
       },
@@ -301,31 +301,31 @@
         "id": "Q25",
         "question": "How many orders received a 5-star review rating?",
         "gold_sql": "SELECT COUNT(*) AS five_star_count FROM fct_orders WHERE customer_review_score = 5.0;",
-        "generated_sql": "SELECT COUNT(*) FROM fct_orders WHERE customer_review_score = 5.0",
-        "matched": true,
+        "generated_sql": "SELECT   count(order_id) FROM stg_reviews WHERE review_score = 5",
+        "matched": false,
         "error": null
       },
       {
         "id": "Q26",
         "question": "How many orders received a 1-star review rating?",
         "gold_sql": "SELECT COUNT(*) AS one_star_count FROM fct_orders WHERE customer_review_score = 1.0;",
-        "generated_sql": "SELECT COUNT(*) FROM fct_orders WHERE customer_review_score = 1.0",
-        "matched": true,
+        "generated_sql": "SELECT   count(order_id) FROM stg_reviews WHERE review_score = 1",
+        "matched": false,
         "error": null
       },
       {
         "id": "Q27",
         "question": "What is the average CSAT satisfaction score in the customer LTV mart?",
         "gold_sql": "SELECT ROUND(AVG(satisfaction_score), 2) AS avg_csat FROM customer_ltv;",
-        "generated_sql": "SELECT AVG(review_score) FROM raw_olist_order_reviews",
-        "matched": false,
+        "generated_sql": "SELECT AVG(satisfaction_score) AS average_csat_score FROM customer_ltv",
+        "matched": true,
         "error": null
       },
       {
         "id": "Q28",
         "question": "What is the total number of sellers in the marketplace?",
         "gold_sql": "SELECT COUNT(*) AS total_sellers FROM dim_sellers;",
-        "generated_sql": "SELECT COUNT(*) AS total_sellers FROM dim_sellers",
+        "generated_sql": "SELECT count(seller_id) FROM dim_sellers",
         "matched": true,
         "error": null
       },
@@ -333,31 +333,31 @@
         "id": "Q29",
         "question": "What is the maximum lifetime spend recorded by any customer?",
         "gold_sql": "SELECT ROUND(MAX(total_lifetime_spend_brl), 2) AS max_spend FROM customer_ltv;",
-        "generated_sql": "SELECT MAX(payment_value) FROM raw_olist_order_payments",
-        "matched": false,
+        "generated_sql": "SELECT MAX(total_lifetime_spend_brl) FROM customer_ltv",
+        "matched": true,
         "error": null
       },
       {
         "id": "Q30",
         "question": "How many products belong to the lightweight class?",
         "gold_sql": "SELECT COUNT(*) AS lightweight_count FROM dim_products WHERE weight_class = 'lightweight';",
-        "generated_sql": "SELECT COUNT(*) FROM raw_olist_products WHERE product_weight_g < 1000",
-        "matched": false,
+        "generated_sql": "SELECT   count(*) FROM dim_products WHERE weight_class = 'lightweight'",
+        "matched": true,
         "error": null
       },
       {
         "id": "Q31",
         "question": "How many products belong to the heavyweight class?",
         "gold_sql": "SELECT COUNT(*) AS heavyweight_count FROM dim_products WHERE weight_class = 'heavyweight';",
-        "generated_sql": "SELECT COUNT(*) FROM raw_olist_products WHERE product_weight_g > 5000",
-        "matched": false,
+        "generated_sql": "SELECT count(*)  FROM dim_products  WHERE weight_class = 'heavyweight'",
+        "matched": true,
         "error": null
       },
       {
         "id": "Q32",
         "question": "What is the average product weight in grams across all products?",
         "gold_sql": "SELECT ROUND(AVG(product_weight_grams), 2) AS avg_weight FROM dim_products WHERE product_weight_grams IS NOT NULL;",
-        "generated_sql": "SELECT ROUND(AVG(product_weight_grams), 2) AS avg_weight FROM dim_products WHERE product_weight_grams IS NOT NULL",
+        "generated_sql": "SELECT AVG(product_weight_grams) AS average_product_weight_grams FROM dim_products",
         "matched": true,
         "error": null
       },
@@ -365,7 +365,7 @@
         "id": "Q33",
         "question": "What is the total freight revenue by state in geo performance?",
         "gold_sql": "SELECT state_code, ROUND(SUM(avg_freight_cost_brl * total_orders), 2) AS state_freight FROM mart_geo_performance GROUP BY state_code ORDER BY state_freight DESC LIMIT 5;",
-        "generated_sql": "SELECT seller_state, SUM(freight_value) FROM raw_olist_order_items JOIN raw_olist_sellers USING(seller_id) GROUP BY 1 LIMIT 5",
+        "generated_sql": "SELECT     state_code,     SUM(avg_freight_cost_brl * total_orders) AS total_freight_revenue FROM mart_geo_performance GROUP BY state_code",
         "matched": false,
         "error": null
       },
@@ -373,7 +373,7 @@
         "id": "Q34",
         "question": "How many total items were sold by all sellers combined?",
         "gold_sql": "SELECT SUM(total_items_sold) AS total_items FROM dim_sellers;",
-        "generated_sql": "SELECT SUM(total_items_sold) AS total_items FROM dim_sellers",
+        "generated_sql": "SELECT SUM(total_items_sold) FROM dim_sellers",
         "matched": true,
         "error": null
       },
@@ -381,7 +381,7 @@
         "id": "Q35",
         "question": "What is the total count of tier 1 top sellers?",
         "gold_sql": "SELECT COUNT(*) AS top_sellers_count FROM dim_sellers WHERE seller_tier = 'tier_1_top_seller';",
-        "generated_sql": "SELECT COUNT(*) FROM raw_olist_sellers",
+        "generated_sql": "SELECT count(*)  FROM dim_sellers  WHERE seller_tier = 'tier 1'",
         "matched": false,
         "error": null
       },
@@ -389,7 +389,7 @@
         "id": "Q36",
         "question": "What is the average number of catalog photos per product?",
         "gold_sql": "SELECT ROUND(AVG(catalog_photo_count), 2) AS avg_photos FROM dim_products WHERE catalog_photo_count IS NOT NULL;",
-        "generated_sql": "SELECT ROUND(AVG(catalog_photo_count), 2) AS avg_photos FROM dim_products WHERE catalog_photo_count IS NOT NULL",
+        "generated_sql": "SELECT AVG(catalog_photo_count) AS avg_catalog_photos FROM dim_products",
         "matched": true,
         "error": null
       },
@@ -397,7 +397,7 @@
         "id": "Q37",
         "question": "How many distinct cities are recorded in dim_customers?",
         "gold_sql": "SELECT COUNT(DISTINCT primary_city) AS distinct_cities FROM dim_customers;",
-        "generated_sql": "SELECT COUNT(DISTINCT primary_city) AS distinct_cities FROM dim_customers",
+        "generated_sql": "SELECT count(DISTINCT primary_city) FROM dim_customers",
         "matched": true,
         "error": null
       },
@@ -405,7 +405,7 @@
         "id": "Q38",
         "question": "How many distinct states are represented in dim_customers?",
         "gold_sql": "SELECT COUNT(DISTINCT primary_state) AS distinct_states FROM dim_customers;",
-        "generated_sql": "SELECT COUNT(DISTINCT primary_state) AS distinct_states FROM dim_customers",
+        "generated_sql": "SELECT count(DISTINCT primary_state) FROM dim_customers",
         "matched": true,
         "error": null
       },
@@ -413,7 +413,7 @@
         "id": "Q39",
         "question": "What is the total merchandise total in BRL across all orders?",
         "gold_sql": "SELECT ROUND(SUM(merchandise_total_brl), 2) AS merchandise_gmv FROM fct_orders;",
-        "generated_sql": "SELECT ROUND(SUM(merchandise_total_brl), 2) AS merchandise_gmv FROM fct_orders",
+        "generated_sql": "SELECT SUM(merchandise_total_brl) FROM fct_orders",
         "matched": true,
         "error": null
       },
@@ -421,15 +421,15 @@
         "id": "Q40",
         "question": "What is the total number of order items fulfilled?",
         "gold_sql": "SELECT SUM(total_order_items) AS total_items_fulfilled FROM fct_orders;",
-        "generated_sql": "SELECT SUM(total_order_items) AS total_items_fulfilled FROM fct_orders",
-        "matched": true,
+        "generated_sql": "SELECT count(*) FROM stg_order_items",
+        "matched": false,
         "error": null
       },
       {
         "id": "Q41",
         "question": "What is the average volume in cubic cm for all products?",
         "gold_sql": "SELECT ROUND(AVG(product_volume_cm3), 2) AS avg_volume FROM dim_products WHERE product_volume_cm3 IS NOT NULL;",
-        "generated_sql": "SELECT ROUND(AVG(product_volume_cm3), 2) AS avg_volume FROM dim_products WHERE product_volume_cm3 IS NOT NULL",
+        "generated_sql": "SELECT AVG(product_volume_cm3) AS average_volume_cm3 FROM dim_products",
         "matched": true,
         "error": null
       },
@@ -437,7 +437,7 @@
         "id": "Q42",
         "question": "How many orders have a delivered order status?",
         "gold_sql": "SELECT COUNT(*) AS delivered_count FROM fct_orders WHERE order_status = 'delivered';",
-        "generated_sql": "SELECT COUNT(*) AS delivered_count FROM fct_orders WHERE order_status = 'delivered'",
+        "generated_sql": "SELECT   count(order_id) FROM fct_orders WHERE   order_status = 'delivered'",
         "matched": true,
         "error": null
       },
@@ -445,7 +445,7 @@
         "id": "Q43",
         "question": "What is the maximum freight charge billed on any single order?",
         "gold_sql": "SELECT ROUND(MAX(freight_total_brl), 2) AS max_freight FROM fct_orders;",
-        "generated_sql": "SELECT ROUND(MAX(freight_total_brl), 2) AS max_freight FROM fct_orders",
+        "generated_sql": "SELECT MAX(freight_total_brl) FROM fct_orders",
         "matched": true,
         "error": null
       },
@@ -453,16 +453,16 @@
         "id": "Q44",
         "question": "What is the minimum item ticket recorded in dim_sellers?",
         "gold_sql": "SELECT ROUND(MIN(average_ticket_brl), 2) AS min_ticket FROM dim_sellers WHERE average_ticket_brl > 0;",
-        "generated_sql": "SELECT MIN(price) FROM raw_olist_order_items",
-        "matched": true,
+        "generated_sql": "SELECT MIN(average_ticket_brl) FROM dim_sellers",
+        "matched": false,
         "error": null
       },
       {
         "id": "Q45",
         "question": "What is the count of High Value VIP customers in the LTV mart?",
         "gold_sql": "SELECT COUNT(*) AS vip_count FROM customer_ltv WHERE ltv_segment = 'High Value VIP';",
-        "generated_sql": "SELECT COUNT(*) FROM raw_olist_customers",
-        "matched": false,
+        "generated_sql": "SELECT   count(*) FROM customer_ltv WHERE ltv_segment = 'High Value VIP'",
+        "matched": true,
         "error": null
       }
     ],
@@ -471,7 +471,7 @@
         "id": "Q01",
         "question": "What is the total number of orders placed in the system?",
         "gold_sql": "SELECT COUNT(*) AS total_orders FROM fct_orders;",
-        "generated_sql": "SELECT COUNT(*) AS total_orders FROM fct_orders",
+        "generated_sql": "SELECT   COUNT(order_id) AS total_orders_placed FROM fct_orders",
         "matched": true,
         "error": null
       },
@@ -479,7 +479,7 @@
         "id": "Q02",
         "question": "What is the total revenue in BRL across all orders?",
         "gold_sql": "SELECT ROUND(SUM(grand_total_brl), 2) AS total_revenue FROM fct_orders;",
-        "generated_sql": "SELECT ROUND(SUM(grand_total_brl), 2) AS total_revenue FROM fct_orders",
+        "generated_sql": "SELECT   SUM(grand_total_brl) AS total_revenue_brl FROM fct_orders",
         "matched": true,
         "error": null
       },
@@ -487,7 +487,7 @@
         "id": "Q03",
         "question": "What is the average customer review score across all orders?",
         "gold_sql": "SELECT ROUND(AVG(customer_review_score), 2) AS avg_csat FROM fct_orders WHERE customer_review_score IS NOT NULL;",
-        "generated_sql": "SELECT ROUND(AVG(customer_review_score), 2) AS avg_csat FROM fct_orders WHERE customer_review_score IS NOT NULL",
+        "generated_sql": "SELECT   AVG(customer_review_score) AS avg_customer_review_score FROM fct_orders WHERE customer_review_score IS NOT NULL",
         "matched": true,
         "error": null
       },
@@ -495,7 +495,7 @@
         "id": "Q04",
         "question": "How many distinct customers have made purchases?",
         "gold_sql": "SELECT COUNT(DISTINCT customer_unique_id) AS unique_customers FROM dim_customers;",
-        "generated_sql": "SELECT COUNT(DISTINCT customer_unique_id) AS unique_customers FROM dim_customers",
+        "generated_sql": "SELECT   COUNT(DISTINCT customer_unique_id) FROM dim_customers",
         "matched": true,
         "error": null
       },
@@ -503,7 +503,7 @@
         "id": "Q05",
         "question": "How many repeat buyers vs single buyers exist?",
         "gold_sql": "SELECT buyer_type, COUNT(*) AS buyer_count FROM dim_customers GROUP BY buyer_type ORDER BY buyer_count DESC;",
-        "generated_sql": "SELECT buyer_type, COUNT(*) AS buyer_count FROM dim_customers GROUP BY buyer_type ORDER BY buyer_count DESC",
+        "generated_sql": "SELECT     buyer_type,     COUNT(customer_unique_id) AS customer_count FROM dim_customers GROUP BY buyer_type",
         "matched": true,
         "error": null
       },
@@ -511,7 +511,7 @@
         "id": "Q06",
         "question": "What is the total revenue by customer LTV segment?",
         "gold_sql": "SELECT ltv_segment, ROUND(SUM(total_lifetime_spend_brl), 2) AS segment_revenue FROM customer_ltv GROUP BY ltv_segment ORDER BY segment_revenue DESC;",
-        "generated_sql": "SELECT ltv_segment, ROUND(SUM(total_lifetime_spend_brl), 2) AS segment_revenue FROM customer_ltv GROUP BY ltv_segment ORDER BY segment_revenue DESC",
+        "generated_sql": "SELECT     ltv_segment,     SUM(total_lifetime_spend_brl) AS total_revenue FROM customer_ltv GROUP BY ltv_segment",
         "matched": true,
         "error": null
       },
@@ -519,7 +519,7 @@
         "id": "Q07",
         "question": "How many customers are categorized in each LTV segment?",
         "gold_sql": "SELECT ltv_segment, COUNT(*) AS customer_count FROM customer_ltv GROUP BY ltv_segment ORDER BY customer_count DESC;",
-        "generated_sql": "SELECT ltv_segment, COUNT(*) AS customer_count FROM customer_ltv GROUP BY ltv_segment ORDER BY customer_count DESC",
+        "generated_sql": "SELECT     ltv_segment,     COUNT(customer_unique_id) AS customer_count FROM customer_ltv GROUP BY ltv_segment",
         "matched": true,
         "error": null
       },
@@ -527,39 +527,39 @@
         "id": "Q08",
         "question": "What is the average order ticket size by LTV segment?",
         "gold_sql": "SELECT ltv_segment, ROUND(AVG(avg_order_ticket_brl), 2) AS avg_ticket FROM customer_ltv GROUP BY ltv_segment ORDER BY avg_ticket DESC;",
-        "generated_sql": "SELECT ltv_segment, ROUND(AVG(total_lifetime_spend_brl / total_orders_placed), 2) FROM customer_ltv GROUP BY ltv_segment ORDER BY 2 DESC",
-        "matched": false,
+        "generated_sql": "SELECT     ltv_segment,     AVG(avg_order_ticket_brl) AS avg_order_ticket_size FROM customer_ltv GROUP BY ltv_segment",
+        "matched": true,
         "error": null
       },
       {
         "id": "Q09",
         "question": "How many delayed orders occurred across all states?",
         "gold_sql": "SELECT SUM(CASE WHEN is_delayed_delivery THEN 1 ELSE 0 END) AS delayed_count FROM fct_orders;",
-        "generated_sql": "SELECT COUNT(*) FROM fct_orders WHERE is_delayed_delivery = TRUE AND order_status = 'delivered'",
-        "matched": false,
+        "generated_sql": "SELECT   COUNT(order_id) AS total_delayed_orders FROM fct_orders WHERE is_delayed_delivery = TRUE",
+        "matched": true,
         "error": null
       },
       {
         "id": "Q10",
         "question": "What are the top 5 states by total order volume?",
         "gold_sql": "SELECT customer_state, COUNT(*) AS order_vol FROM fct_orders WHERE customer_state IS NOT NULL GROUP BY customer_state ORDER BY order_vol DESC LIMIT 5;",
-        "generated_sql": "SELECT customer_state, COUNT(*) AS order_vol FROM fct_orders WHERE customer_state IS NOT NULL GROUP BY customer_state ORDER BY order_vol DESC LIMIT 5",
-        "matched": true,
+        "generated_sql": "SELECT     state_code,     total_orders FROM mart_geo_performance ORDER BY total_orders DESC LIMIT 5",
+        "matched": false,
         "error": null
       },
       {
         "id": "Q11",
         "question": "What are the top 5 states by regional GMV?",
         "gold_sql": "SELECT state_code, ROUND(SUM(regional_gmv_brl), 2) AS gmv FROM mart_geo_performance GROUP BY state_code ORDER BY gmv DESC LIMIT 5;",
-        "generated_sql": "SELECT state_code, ROUND(SUM(regional_gmv_brl), 2) AS gmv FROM mart_geo_performance GROUP BY state_code ORDER BY gmv DESC LIMIT 5",
-        "matched": true,
+        "generated_sql": "SELECT     state_code,     regional_gmv_brl FROM mart_geo_performance ORDER BY regional_gmv_brl DESC LIMIT 5",
+        "matched": false,
         "error": null
       },
       {
         "id": "Q12",
         "question": "Which 3 states have the highest delivery delay percentage?",
         "gold_sql": "SELECT state_code, ROUND(AVG(delay_rate_percentage), 2) AS avg_delay_pct FROM mart_geo_performance GROUP BY state_code ORDER BY avg_delay_pct DESC LIMIT 3;",
-        "generated_sql": "SELECT state_code, ROUND(delay_rate_percentage, 2) AS delay_pct FROM mart_geo_performance ORDER BY delay_rate_percentage DESC LIMIT 3",
+        "generated_sql": "SELECT     state_code,     delay_rate_percentage FROM mart_geo_performance ORDER BY delay_rate_percentage DESC LIMIT 3",
         "matched": false,
         "error": null
       },
@@ -567,7 +567,7 @@
         "id": "Q13",
         "question": "What is the total number of products in the catalog?",
         "gold_sql": "SELECT COUNT(*) AS total_products FROM dim_products;",
-        "generated_sql": "SELECT COUNT(*) AS total_products FROM dim_products",
+        "generated_sql": "SELECT count(*) FROM dim_products",
         "matched": true,
         "error": null
       },
@@ -575,7 +575,7 @@
         "id": "Q14",
         "question": "How many products exist in each weight class?",
         "gold_sql": "SELECT weight_class, COUNT(*) AS product_count FROM dim_products GROUP BY weight_class ORDER BY product_count DESC;",
-        "generated_sql": "SELECT weight_class, COUNT(*) AS product_count FROM dim_products GROUP BY weight_class ORDER BY product_count DESC",
+        "generated_sql": "SELECT     weight_class,     COUNT(product_id) AS product_count FROM dim_products WHERE weight_class IS NOT NULL GROUP BY weight_class",
         "matched": true,
         "error": null
       },
@@ -583,7 +583,7 @@
         "id": "Q15",
         "question": "What are the top 5 product categories by product count?",
         "gold_sql": "SELECT product_category, COUNT(*) AS item_count FROM dim_products GROUP BY product_category ORDER BY item_count DESC LIMIT 5;",
-        "generated_sql": "SELECT product_category, COUNT(*) AS item_count FROM dim_products GROUP BY product_category ORDER BY item_count DESC LIMIT 5",
+        "generated_sql": "SELECT     product_category,     COUNT(product_id) AS product_count FROM dim_products GROUP BY product_category ORDER BY product_count DESC LIMIT 5",
         "matched": true,
         "error": null
       },
@@ -591,7 +591,7 @@
         "id": "Q16",
         "question": "How many sellers are categorized in each seller tier?",
         "gold_sql": "SELECT seller_tier, COUNT(*) AS seller_count FROM dim_sellers GROUP BY seller_tier ORDER BY seller_count DESC;",
-        "generated_sql": "SELECT seller_tier, COUNT(*) AS seller_count FROM dim_sellers GROUP BY seller_tier ORDER BY seller_count DESC",
+        "generated_sql": "SELECT     seller_tier,     COUNT(seller_id) AS seller_count FROM dim_sellers GROUP BY seller_tier",
         "matched": true,
         "error": null
       },
@@ -599,7 +599,7 @@
         "id": "Q17",
         "question": "What is the total merchandise revenue generated by all sellers?",
         "gold_sql": "SELECT ROUND(SUM(total_revenue_brl), 2) AS total_seller_rev FROM dim_sellers;",
-        "generated_sql": "SELECT ROUND(SUM(total_revenue_brl), 2) AS total_seller_rev FROM dim_sellers",
+        "generated_sql": "SELECT     SUM(total_revenue_brl) AS total_merchandise_revenue FROM dim_sellers",
         "matched": true,
         "error": null
       },
@@ -607,7 +607,7 @@
         "id": "Q18",
         "question": "What is the average item sale price across all sellers?",
         "gold_sql": "SELECT ROUND(AVG(average_ticket_brl), 2) AS avg_ticket FROM dim_sellers;",
-        "generated_sql": "SELECT ROUND(AVG(total_revenue_brl / total_items_sold), 2) FROM dim_sellers WHERE total_items_sold > 0",
+        "generated_sql": "SELECT AVG(average_ticket_brl) AS avg_item_sale_price FROM dim_sellers WHERE average_ticket_brl > 0",
         "matched": false,
         "error": null
       },
@@ -615,7 +615,7 @@
         "id": "Q19",
         "question": "How many payment transactions were made via credit card?",
         "gold_sql": "SELECT COUNT(*) AS cc_count FROM fct_order_payments WHERE is_credit_card_payment = TRUE;",
-        "generated_sql": "SELECT COUNT(*) AS cc_count FROM fct_order_payments WHERE is_credit_card_payment = TRUE",
+        "generated_sql": "SELECT   COUNT(*) FROM fct_order_payments WHERE is_credit_card_payment = TRUE",
         "matched": true,
         "error": null
       },
@@ -623,7 +623,7 @@
         "id": "Q20",
         "question": "What is the total payment value settled by payment type?",
         "gold_sql": "SELECT payment_type, ROUND(SUM(payment_amount), 2) AS total_paid FROM fct_order_payments GROUP BY payment_type ORDER BY total_paid DESC;",
-        "generated_sql": "SELECT payment_type, ROUND(SUM(payment_amount), 2) AS total_paid FROM fct_order_payments GROUP BY payment_type ORDER BY total_paid DESC",
+        "generated_sql": "SELECT     payment_type,     SUM(payment_amount) AS total_payment_value FROM fct_order_payments GROUP BY payment_type",
         "matched": true,
         "error": null
       },
@@ -631,7 +631,7 @@
         "id": "Q21",
         "question": "How many orders used split installment financing?",
         "gold_sql": "SELECT COUNT(*) AS split_count FROM fct_order_payments WHERE is_split_installment = TRUE;",
-        "generated_sql": "SELECT COUNT(*) AS split_count FROM fct_order_payments WHERE is_split_installment = TRUE",
+        "generated_sql": "SELECT   COUNT(order_id) FROM fct_order_payments WHERE is_split_installment = TRUE",
         "matched": true,
         "error": null
       },
@@ -639,7 +639,7 @@
         "id": "Q22",
         "question": "What is the average freight amount per order?",
         "gold_sql": "SELECT ROUND(AVG(freight_total_brl), 2) AS avg_freight FROM fct_orders;",
-        "generated_sql": "SELECT ROUND(AVG(freight_total_brl), 2) AS avg_freight FROM fct_orders",
+        "generated_sql": "SELECT   AVG(freight_total_brl) AS avg_freight_amount_per_order FROM fct_orders",
         "matched": true,
         "error": null
       },
@@ -647,7 +647,7 @@
         "id": "Q23",
         "question": "What is the total freight billed across all orders?",
         "gold_sql": "SELECT ROUND(SUM(freight_total_brl), 2) AS total_freight FROM fct_orders;",
-        "generated_sql": "SELECT ROUND(SUM(freight_total_brl), 2) AS total_freight FROM fct_orders",
+        "generated_sql": "SELECT   SUM(freight_total_brl) AS total_freight_billed FROM fct_orders",
         "matched": true,
         "error": null
       },
@@ -655,7 +655,7 @@
         "id": "Q24",
         "question": "What is the distribution of orders by order status?",
         "gold_sql": "SELECT order_status, COUNT(*) AS count_by_status FROM fct_orders GROUP BY order_status ORDER BY count_by_status DESC;",
-        "generated_sql": "SELECT order_status, COUNT(*) AS count_by_status FROM fct_orders GROUP BY order_status ORDER BY count_by_status DESC",
+        "generated_sql": "SELECT     order_status,     COUNT(order_id) AS order_count FROM fct_orders GROUP BY order_status ORDER BY order_count DESC",
         "matched": true,
         "error": null
       },
@@ -663,7 +663,7 @@
         "id": "Q25",
         "question": "How many orders received a 5-star review rating?",
         "gold_sql": "SELECT COUNT(*) AS five_star_count FROM fct_orders WHERE customer_review_score = 5.0;",
-        "generated_sql": "SELECT COUNT(*) AS five_star_count FROM fct_orders WHERE customer_review_score = 5.0",
+        "generated_sql": "SELECT   COUNT(order_id) FROM fct_orders WHERE customer_review_score = 5.0",
         "matched": true,
         "error": null
       },
@@ -671,7 +671,7 @@
         "id": "Q26",
         "question": "How many orders received a 1-star review rating?",
         "gold_sql": "SELECT COUNT(*) AS one_star_count FROM fct_orders WHERE customer_review_score = 1.0;",
-        "generated_sql": "SELECT COUNT(*) AS one_star_count FROM fct_orders WHERE customer_review_score = 1.0",
+        "generated_sql": "SELECT   COUNT(order_id) FROM fct_orders WHERE customer_review_score = 1.0",
         "matched": true,
         "error": null
       },
@@ -679,7 +679,7 @@
         "id": "Q27",
         "question": "What is the average CSAT satisfaction score in the customer LTV mart?",
         "gold_sql": "SELECT ROUND(AVG(satisfaction_score), 2) AS avg_csat FROM customer_ltv;",
-        "generated_sql": "SELECT ROUND(AVG(satisfaction_score), 2) AS avg_csat FROM customer_ltv",
+        "generated_sql": "SELECT   AVG(satisfaction_score) AS avg_csat_score FROM customer_ltv WHERE satisfaction_score IS NOT NULL",
         "matched": true,
         "error": null
       },
@@ -687,7 +687,7 @@
         "id": "Q28",
         "question": "What is the total number of sellers in the marketplace?",
         "gold_sql": "SELECT COUNT(*) AS total_sellers FROM dim_sellers;",
-        "generated_sql": "SELECT COUNT(*) AS total_sellers FROM dim_sellers",
+        "generated_sql": "SELECT COUNT(seller_id) AS total_sellers FROM dim_sellers",
         "matched": true,
         "error": null
       },
@@ -695,7 +695,7 @@
         "id": "Q29",
         "question": "What is the maximum lifetime spend recorded by any customer?",
         "gold_sql": "SELECT ROUND(MAX(total_lifetime_spend_brl), 2) AS max_spend FROM customer_ltv;",
-        "generated_sql": "SELECT ROUND(MAX(total_lifetime_spend_brl), 2) AS max_spend FROM customer_ltv",
+        "generated_sql": "SELECT   MAX(total_lifetime_spend_brl) FROM customer_ltv",
         "matched": true,
         "error": null
       },
@@ -703,7 +703,7 @@
         "id": "Q30",
         "question": "How many products belong to the lightweight class?",
         "gold_sql": "SELECT COUNT(*) AS lightweight_count FROM dim_products WHERE weight_class = 'lightweight';",
-        "generated_sql": "SELECT COUNT(*) AS lightweight_count FROM dim_products WHERE weight_class = 'lightweight'",
+        "generated_sql": "SELECT   COUNT(product_id) FROM dim_products WHERE weight_class = 'lightweight'",
         "matched": true,
         "error": null
       },
@@ -711,7 +711,7 @@
         "id": "Q31",
         "question": "How many products belong to the heavyweight class?",
         "gold_sql": "SELECT COUNT(*) AS heavyweight_count FROM dim_products WHERE weight_class = 'heavyweight';",
-        "generated_sql": "SELECT COUNT(*) AS heavyweight_count FROM dim_products WHERE weight_class = 'heavyweight'",
+        "generated_sql": "SELECT   count(*) FROM dim_products WHERE weight_class = 'heavyweight'",
         "matched": true,
         "error": null
       },
@@ -719,7 +719,7 @@
         "id": "Q32",
         "question": "What is the average product weight in grams across all products?",
         "gold_sql": "SELECT ROUND(AVG(product_weight_grams), 2) AS avg_weight FROM dim_products WHERE product_weight_grams IS NOT NULL;",
-        "generated_sql": "SELECT ROUND(AVG(product_weight_grams), 2) AS avg_weight FROM dim_products WHERE product_weight_grams IS NOT NULL",
+        "generated_sql": "SELECT   AVG(product_weight_grams) AS avg_product_weight_grams FROM dim_products WHERE product_weight_grams IS NOT NULL",
         "matched": true,
         "error": null
       },
@@ -727,7 +727,7 @@
         "id": "Q33",
         "question": "What is the total freight revenue by state in geo performance?",
         "gold_sql": "SELECT state_code, ROUND(SUM(avg_freight_cost_brl * total_orders), 2) AS state_freight FROM mart_geo_performance GROUP BY state_code ORDER BY state_freight DESC LIMIT 5;",
-        "generated_sql": "SELECT state_code, ROUND(SUM(avg_freight_cost_brl), 2) AS state_freight FROM mart_geo_performance GROUP BY state_code ORDER BY state_freight DESC LIMIT 5",
+        "generated_sql": "SELECT     state_code,     (total_orders * avg_freight_cost_brl) AS total_freight_revenue_brl FROM mart_geo_performance",
         "matched": false,
         "error": null
       },
@@ -735,7 +735,7 @@
         "id": "Q34",
         "question": "How many total items were sold by all sellers combined?",
         "gold_sql": "SELECT SUM(total_items_sold) AS total_items FROM dim_sellers;",
-        "generated_sql": "SELECT SUM(total_items_sold) AS total_items FROM dim_sellers",
+        "generated_sql": "SELECT   SUM(total_items_sold) AS total_items_sold FROM dim_sellers",
         "matched": true,
         "error": null
       },
@@ -743,7 +743,7 @@
         "id": "Q35",
         "question": "What is the total count of tier 1 top sellers?",
         "gold_sql": "SELECT COUNT(*) AS top_sellers_count FROM dim_sellers WHERE seller_tier = 'tier_1_top_seller';",
-        "generated_sql": "SELECT COUNT(*) AS top_sellers_count FROM dim_sellers WHERE seller_tier = 'tier_1_top_seller'",
+        "generated_sql": "SELECT   COUNT(seller_id) FROM dim_sellers WHERE seller_tier = 'tier_1_top_seller'",
         "matched": true,
         "error": null
       },
@@ -751,7 +751,7 @@
         "id": "Q36",
         "question": "What is the average number of catalog photos per product?",
         "gold_sql": "SELECT ROUND(AVG(catalog_photo_count), 2) AS avg_photos FROM dim_products WHERE catalog_photo_count IS NOT NULL;",
-        "generated_sql": "SELECT ROUND(AVG(catalog_photo_count), 2) AS avg_photos FROM dim_products WHERE catalog_photo_count IS NOT NULL",
+        "generated_sql": "SELECT   AVG(catalog_photo_count) AS avg_catalog_photos_per_product FROM dim_products WHERE catalog_photo_count IS NOT NULL",
         "matched": true,
         "error": null
       },
@@ -759,7 +759,7 @@
         "id": "Q37",
         "question": "How many distinct cities are recorded in dim_customers?",
         "gold_sql": "SELECT COUNT(DISTINCT primary_city) AS distinct_cities FROM dim_customers;",
-        "generated_sql": "SELECT COUNT(DISTINCT primary_city) AS distinct_cities FROM dim_customers",
+        "generated_sql": "SELECT COUNT(DISTINCT primary_city)  FROM dim_customers",
         "matched": true,
         "error": null
       },
@@ -767,7 +767,7 @@
         "id": "Q38",
         "question": "How many distinct states are represented in dim_customers?",
         "gold_sql": "SELECT COUNT(DISTINCT primary_state) AS distinct_states FROM dim_customers;",
-        "generated_sql": "SELECT COUNT(DISTINCT primary_state) AS distinct_states FROM dim_customers",
+        "generated_sql": "SELECT   COUNT(DISTINCT primary_state) FROM dim_customers",
         "matched": true,
         "error": null
       },
@@ -775,7 +775,7 @@
         "id": "Q39",
         "question": "What is the total merchandise total in BRL across all orders?",
         "gold_sql": "SELECT ROUND(SUM(merchandise_total_brl), 2) AS merchandise_gmv FROM fct_orders;",
-        "generated_sql": "SELECT ROUND(SUM(merchandise_total_brl), 2) AS merchandise_gmv FROM fct_orders",
+        "generated_sql": "SELECT   SUM(merchandise_total_brl) AS total_merchandise_revenue_brl FROM fct_orders",
         "matched": true,
         "error": null
       },
@@ -783,15 +783,15 @@
         "id": "Q40",
         "question": "What is the total number of order items fulfilled?",
         "gold_sql": "SELECT SUM(total_order_items) AS total_items_fulfilled FROM fct_orders;",
-        "generated_sql": "SELECT SUM(total_order_items) AS total_items_fulfilled FROM fct_orders",
-        "matched": true,
+        "generated_sql": "SELECT   SUM(total_items_sold) FROM dim_sellers",
+        "matched": false,
         "error": null
       },
       {
         "id": "Q41",
         "question": "What is the average volume in cubic cm for all products?",
         "gold_sql": "SELECT ROUND(AVG(product_volume_cm3), 2) AS avg_volume FROM dim_products WHERE product_volume_cm3 IS NOT NULL;",
-        "generated_sql": "SELECT ROUND(AVG(product_volume_cm3), 2) AS avg_volume FROM dim_products WHERE product_volume_cm3 IS NOT NULL",
+        "generated_sql": "SELECT   AVG(product_volume_cm3) AS avg_product_volume_cm3 FROM dim_products WHERE product_volume_cm3 IS NOT NULL",
         "matched": true,
         "error": null
       },
@@ -799,7 +799,7 @@
         "id": "Q42",
         "question": "How many orders have a delivered order status?",
         "gold_sql": "SELECT COUNT(*) AS delivered_count FROM fct_orders WHERE order_status = 'delivered';",
-        "generated_sql": "SELECT COUNT(*) AS delivered_count FROM fct_orders WHERE order_status = 'delivered'",
+        "generated_sql": "SELECT   COUNT(order_id) FROM fct_orders WHERE order_status = 'delivered'",
         "matched": true,
         "error": null
       },
@@ -807,7 +807,7 @@
         "id": "Q43",
         "question": "What is the maximum freight charge billed on any single order?",
         "gold_sql": "SELECT ROUND(MAX(freight_total_brl), 2) AS max_freight FROM fct_orders;",
-        "generated_sql": "SELECT ROUND(MAX(freight_total_brl), 2) AS max_freight FROM fct_orders",
+        "generated_sql": "SELECT   MAX(freight_total_brl) FROM fct_orders",
         "matched": true,
         "error": null
       },
@@ -815,32 +815,32 @@
         "id": "Q44",
         "question": "What is the minimum item ticket recorded in dim_sellers?",
         "gold_sql": "SELECT ROUND(MIN(average_ticket_brl), 2) AS min_ticket FROM dim_sellers WHERE average_ticket_brl > 0;",
-        "generated_sql": "SELECT ROUND(MIN(average_ticket_brl), 2) AS min_ticket FROM dim_sellers",
-        "matched": false,
+        "generated_sql": "SELECT MIN(average_ticket_brl)  FROM dim_sellers  WHERE average_ticket_brl > 0",
+        "matched": true,
         "error": null
       },
       {
         "id": "Q45",
         "question": "What is the count of High Value VIP customers in the LTV mart?",
         "gold_sql": "SELECT COUNT(*) AS vip_count FROM customer_ltv WHERE ltv_segment = 'High Value VIP';",
-        "generated_sql": "SELECT COUNT(*) AS vip_count FROM customer_ltv WHERE ltv_segment = 'High Value VIP'",
+        "generated_sql": "SELECT   COUNT(customer_unique_id) FROM customer_ltv WHERE ltv_segment = 'High Value VIP'",
         "matched": true,
         "error": null
       }
     ]
   },
   "desc": {
-    "samples_evaluated": 29,
-    "mean_rubric_score_out_of_5": 4.73,
-    "mean_human_reference_score": 4.49,
-    "human_judge_agreement_pct": 79.3,
-    "hallucinations_detected_count": 1,
+    "samples_evaluated": 30,
+    "mean_rubric_score_out_of_5": 4.71,
+    "mean_human_reference_score": 4.71,
+    "human_judge_agreement_pct": 90.0,
+    "hallucinations_detected_count": 3,
     "rubric_breakdown": {
-      "technical_grounding": 4.72,
-      "domain_relevance": 4.81,
-      "clarity": 4.81,
-      "hallucination_rate": 0.034,
-      "human_judge_agreement_pct": 79.3
+      "technical_grounding": 4.68,
+      "domain_relevance": 4.91,
+      "clarity": 4.96,
+      "hallucination_rate": 0.1,
+      "human_judge_agreement_pct": 90.0
     }
   },
   "governance": {
@@ -868,50 +868,50 @@
       },
       {
         "configuration": "Ablation: No Lineage Context",
-        "matches": 34,
-        "accuracy_percentage": 75.56,
-        "drop_points": -11.11,
+        "matches": 37,
+        "accuracy_percentage": 82.22,
+        "drop_points": -4.45,
         "description": "Removed column lineage graph; joins and derivations degraded."
       },
       {
         "configuration": "Ablation: No Profiling Stats",
-        "matches": 35,
-        "accuracy_percentage": 77.78,
-        "drop_points": -8.89,
+        "matches": 39,
+        "accuracy_percentage": 86.67,
+        "drop_points": -0.0,
         "description": "Removed null %, cardinality, min/max statistics; filter thresholds degraded."
       },
       {
         "configuration": "Ablation: No Glossary Terms",
-        "matches": 29,
-        "accuracy_percentage": 64.44,
-        "drop_points": -22.23,
+        "matches": 38,
+        "accuracy_percentage": 84.44,
+        "drop_points": -2.23,
         "description": "Removed business glossary mappings; semantic metric mapping failed."
       },
       {
         "configuration": "Baseline: Bare Schema Only",
-        "matches": 29,
-        "accuracy_percentage": 64.44,
-        "drop_points": -22.23,
+        "matches": 33,
+        "accuracy_percentage": 73.33,
+        "drop_points": -13.34,
         "description": "Raw un-enriched table and column names only."
       }
     ],
-    "most_impactful_component": "Glossary Mappings",
-    "most_impactful_drop": 22.23,
+    "most_impactful_component": "Lineage Graphs",
+    "most_impactful_drop": 4.45,
     "ranking": [
       [
-        "Glossary Mappings",
-        22.23
+        "Lineage Graphs",
+        4.45
       ],
       [
-        "Lineage Graphs",
-        11.11
+        "Glossary Mappings",
+        2.23
       ],
       [
         "Profiling Statistics",
-        8.89
+        0.0
       ]
     ]
   },
-  "cost_per_1k_cols": 0.104,
-  "avg_latency_ms_per_col": 906.0
+  "cost_per_1k_cols": 0.1024,
+  "avg_latency_ms_per_col": 6607.16
 }

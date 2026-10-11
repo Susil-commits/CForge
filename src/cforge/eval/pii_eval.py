@@ -28,18 +28,19 @@ def compute_metrics(tp: int, fp: int, fn: int, tn: int) -> Dict[str, Any]:
     }
 
 
-def evaluate_pii_classification(split: Optional[str] = "held_out") -> Dict[str, Any]:
+def evaluate_pii_classification(split: Optional[str] = "held_out", agent_mode: str = "heuristic") -> Dict[str, Any]:
     """Evaluate PII classification performance.
     
     Args:
         split: 'held_out' (default, independent unseen split), 'calibration', or 'all'.
+        agent_mode: 'heuristic' (fast deterministic pattern agent), 'auto', or 'llm'.
     """
     with open(GOLD_LABELS_PATH, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         gold_rows = list(reader)
 
     profiler = EstateProfiler()
-    agent = ClassifierAgent()
+    agent = ClassifierAgent(mode=agent_mode)
     heuristic_agent = HeuristicClassifierAgent()
 
     # Filter by split if requested

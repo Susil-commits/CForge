@@ -130,7 +130,7 @@ Propose data quality rules adhering to the schema.
 class QualityProposerAgent:
     """Facade Quality Proposer Agent with configurable execution mode ('auto', 'llm', 'heuristic')."""
 
-    def __init__(self, model_name: str = "cforge-quality-proposer-v1", mode: str = "auto"):
+    def __init__(self, model_name: str = "cforge-quality-proposer-v1", mode: str = "heuristic"):
         self.model_name = model_name
         self.mode = mode
         self.heuristic_agent = HeuristicQualityProposerAgent(model_name)

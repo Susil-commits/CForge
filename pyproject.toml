@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "contextatlas"
+name = "cforge"
 version = "0.1.0"
-description = "ContextAtlas: Governed metadata enrichment and catalog navigation engine for AI agents"
+description = "ContextForge: Governed metadata enrichment and catalog navigation engine for AI agents"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [

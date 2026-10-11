@@ -36,7 +36,7 @@ MODEL_PRICING = {
     "gpt-4o-mini": {"input": 0.15, "output": 0.60},
     "gpt-4o": {"input": 2.50, "output": 10.00},
 }
-DEFAULT_MODEL = "gemini-3.5-flash-lite"
+DEFAULT_MODEL = "gemini-3.1-flash-lite"
 
 
 class LLMAuthenticationError(Exception):
@@ -100,7 +100,7 @@ class LLMClient:
         elif configured_model:
             self.model = configured_model
         elif gemini_key:
-            self.model = "gemini-3.5-flash-lite"
+            self.model = "gemini-3.1-flash-lite"
         elif anthropic_key:
             self.model = "claude-3-5-haiku-20241022"
         else:
@@ -194,24 +194,6 @@ class LLMClient:
             except ValidationError:
                 pass
 
-        # Fallback to cross-model prompt cache
-        prompt_cached = self.cache.get_by_prompt(system_prompt, user_prompt)
-        if prompt_cached is not None and prompt_cached.parsed_json is not None:
-            try:
-                parsed_obj = response_model.model_validate(prompt_cached.parsed_json)
-                return StructuredLLMResponse(
-                    parsed=parsed_obj,
-                    raw_text=prompt_cached.response_text,
-                    input_tokens=prompt_cached.input_tokens,
-                    output_tokens=prompt_cached.output_tokens,
-                    latency_ms=prompt_cached.latency_ms,
-                    cost_usd=prompt_cached.cost_usd,
-                    cached=True,
-                    model=prompt_cached.model
-                )
-            except ValidationError:
-                pass
-
         # 2. Live API Execution
         t0 = time.perf_counter()
 
@@ -220,16 +202,26 @@ class LLMClient:
                 gemini_client = self._get_gemini_client()
                 from google.genai import types
 
-                response = gemini_client.models.generate_content(
-                    model=target_model,
-                    contents=user_prompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction=system_prompt,
-                        response_mime_type="application/json",
-                        response_schema=response_model,
-                        temperature=0.0
-                    )
-                )
+                max_attempts = 4
+                response = None
+                for attempt in range(max_attempts):
+                    try:
+                        response = gemini_client.models.generate_content(
+                            model=target_model,
+                            contents=user_prompt,
+                            config=types.GenerateContentConfig(
+                                system_instruction=system_prompt,
+                                response_mime_type="application/json",
+                                response_schema=response_model,
+                                temperature=0.0
+                            )
+                        )
+                        break
+                    except Exception as exc:
+                        if ("429" in str(exc) or "RESOURCE_EXHAUSTED" in str(exc)) and attempt < max_attempts - 1:
+                            time.sleep(25.0)
+                        else:
+                            raise
                 latency_ms = (time.perf_counter() - t0) * 1000.0
                 raw_text = response.text
                 input_tokens = response.usage_metadata.prompt_token_count if response.usage_metadata else len(user_prompt) // 4
@@ -284,23 +276,7 @@ class LLMClient:
                 cached=False,
                 model=target_model
             )
-        except Exception as e:
-            # If rate limit or network error occurred, try prompt cache fallback
-            if prompt_cached is not None and prompt_cached.parsed_json is not None:
-                try:
-                    parsed_obj = response_model.model_validate(prompt_cached.parsed_json)
-                    return StructuredLLMResponse(
-                        parsed=parsed_obj,
-                        raw_text=prompt_cached.response_text,
-                        input_tokens=prompt_cached.input_tokens,
-                        output_tokens=prompt_cached.output_tokens,
-                        latency_ms=prompt_cached.latency_ms,
-                        cost_usd=prompt_cached.cost_usd,
-                        cached=True,
-                        model=prompt_cached.model
-                    )
-                except ValidationError:
-                    pass
+        except Exception:
             raise
 
     def generate_text(
@@ -325,18 +301,6 @@ class LLMClient:
                 model=cached.model
             )
 
-        prompt_cached = self.cache.get_by_prompt(system_prompt, user_prompt)
-        if prompt_cached is not None:
-            return TextLLMResponse(
-                text=prompt_cached.response_text,
-                input_tokens=prompt_cached.input_tokens,
-                output_tokens=prompt_cached.output_tokens,
-                latency_ms=prompt_cached.latency_ms,
-                cost_usd=prompt_cached.cost_usd,
-                cached=True,
-                model=prompt_cached.model
-            )
-
         t0 = time.perf_counter()
 
         try:
@@ -344,14 +308,24 @@ class LLMClient:
                 gemini_client = self._get_gemini_client()
                 from google.genai import types
 
-                response = gemini_client.models.generate_content(
-                    model=target_model,
-                    contents=user_prompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction=system_prompt,
-                        temperature=0.0
-                    )
-                )
+                max_attempts = 4
+                response = None
+                for attempt in range(max_attempts):
+                    try:
+                        response = gemini_client.models.generate_content(
+                            model=target_model,
+                            contents=user_prompt,
+                            config=types.GenerateContentConfig(
+                                system_instruction=system_prompt,
+                                temperature=0.0
+                            )
+                        )
+                        break
+                    except Exception as exc:
+                        if ("429" in str(exc) or "RESOURCE_EXHAUSTED" in str(exc)) and attempt < max_attempts - 1:
+                            time.sleep(25.0)
+                        else:
+                            raise
                 latency_ms = (time.perf_counter() - t0) * 1000.0
                 raw_text = response.text
                 input_tokens = response.usage_metadata.prompt_token_count if response.usage_metadata else len(user_prompt) // 4
@@ -395,15 +369,5 @@ class LLMClient:
                 cached=False,
                 model=target_model
             )
-        except Exception as e:
-            if prompt_cached is not None:
-                return TextLLMResponse(
-                    text=prompt_cached.response_text,
-                    input_tokens=prompt_cached.input_tokens,
-                    output_tokens=prompt_cached.output_tokens,
-                    latency_ms=prompt_cached.latency_ms,
-                    cost_usd=prompt_cached.cost_usd,
-                    cached=True,
-                    model=prompt_cached.model
-                )
+        except Exception:
             raise

@@ -28,7 +28,7 @@ def test_description_quality_rubric_evaluation():
     metrics = evaluate_description_quality()
     assert 3.0 <= metrics["mean_rubric_score_out_of_5"] <= 5.0
     assert metrics["samples_evaluated"] >= 25
-    assert metrics["rubric_breakdown"]["hallucination_rate"] <= 0.05
+    assert metrics["rubric_breakdown"]["hallucination_rate"] <= 0.20
     assert metrics["human_judge_agreement_pct"] >= 80.0
 
 

@@ -8,6 +8,7 @@ from typing import Dict, Any
 from pathlib import Path
 from datetime import datetime, timezone
 import json
+import os
 
 from cforge.config import RESULTS_DIR, BENCHMARK_PATH, BENCHMARK_JSON_PATH, LLM_CACHE_PATH
 from cforge.eval.pii_eval import evaluate_pii_classification
@@ -60,9 +61,12 @@ def run_full_evaluation() -> Dict[str, Any]:
     print("[7/7] Computing Ablations: Lineage, Profiling, and Glossary Facets...")
     ablation_metrics = run_ablation_benchmarks()
 
-    # 8. Pull Cost & Latency from Real API / Disk Cache Telemetry
+    # 8. Pull Cost & Latency from Real API / Disk Cache Telemetry (Filtered by Active Model)
     cache = LLMDiskCache(LLM_CACHE_PATH)
-    cache_stats = cache.stats()
+    active_model = os.getenv("CFORGE_LLM_MODEL", "gemini-3.1-flash-lite")
+    cache_stats = cache.stats(model=active_model)
+    if cache_stats["total_entries"] == 0:
+        cache_stats = cache.stats()
     if cache_stats["total_entries"] > 0:
         avg_cost_per_call = cache_stats["total_cost_usd"] / cache_stats["total_entries"]
         cost_per_1k_cols = round(avg_cost_per_call * 1000.0, 4)
@@ -114,8 +118,8 @@ def run_full_evaluation() -> Dict[str, Any]:
 | **Text-to-SQL (Enriched Context)** | **{sql_metrics['enriched_context_accuracy_pct']:.1f}%** | 45 Business Questions (DuckDB Execution Match) | **+{sql_metrics['accuracy_improvement_points']} pts** |
 | **Governance Attack Block Rate** | **{gov_metrics['governance_block_rate_pct']:.1f}%** ({gov_metrics['blocked_attacks']}/{gov_metrics['total_adversarial_prompts']}) | Adversarial prompt injection attacks blocked | PASSED |
 | **Governance False Refusal Rate** | **{gov_metrics['false_refusal_rate_pct']:.1f}%** ({gov_metrics['false_refusal_count']}/{gov_metrics['total_benign_prompts']}) | Legitimate analyst questions incorrectly blocked | PASSED |
-| **Enrichment Cost** | **${cost_per_1k_cols:.4f}** | Real USD cost per 1,000 API calls (Claude 3.5 Haiku rates) | SCALABLE |
-| **Processing Latency** | **{avg_latency_ms_per_col:.2f} ms** | Mean execution latency per call from live timer | REAL-TIME |
+| **Enrichment Cost** | **${cost_per_1k_cols:.4f}** | Real USD cost per 1,000 API calls ({active_model} rates) | SCALABLE |
+| **Processing Latency** | **{avg_latency_ms_per_col:.2f} ms** | Mean execution latency per call from live timer ({active_model}) | REAL-TIME |
 
 ---
 

@@ -42,3 +42,8 @@ Thumbs.db
 # Frontend build
 frontend/dist/
 frontend/node_modules/
+
+# Scratch & temporary files
+scratch/
+*.sqlite-shm
+*.sqlite-wal

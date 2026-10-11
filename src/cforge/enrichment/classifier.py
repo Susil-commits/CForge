@@ -3,6 +3,7 @@
 Provides both an LLM-powered agent with schema validation and a heuristic baseline agent.
 """
 
+import re
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from cforge.enrichment.profiler import ColumnProfile
@@ -26,7 +27,7 @@ class HeuristicClassifierAgent:
 
     def classify(self, profile: ColumnProfile, upstream_tags: Optional[List[str]] = None) -> ClassificationResult:
         """Classify PII and sensitivity grounded in column profile statistics and lineage."""
-        col = profile.column_name.lower()
+        col_clean = re.sub(r"[^a-zA-Z0-9]", "", profile.column_name).lower()
         patterns = profile.detected_patterns
         evidence: List[str] = []
 
@@ -44,56 +45,63 @@ class HeuristicClassifierAgent:
             evidence.append(f"Derived directly from upstream parent column classified as PII: {upstream_tags}.")
             regulations.extend(["LGPD", "GDPR"])
 
-        if "EMAIL_PATTERN" in patterns or "email" in col:
+        if "EMAIL_PATTERN" in patterns or "email" in col_clean:
             is_pii = True
             pii_type = "EMAIL"
             sensitivity = "RESTRICTED"
             confidence = 0.98
             evidence.append("Regex pattern and column identifier indicate electronic mail contact.")
             regulations.extend(["LGPD", "GDPR"])
-        elif "PHONE_PATTERN" in patterns or any(k in col for k in ["phone", "fax", "tel"]):
+        elif any(k in col_clean for k in ["phone", "fax", "tel"]) or ("PHONE_PATTERN" in patterns and not any(k in col_clean for k in ["id", "count", "num"])):
             is_pii = True
             pii_type = "PHONE_NUMBER"
             sensitivity = "RESTRICTED"
             confidence = 0.96
             evidence.append("Telephone number structure and dial pattern detected.")
             regulations.extend(["LGPD", "GDPR"])
-        elif "ZIP_PATTERN" in patterns or any(k in col for k in ["zip", "postal", "cep"]):
+        elif any(k in col_clean for k in ["zip", "postal", "cep"]):
             is_pii = True
             pii_type = "POSTAL_CODE"
             sensitivity = "CONFIDENTIAL"
             confidence = 0.95
             evidence.append(f"Postal code format verified with {profile.distinct_count} regional postal prefixes.")
             regulations.extend(["LGPD", "GDPR"])
-        elif any(k in col for k in ["customer_id", "customer_unique_id"]):
+        elif any(k in col_clean for k in ["customerid", "customeruniqueid"]):
             is_pii = True
             pii_type = "CUSTOMER_ID"
             sensitivity = "RESTRICTED"
             confidence = 0.97
             evidence.append(f"Individual customer personal identity token with cardinality {profile.distinct_count}.")
             regulations.extend(["LGPD", "GDPR"])
-        elif any(k in col for k in ["contact_name", "first_name", "last_name", "ship_name"]):
+        elif any(k in col_clean for k in ["contactname", "firstname", "lastname", "shipname"]):
             is_pii = True
             pii_type = "PERSON_NAME"
             sensitivity = "RESTRICTED"
             confidence = 0.96
             evidence.append("Natural person first or last name identifier.")
             regulations.extend(["LGPD", "GDPR"])
-        elif any(k in col for k in ["address", "street"]):
+        elif any(k in col_clean for k in ["address", "street"]):
             is_pii = True
             pii_type = "PHYSICAL_ADDRESS"
             sensitivity = "RESTRICTED"
             confidence = 0.96
             evidence.append("Physical delivery or residential geographical street address.")
             regulations.extend(["LGPD", "GDPR"])
-        elif any(k in col for k in ["payment_value", "payment_amount", "credit_card", "payment_type"]):
+        elif any(k in col_clean for k in ["birthdate", "dob"]):
+            is_pii = True
+            pii_type = "CONFIDENTIAL_NOTES"
+            sensitivity = "CONFIDENTIAL"
+            confidence = 0.95
+            evidence.append("Personal birth date or demographic milestone.")
+            regulations.extend(["LGPD", "GDPR"])
+        elif any(k in col_clean for k in ["paymentvalue", "paymentamount", "creditcard", "paymenttype"]):
             is_pii = True
             pii_type = "FINANCIAL"
             sensitivity = "RESTRICTED"
             confidence = 0.94
             evidence.append("Payment transaction or financial settlement instrument data.")
             regulations.append("PCI-DSS")
-        elif any(k in col for k in ["notes", "comment", "review_comment"]):
+        elif any(k in col_clean for k in ["notes", "comment", "reviewcomment"]):
             is_pii = True
             pii_type = "CONFIDENTIAL_NOTES"
             sensitivity = "CONFIDENTIAL"
@@ -175,7 +183,7 @@ Classify this column adhering to the schema.
 class ClassifierAgent:
     """Facade Classifier Agent with configurable execution mode ('auto', 'llm', 'heuristic')."""
 
-    def __init__(self, model_name: str = "cforge-classifier-v1", mode: str = "auto"):
+    def __init__(self, model_name: str = "cforge-classifier-v1", mode: str = "heuristic"):
         self.model_name = model_name
         self.mode = mode
         self.heuristic_agent = HeuristicClassifierAgent(model_name)

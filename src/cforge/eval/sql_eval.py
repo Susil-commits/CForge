@@ -222,9 +222,13 @@ class TextToSQLEvaluator:
             # 2. Generate and Execute Target SQL
             try:
                 gen_sql = self.generate_sql(question, context)
-            except (LLMAuthenticationError, Exception):
-                # If no LLM key, rate limited, or not cached, record failure
-                gen_sql = "SELECT 'NO_API_KEY_OR_CACHE';"
+            except LLMAuthenticationError as e:
+                raise RuntimeError(
+                    f"Text-to-SQL evaluation failed on question '{qid}': cache miss and no API key available. "
+                    f"Live evaluation requires a valid API key (e.g. GEMINI_API_KEY). {e}"
+                ) from e
+            except Exception as e:
+                gen_sql = f"SELECT 'QUERY_GENERATION_FAILED: {e}';"
 
             exec_match = False
             error_msg = None

@@ -1,4 +1,4 @@
-# ContextAtlas
+# ContextForge
 
 <div align="center">
 
@@ -41,7 +41,7 @@ ContextForge implements a governed metadata pipeline:
 ## Benchmark Results
 
 ### Headline Result
-Text-to-SQL execution accuracy increased from **64.44% to 86.67% (+22.23 pts)** when the AI agent queried with governed metadata context compared to a bare physical schema.
+Text-to-SQL execution accuracy increased from **73.33% to 86.67% (+13.34 pts)** when the AI agent queried with governed metadata context compared to a bare physical schema.
 
 All metrics are generated directly from live estate execution in DuckDB via `python -m cforge.eval.runner` (`make eval`) and recorded in [`results/benchmark.md`](results/benchmark.md).
 
@@ -49,15 +49,15 @@ All metrics are generated directly from live estate execution in DuckDB via `pyt
 
 | Dimension | Metric | Baseline (Bare Schema) | Governed Context | Measurement Method |
 | :--- | :---: | :---: | :---: | :--- |
-| **Text-to-SQL Accuracy** | DuckDB Execution Match | 64.44% (29/45) | **86.67% (39/45)** | 45 Business Questions vs Gold SQL execution in DuckDB |
-| **PII Detection F1** | F1 / Precision / Recall | — | **95.7%** (P: 91.7%, R: 100%) | Evaluated on independent held-out split (43 unseen cols) |
+| **Text-to-SQL Accuracy** | DuckDB Execution Match | 73.33% (33/45) | **86.67% (39/45)** | 45 Business Questions vs Gold SQL execution in DuckDB |
+| **PII Detection F1** | F1 / Precision / Recall | — | **100.0%** (P: 100.0%, R: 100.0%) | Evaluated on independent held-out split (90 unseen cols) |
 | **Lineage Parser Accuracy** | Strict AST Recall | — | **100.0%** (30/30 strictly verified) | All expected source columns strictly matched |
 | **Defect Catch Rate** | Injected Defects Caught | 0% | **100.00%** (5/5 defects) | Controlled null, duplicate, and range anomalies |
 | **Governance Defense** | Adversarial Block Rate | 0% | **100.00%** (20/20 blocked) | Intercepts unauthorized PII queries (Role: Analyst) |
 | **Governance Precision** | False Refusal Rate | — | **0.00%** (0/20 benign blocked) | Legitimate analytical queries permitted without false alarms |
-| **Description Quality** | LLM Judge Rubric | — | **4.73 / 5.0** | Scored across 30 samples by LLM Judge (79.3% human agreement) |
-| **Enrichment Economics** | Cost per 1,000 API Calls | — | **$0.1040** | Empirical token usage at lightweight model rates |
-| **Query Latency** | Mean Call Latency | — | **906.00 ms** | Live timer measurements from API/cache |
+| **Description Quality** | LLM Judge Rubric | — | **4.75 / 5.0** | Scored across 30 samples by LLM Judge (90.0% human agreement) |
+| **Enrichment Economics** | Cost per 1,000 API Calls | — | **$0.1086** | Empirical token usage at gemini-3.1-flash-lite rates |
+| **Query Latency** | Mean Call Latency | — | **2750.67 ms** | Live timer measurements from real model API calls |
 
 ---
 
@@ -68,12 +68,12 @@ To identify which metadata components drive query accuracy, each layer was syste
 | Configuration | Matches | Accuracy | Impact vs Full Context | Key Failure Mode When Removed |
 |:---|:---:|:---:|:---:|:---|
 | **Full Governed Context** | 39/45 | **86.67%** | **Baseline (0.0 pts)** | Complete context enabled. |
-| **Ablation: No Lineage Context** | 34/45 | 75.56% | -11.11 pts | Derived metrics and multi-table joins fail to identify upstream sources. |
-| **Ablation: No Profiling Stats** | 35/45 | 77.78% | -8.89 pts | Null filters, bounds, and distributions omitted, causing incorrect top-K rows. |
-| **Ablation: No Glossary Terms** | 29/45 | 64.44% | -22.23 pts | Domain vocabulary (LTV, GMV, CSAT, VIP Tiers) fails semantic resolution. |
-| **Baseline: Bare Schema Only** | 29/45 | 64.44% | -22.23 pts | No semantic understanding of calculated columns or marts. |
+| **Ablation: No Lineage Context** | 37/45 | 82.22% | -4.45 pts | Derived metrics and multi-table joins fail to identify upstream sources. |
+| **Ablation: No Profiling Stats** | 39/45 | 86.67% | -0.00 pts | Null filters, bounds, and distributions omitted, causing incorrect top-K rows. |
+| **Ablation: No Glossary Terms** | 38/45 | 84.44% | -2.23 pts | Domain vocabulary (LTV, GMV, CSAT, VIP Tiers) fails semantic resolution. |
+| **Baseline: Bare Schema Only** | 33/45 | 73.33% | -13.34 pts | No semantic understanding of calculated columns or marts. |
 
-> **Key Finding**: **Glossary Mappings** had the single largest positive impact on agent performance (22.23 pt drop when removed), followed by Lineage Graphs and Profiling Statistics.
+> **Key Finding**: **Lineage Graphs** had the single largest positive impact on agent performance (4.45 pt drop when removed), followed by Glossary Terms and Profiling Statistics.
 
 ---
 

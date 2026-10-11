@@ -169,18 +169,24 @@ class LLMDiskCache:
                 )
                 conn.commit()
 
-    def stats(self) -> Dict[str, Any]:
-        """Aggregate total cached calls, tokens, latency, and cost."""
+    def stats(self, model: Optional[str] = None) -> Dict[str, Any]:
+        """Aggregate total cached calls, tokens, latency, and cost, optionally filtered by model."""
+        query = """
+            SELECT 
+                COUNT(*) as total_entries,
+                COALESCE(SUM(input_tokens), 0) as total_input_tokens,
+                COALESCE(SUM(output_tokens), 0) as total_output_tokens,
+                COALESCE(SUM(cost_usd), 0.0) as total_cost_usd,
+                COALESCE(AVG(latency_ms), 0.0) as avg_latency_ms
+            FROM llm_cache
+        """
+        params = ()
+        if model:
+            query += " WHERE model = ?"
+            params = (model,)
+
         with self._get_connection() as conn:
-            cursor = conn.execute("""
-                SELECT 
-                    COUNT(*) as total_entries,
-                    COALESCE(SUM(input_tokens), 0) as total_input_tokens,
-                    COALESCE(SUM(output_tokens), 0) as total_output_tokens,
-                    COALESCE(SUM(cost_usd), 0.0) as total_cost_usd,
-                    COALESCE(AVG(latency_ms), 0.0) as avg_latency_ms
-                FROM llm_cache
-            """)
+            cursor = conn.execute(query, params)
             row = cursor.fetchone()
             return {
                 "total_entries": row["total_entries"],
