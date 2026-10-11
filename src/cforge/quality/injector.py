@@ -125,6 +125,51 @@ class DefectInjector:
             injected_count=10
         ))
 
+        # Defect 6 (Hard / Unanticipated): Temporal Inversion (delivery prior to purchase)
+        conn.execute("""
+            UPDATE stg_orders
+            SET delivered_customer_at = purchase_timestamp - INTERVAL 5 DAY
+            WHERE order_id IN (SELECT order_id FROM stg_orders WHERE delivered_customer_at IS NOT NULL LIMIT 6);
+        """)
+        defects.append(InjectedDefect(
+            defect_id="DEF-006",
+            defect_type="TEMPORAL_INVERSION",
+            table_name="stg_orders",
+            column_name="delivered_customer_at",
+            description="Injected 6 temporal sequence inversions (delivered_customer_at < purchase_timestamp).",
+            injected_count=6
+        ))
+
+        # Defect 7 (Hard / Unanticipated): Currency Micro-Drift Anomaly
+        conn.execute("""
+            UPDATE fct_orders
+            SET grand_total_brl = 0.05
+            WHERE order_id IN (SELECT order_id FROM fct_orders WHERE total_order_items > 2 LIMIT 4);
+        """)
+        defects.append(InjectedDefect(
+            defect_id="DEF-007",
+            defect_type="CURRENCY_DRIFT",
+            table_name="fct_orders",
+            column_name="grand_total_brl",
+            description="Injected 4 multi-item transactions settled at 0.05 BRL (passing positive checks but violating invoice grain).",
+            injected_count=4
+        ))
+
+        # Defect 8 (Hard / Unanticipated): Cross-Table Reconciliation Mismatch
+        conn.execute("""
+            INSERT INTO stg_payments (order_id, payment_sequential, payment_type, payment_installments, payment_amount)
+            VALUES ('orphan_recon_order_1', 1, 'credit_card', 1, 999.99),
+                   ('orphan_recon_order_2', 1, 'credit_card', 1, 550.00);
+        """)
+        defects.append(InjectedDefect(
+            defect_id="DEF-008",
+            defect_type="RECONCILIATION_MISMATCH",
+            table_name="stg_payments",
+            column_name="payment_amount",
+            description="Injected 2 orphaned payment records with non-existent parent order IDs.",
+            injected_count=2
+        ))
+
         conn.close()
         return defects
 
@@ -173,7 +218,7 @@ class DefectInjector:
         total = len(defects)
         missed = total - caught_count
         catch_rate = round((caught_count / total) * 100.0, 2)
-        proof = f"Rules caught {caught_count} of {total} injected defects, with {false_positives} false positives."
+        proof = f"Rules caught {caught_count} of {total} injected defects ({catch_rate}%), with {false_positives} false positives."
 
         return DefectCatchReport(
             total_injected_defects=total,

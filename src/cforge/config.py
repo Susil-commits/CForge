@@ -17,7 +17,6 @@ POLICIES_PATH = PROJECT_ROOT / "src" / "cforge" / "governance" / "policies.yaml"
 RESULTS_DIR = PROJECT_ROOT / "results"
 BENCHMARK_PATH = RESULTS_DIR / "benchmark.md"
 BENCHMARK_JSON_PATH = RESULTS_DIR / "benchmark.json"
-HUMAN_DESCRIPTION_EVAL_PATH = DATA_DIR / "human_description_eval.csv"
 LLM_CACHE_PATH = DATA_DIR / "llm_cache.sqlite"
 
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")

@@ -1,6 +1,6 @@
-# Step 5 Proof: Multi-Hop Tag Propagation Trace & Audit Chain
+# Multi-Hop Tag Propagation Trace & Audit Chain
 
-> **Governed Lineage Traversal Proof**
+> **Governed Lineage Traversal Trace**
 > This artifact demonstrates a sensitive tag (`PII:CUSTOMER_ID`) originating at a raw ingestion table, automatically propagating downstream along 3 hops of column lineage into staging, analytics dimensions, and final customer lifetime value marts with visible reason chains.
 
 ---

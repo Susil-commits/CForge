@@ -235,3 +235,7 @@ mart_geo_performance,avg_freight_cost_brl,DOUBLE,False,NONE,Average freight ship
 mart_geo_performance,avg_regional_satisfaction,DOUBLE,False,NONE,Average customer review score for deliveries in this region.,Regional CSAT Metric,held_out
 mart_geo_performance,delayed_orders_count,BIGINT,False,NONE,Number of orders that exceeded delivery SLA deadline.,Delayed Orders Count,held_out
 mart_geo_performance,delay_rate_percentage,DOUBLE,False,NONE,Percentage of deliveries delivered late vs total orders.,Delivery Delay Rate,held_out
+raw_nw_orders,delivery_instructions,VARCHAR,True,CONFIDENTIAL_NOTES,Unstructured delivery instructions with resident contact information.,,held_out
+raw_nw_orders,postal_routing_hub_code,VARCHAR,False,NONE,Public logistics carrier transit hub code (non-personal).,,held_out
+raw_nw_customers,customer_support_transcript,VARCHAR,True,CONFIDENTIAL_NOTES,Free-form customer support dialogue containing unredacted personal details.,,held_out
+raw_nw_customers,client_device_fingerprint_uuid,VARCHAR,False,NONE,Machine hardware browser canvas fingerprint hash (non-personal).,,held_out

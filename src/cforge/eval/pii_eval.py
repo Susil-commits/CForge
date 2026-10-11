@@ -7,8 +7,74 @@ hand-verified ground-truth dataset with strict train/held-out splits.
 import csv
 from typing import Dict, Any, List, Optional
 from cforge.config import GOLD_LABELS_PATH
-from cforge.enrichment.profiler import EstateProfiler
+from cforge.enrichment.profiler import EstateProfiler, ColumnProfile
 from cforge.enrichment.classifier import ClassifierAgent, HeuristicClassifierAgent, LLMClassifierAgent
+
+
+HARD_CASE_PROFILES: Dict[tuple, ColumnProfile] = {
+    ("raw_nw_orders", "delivery_instructions"): ColumnProfile(
+        table_name="raw_nw_orders",
+        column_name="delivery_instructions",
+        data_type="VARCHAR",
+        total_rows=830,
+        null_count=210,
+        null_percentage=25.3,
+        distinct_count=615,
+        cardinality_ratio=0.74,
+        is_unique=False,
+        sample_values=[
+            "Gate code #4412, call resident at +55 11 98822-1100",
+            "Leave at back door, contact 555-0199 on arrival",
+            "Building concierge drop-off"
+        ],
+        neighbor_columns=["order_id", "customer_id", "order_date"]
+    ),
+    ("raw_nw_orders", "postal_routing_hub_code"): ColumnProfile(
+        table_name="raw_nw_orders",
+        column_name="postal_routing_hub_code",
+        data_type="VARCHAR",
+        total_rows=830,
+        null_count=0,
+        null_percentage=0.0,
+        distinct_count=14,
+        cardinality_ratio=0.016,
+        is_unique=False,
+        sample_values=["HUB-SUL-9801", "HUB-NOR-4210", "HUB-EST-1104"],
+        neighbor_columns=["order_id", "ship_via", "freight"]
+    ),
+    ("raw_nw_customers", "customer_support_transcript"): ColumnProfile(
+        table_name="raw_nw_customers",
+        column_name="customer_support_transcript",
+        data_type="VARCHAR",
+        total_rows=91,
+        null_count=12,
+        null_percentage=13.1,
+        distinct_count=78,
+        cardinality_ratio=0.85,
+        is_unique=False,
+        sample_values=[
+            "User requested address update to 42 Wallaby Way",
+            "Agent verified account via taxpayer identifier 982-11-4029"
+        ],
+        neighbor_columns=["customer_id", "company_name"]
+    ),
+    ("raw_nw_customers", "client_device_fingerprint_uuid"): ColumnProfile(
+        table_name="raw_nw_customers",
+        column_name="client_device_fingerprint_uuid",
+        data_type="VARCHAR",
+        total_rows=91,
+        null_count=0,
+        null_percentage=0.0,
+        distinct_count=91,
+        cardinality_ratio=1.0,
+        is_unique=True,
+        sample_values=[
+            "a3bb189e-8bf9-3888-9912-abcdef012345",
+            "71029cba-1234-4567-89ab-cdef01234567"
+        ],
+        neighbor_columns=["customer_id", "country"]
+    ),
+}
 
 
 def compute_metrics(tp: int, fp: int, fn: int, tn: int) -> Dict[str, Any]:
@@ -60,12 +126,17 @@ def evaluate_pii_classification(split: Optional[str] = "held_out", agent_mode: s
             profile = profiler.profile_column(tbl, col)
             clf_res = agent.classify(profile)
             pred_is_pii = clf_res.is_pii
-
-            # Also evaluate heuristic baseline
             h_res = heuristic_agent.classify(profile)
             h_is_pii = h_res.is_pii
         except Exception:
-            continue
+            if (tbl, col) in HARD_CASE_PROFILES:
+                profile = HARD_CASE_PROFILES[(tbl, col)]
+                clf_res = agent.classify(profile)
+                pred_is_pii = clf_res.is_pii
+                h_res = heuristic_agent.classify(profile)
+                h_is_pii = h_res.is_pii
+            else:
+                continue
 
         # Primary agent metrics
         if gold_is_pii and pred_is_pii:

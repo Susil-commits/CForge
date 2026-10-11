@@ -8,56 +8,94 @@
 
 [![CI Pipeline](https://github.com/Susil-commits/CForge/actions/workflows/ci.yml/badge.svg)](https://github.com/Susil-commits/CForge/actions)
 [![Tests Passing](https://img.shields.io/badge/tests-54%2F54%20passed-success)](tests/)
-[![Accuracy Uplift](https://img.shields.io/badge/Text--to--SQL%20Lift-%2B22.23%20pts-blueviolet)](results/benchmark.md)
-[![PII Governance](https://img.shields.io/badge/PII%20Block%20Rate-100%25-brightgreen)](src/cforge/governance/policies.yaml)
+[![Accuracy Uplift](https://img.shields.io/badge/Text--to--SQL%20Lift-%2B13.34%20pts-blueviolet)](results/benchmark.md)
+[![PII Governance](https://img.shields.io/badge/Governance%20Block%20Rate-87.0%25-brightgreen)](src/cforge/governance/policies.yaml)
 [![Datasets](https://img.shields.io/badge/Data%20Estate-100%25%20Real%20Public-orange)](data/raw/)
 [![LLM Support](https://img.shields.io/badge/LLM-Gemini%20%26%20Claude%20%2B%20Disk%20Cache-purple)](src/cforge/llm/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey)](LICENSE)
 
-[**Overview**](#overview) • [**Benchmark Results**](#benchmark-results) • [**Architecture**](#system-architecture) • [**Core Modules**](#core-modules) • [**User Interface**](#user-interface) • [**Quickstart**](#quickstart)
+[**Executive Pitch**](#the-pitch-deck-problem--solution) • [**Benchmark Results**](#benchmark-results) • [**Architecture**](#system-architecture) • [**Core Modules**](#core-modules) • [**User Interface**](#user-interface) • [**Quickstart**](#quickstart)
 
 ---
 
 </div>
 
-## Overview
+## The Pitch Deck: Problem & Solution
 
-### Problem
-Text-to-SQL systems and data analytics agents operating directly on raw database schemas encounter three standard failure modes:
-1. **Schema Ambiguity**: Column names without business context (e.g., `customer_id` vs `customer_unique_id`) cause incorrect joins, misaligned metric grains, and invalid SQL queries.
-2. **PII Exposure**: Without column sensitivity tags and policy enforcement, agents query and return sensitive personal records to unauthorized callers.
-3. **Unvalidated Writes**: LLM-generated metadata proposals written directly to catalogs without schema validation or policy checks introduce hallucinations into shared documentation.
+> 📄 *Full 8-slide executive presentation available in [`docs/pitch_deck.md`](docs/pitch_deck.md).*
 
-### Solution
-ContextForge implements a governed metadata pipeline:
-- **Grounded Enrichment**: Real LLM calls (Google Gemini 3.5 Flash Lite & Anthropic Claude) with Pydantic JSON-Schema validation and thread-safe SQLite disk caching generate descriptions, PII classifications, glossary mappings, and quality checks grounded in statistical profiles (cardinality, null rates, value distributions) rather than keywords in isolation. Heuristic versions are preserved as baseline comparators.
-- **Policy-as-Code**: 15 declarative YAML policies validate every proposed metadata change before commit.
-- **Approval Queue**: Low-confidence (<0.80) or sensitive (PII) proposals route to data stewards for review.
-- **Model Context Protocol (MCP)**: Exposes verified catalog metadata to downstream AI agents with role-based PII masking.
-- **Measurable Benchmark**: `make eval` executes actual queries against DuckDB to compute empirical accuracy uplift on gold-standard questions without showing the gold SQL to the model.
+### 1. The Real-World Problem: Why AI Data Agents Fail in Enterprise
+
+Enterprises are investing heavily in "Talk-to-Data" conversational agents, BI copilots, and autonomous Text-to-SQL workflows. Yet in practice, over **80% of deployments fail or stall before production** due to three fatal architectural gaps:
+
+1. **The Context Deficit (Silent Hallucinations & Broken Math)**
+   * Production databases are filled with cryptic column names (`usr_uid`, `tot_amt_curr`, `stat_cd`) and complex relational joins.
+   * When an LLM is given only bare table schemas (DDL), it has no knowledge of enterprise business definitions, metric calculations (e.g., LTV vs. Net Revenue), or valid value domains.
+   * **Result**: Incorrect joins, miscalculated metrics, and invalid queries that either crash or silently return misleading numbers to executives.
+
+2. **The Compliance Catastrophe (Unregulated PII Exposure)**
+   * Generative models possess no innate awareness of data sensitivity, GDPR, HIPAA, or role-based access boundaries.
+   * When an unauthorized user asks a natural question like *"Show me order details for our high-value accounts"*, a naive text-to-SQL agent will eagerly query and return unmasked customer names, emails, phone numbers, and home addresses.
+   * **Result**: Catastrophic compliance violations, privacy breaches, and regulatory fines.
+
+3. **The Static Catalog Cemetery (The Passive Human Wiki Trap)**
+   * Enterprise data catalogs (Collibra, Alation) were engineered as passive human wikis.
+   * Manually documenting tens of thousands of columns demands unsustainable data steward labor. The moment an engineer deploys a new dbt migration, the documentation is obsolete.
+   * **Result**: Catalogs sit abandoned, and downstream AI agents have no standardized, real-time protocol (like MCP) to query them at inference time.
+
+---
+
+### 2. Why Existing Workarounds Fail
+
+| Approach | How It Operates | Why It Fails in Enterprise AI |
+| :--- | :--- | :--- |
+| **Bare Schema Text-to-SQL** | Directly feeds table DDL into LLM system prompts. | High failure rate (**26.7% error rate** on our benchmark); zero privacy protection or role filtering. |
+| **Vector RAG over Docs** | Embeds wikis or data dictionaries into vector stores. | Unstructured chunks lose relational foreign keys, schema constraints, and column data types. |
+| **Model Fine-Tuning** | Trains models on past historical SQL queries. | Brittle, cost-prohibitive, obsolete on next schema migration, and offers zero runtime policy enforcement. |
+| **Legacy Data Catalogs** | Manual web portals for human data steward documentation. | Static, perpetually out-of-date, and lacks agentic API protocols (MCP) for real-time model inference. |
+
+---
+
+### 3. The Solution: ContextForge
+
+**ContextForge is the autonomous data estate intelligence runtime that sits between your data warehouse and downstream AI agents.** It transforms data governance from a passive human chore into an active, real-time engine:
+
+```mermaid
+flowchart LR
+    A[Enterprise Data Estate<br/>Postgres · DuckDB · Lakehouse] --> B[ContextForge Intelligence Layer<br/>• Statistical Profiling<br/>• AST Column Lineage<br/>• Policy-as-Code Gate]
+    B --> C[Model Context Protocol (MCP)<br/>Role-Based Masking & Dynamic Schema]
+    C --> D[Enterprise AI Agents<br/>Claude · ChatGPT · Cursor · BI]
+```
+
+* **Grounded Statistical Enrichment**: Instead of hallucinating descriptions from column names alone, specialized agents combine non-LLM statistical profiling (cardinality, null rates, value distributions) with structured Pydantic JSON schemas and explicit confidence scores.
+* **Deterministic AST Column Lineage**: Uses `sqlglot` to parse multi-table transforms, window functions, and CTEs into OpenLineage standard events.
+* **Automated Multi-Hop Tag Propagation**: Sensitivity tags (e.g., `PII:CUSTOMER_ID`) automatically cascade downstream across arbitrary DAG depth with an auditable reason chain.
+* **Policy-as-Code Guardrails**: 15 declarative YAML policies gate every catalog write. Risky proposals route to a Human-in-the-Loop Steward Queue, backed by a cryptographic SHA-256 audit log.
+* **Model Context Protocol (MCP) Server**: Provides dynamic, role-governed schema context and automated column masking (`[RESTRICTED_PII]`) directly to any AI client at inference time.
+* **Empirically Proven**: Lifts text-to-SQL execution accuracy from **73.3% to 86.7% (+13.34 pts)** on live database execution while blocking 87.0% of adversarial PII extraction attempts.
 
 ---
 
 ## Benchmark Results
 
 ### Headline Result
-Text-to-SQL execution accuracy increased from **73.33% to 86.67% (+13.34 pts)** when the AI agent queried with governed metadata context compared to a bare physical schema.
+Text-to-SQL execution accuracy increased from **73.33% to 86.67% (+13.34 pts)** when the AI agent queried with governed metadata context compared to a bare physical schema (single run, one model).
 
-All metrics are generated directly from live estate execution in DuckDB via `python -m cforge.eval.runner` (`make eval`) and recorded in [`results/benchmark.md`](results/benchmark.md).
+All metrics are generated directly from live estate execution in DuckDB via `python -m cforge.eval.runner` (`make eval`) and recorded in [`results/benchmark.md`](results/benchmark.md). Boundary edge cases and failures are documented in [`docs/failures_and_limitations.md`](docs/failures_and_limitations.md).
 
 ### Evaluation Summary
 
 | Dimension | Metric | Baseline (Bare Schema) | Governed Context | Measurement Method |
 | :--- | :---: | :---: | :---: | :--- |
 | **Text-to-SQL Accuracy** | DuckDB Execution Match | 73.33% (33/45) | **86.67% (39/45)** | 45 Business Questions vs Gold SQL execution in DuckDB |
-| **PII Detection F1** | F1 / Precision / Recall | — | **100.0%** (P: 100.0%, R: 100.0%) | Evaluated on independent held-out split (90 unseen cols) |
-| **Lineage Parser Accuracy** | Strict AST Recall | — | **100.0%** (30/30 strictly verified) | All expected source columns strictly matched |
-| **Defect Catch Rate** | Injected Defects Caught | 0% | **100.00%** (5/5 defects) | Controlled null, duplicate, and range anomalies |
-| **Governance Defense** | Adversarial Block Rate | 0% | **100.00%** (20/20 blocked) | Intercepts unauthorized PII queries (Role: Analyst) |
-| **Governance Precision** | False Refusal Rate | — | **0.00%** (0/20 benign blocked) | Legitimate analytical queries permitted without false alarms |
-| **Description Quality** | LLM Judge Rubric | — | **4.75 / 5.0** | Scored across 30 samples by LLM Judge (90.0% human agreement) |
-| **Enrichment Economics** | Cost per 1,000 API Calls | — | **$0.1086** | Empirical token usage at gemini-3.1-flash-lite rates |
-| **Query Latency** | Mean Call Latency | — | **2750.67 ms** | Live timer measurements from real model API calls |
+| **PII Detection F1** | F1 / Precision / Recall | — | **94.3%** (P: 96.2%, R: 92.6%) | Evaluated on independent held-out split (94 unseen cols) |
+| **Lineage Parser Accuracy** | Strict AST Recall | — | **97.4%** (38/39 verified) | Hand-verified set; 1 boundary failure in correlated subquery |
+| **Defect Catch Rate** | Injected Defects Caught | 0% | **62.5%** (5/8 defects) | Catches schema defects, misses 3 relational & semantic defects |
+| **Governance Defense** | Adversarial Block Rate | 0% | **87.0%** (20/23 blocked) | Intercepts unauthorized PII queries (Role: Analyst) |
+| **Governance Precision** | False Refusal Rate | — | **13.0%** (3/23 benign blocked) | Legitimate analytical queries blocked on sensitive keywords |
+| **Description Quality** | LLM Judge Rubric | — | **4.53 / 5.0** | Scored across 30 samples by LLM Judge on 4-part rubric |
+| **Enrichment Economics** | Cost per 1,000 API Calls | — | **$0.1024** | Empirical token usage at gemini-3.1-flash-lite rates |
+| **Query Latency** | Mean Call Latency | — | **6607.16 ms** | Live timer measurements from real model API calls |
 
 ---
 
@@ -69,11 +107,11 @@ To identify which metadata components drive query accuracy, each layer was syste
 |:---|:---:|:---:|:---:|:---|
 | **Full Governed Context** | 39/45 | **86.67%** | **Baseline (0.0 pts)** | Complete context enabled. |
 | **Ablation: No Lineage Context** | 37/45 | 82.22% | -4.45 pts | Derived metrics and multi-table joins fail to identify upstream sources. |
-| **Ablation: No Profiling Stats** | 39/45 | 86.67% | -0.00 pts | Null filters, bounds, and distributions omitted, causing incorrect top-K rows. |
-| **Ablation: No Glossary Terms** | 38/45 | 84.44% | -2.23 pts | Domain vocabulary (LTV, GMV, CSAT, VIP Tiers) fails semantic resolution. |
-| **Baseline: Bare Schema Only** | 33/45 | 73.33% | -13.34 pts | No semantic understanding of calculated columns or marts. |
+| **Ablation: No Profiling Stats** | 39/45 | 86.67% | -0.00 pts | No net execution change observed on 45-question suite (39/45 matched). |
+| **Ablation: No Glossary Terms** | 38/45 | 84.44% | -2.23 pts | Small single-run shift (-1 question). |
+| **Baseline: Bare Schema Only** | 33/45 | 73.33% | -13.34 pts | Raw un-enriched table and column names only. |
 
-> **Key Finding**: **Lineage Graphs** had the single largest positive impact on agent performance (4.45 pt drop when removed), followed by Glossary Terms and Profiling Statistics.
+> **Key Finding**: **Only the overall gain is clear. Per-facet effects are within noise at n=45.** Differences of 1–2 questions out of 45 on a single run are within run variance.
 
 ---
 
@@ -170,7 +208,7 @@ ContextForge consists of 10 modular components:
 ### 6. Data Quality Loop & Defect Injection
 - [`src/cforge/quality/runner.py`](src/cforge/quality/runner.py) executes SQL checks (uniqueness, range, null bounds, referential integrity) and scores assets.
 - Failing tables are blocked from `CERTIFIED` status.
-- [`src/cforge/quality/injector.py`](src/cforge/quality/injector.py) tests rule coverage against synthetic anomalies: caught 5 of 5 injected defects with 0 false positives.
+- [`src/cforge/quality/injector.py`](src/cforge/quality/injector.py) tests rule coverage against synthetic anomalies: caught 5 of 8 injected defects with 0 false positives (caught schema/boundary anomalies, missed 3 relational and cross-temporal defects).
 
 ### 7. Model Context Protocol (MCP) Server
 - [`src/cforge/mcp/server.py`](src/cforge/mcp/server.py) implements the MCP tool standard:
@@ -265,7 +303,7 @@ Design decisions and failure analysis are logged in [`docs/decisions.md`](docs/d
 - **ADR 003**: Grounded Multi-Agent Enrichment Architecture
 - **ADR 004**: Policy-as-Code Engine and Cryptographic Audit Hashing
 - **ADR 005**: Model Context Protocol (MCP) as Interface Boundary
-- **ADR 006**: AST Column Lineage Parser Boundary & Failure Analysis (28/30 accuracy)
+- **ADR 006**: AST Column Lineage Parser Boundary & Failure Analysis (38/39 accuracy)
 - **ADR 007**: Universal Catalog Adapter Interface and CI Portability
 
 Boundary limitations are documented in [`docs/failures_and_limitations.md`](docs/failures_and_limitations.md).
@@ -290,7 +328,7 @@ CForge/
 │   ├── decisions.md               # Architectural Decision Records (ADR 001-007)
 │   ├── propagation_trace.md       # Trace of 3-hop downstream PII propagation
 │   ├── context_server_comparison.md # Side-by-side with/without context proof
-│   ├── demo_walkthrough.md        # Video demo script and write-up
+│   ├── pitch_deck.md              # Executive problem-solution pitch deck
 │   └── failures_and_limitations.md# Failure and boundary analysis
 ├── frontend/                      # 4-screen web interface
 │   ├── index.html                 # HTML structure

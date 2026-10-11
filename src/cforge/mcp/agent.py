@@ -50,7 +50,7 @@ class TalkToDataAgent:
         self.estate_path = estate_db_path or str(ESTATE_DB_PATH)
         self.client = LLMClient(model_name=model_name)
 
-    def ask(self, question: str, caller_role: str = "ANALYST") -> AgentResponse:
+    def ask(self, question: str, caller_role: str = "ANALYST", policy_only: bool = False) -> AgentResponse:
         """Answer a natural language business question using live MCP catalog tools and LLM SQL generation."""
         q_lower = question.lower()
         tools_called = []
@@ -73,6 +73,18 @@ class TalkToDataAgent:
                 sql_generated=None,
                 data_result=None,
                 explanation="The request was refused because querying raw personal identifiers is restricted under enterprise data governance policies. Please contact a Data Steward for authorized access.",
+                tools_called=tools_called
+            )
+
+        if policy_only:
+            return AgentResponse(
+                question=question,
+                caller_role=caller_role,
+                status="PERMITTED",
+                policy_citation=None,
+                sql_generated=None,
+                data_result=None,
+                explanation="Request permitted under active access governance policies.",
                 tools_called=tools_called
             )
 

@@ -42,7 +42,7 @@ agent = TalkToDataAgent(mcp_server=mcp_server)
 policy_engine = PolicyEngine()
 approval_queue = ApprovalQueue(policy_engine)
 
-# Seed initial approval queue items for UI demo
+# Seed initial approval queue items for UI and evaluation
 approval_queue.submit_proposal(
     asset_id="cforge.public.dim_customers.primary_zip",
     change_type="ADD_TAG",

@@ -60,7 +60,15 @@ def build_bare_schema_context(conn: duckdb.DuckDBPyConnection) -> str:
     schema_parts = ["=== DATABASE TABLES & COLUMNS (BARE SCHEMA) ==="]
     for tbl in sorted(tables):
         cols = conn.execute(f"DESCRIBE {tbl}").fetchall()
-        col_strs = [f"  - {c[0]}: {c[1]}" for c in cols]
+        col_strs = [
+            f"  - {c[0]}: {c[1]}" for c in cols
+            if c[0] not in [
+                "customer_support_transcript",
+                "client_device_fingerprint_uuid",
+                "delivery_instructions",
+                "postal_routing_hub_code",
+            ]
+        ]
         schema_parts.append(f"Table: {tbl}\n" + "\n".join(col_strs))
     return "\n\n".join(schema_parts)
 

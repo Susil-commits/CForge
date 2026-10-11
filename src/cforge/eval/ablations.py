@@ -71,14 +71,14 @@ def run_ablation_benchmarks(estate_db_path: Optional[str] = None, model_name: Op
             "matches": no_profiling_res["matches"],
             "accuracy_percentage": no_profiling_acc,
             "drop_points": -delta_profiling,
-            "description": "Removed null %, cardinality, min/max statistics; filter thresholds degraded."
+            "description": "Removed statistical bounds and null rates; no net execution change on 45-question benchmark (0 questions flipped)."
         },
         {
             "configuration": "Ablation: No Glossary Terms",
             "matches": no_glossary_res["matches"],
             "accuracy_percentage": no_glossary_acc,
             "drop_points": -delta_glossary,
-            "description": "Removed business glossary mappings; semantic metric mapping failed."
+            "description": "Removed business glossary mappings; small single-run shift (-1 question)."
         },
         {
             "configuration": "Baseline: Bare Schema Only",
@@ -89,17 +89,13 @@ def run_ablation_benchmarks(estate_db_path: Optional[str] = None, model_name: Op
         }
     ]
 
-    # Rank facets by true measured impact
-    impact_ranking = [
-        ("Glossary Mappings", delta_glossary),
-        ("Profiling Statistics", delta_profiling),
-        ("Lineage Graphs", delta_lineage)
-    ]
-    impact_ranking.sort(key=lambda x: x[1], reverse=True)
+    key_finding = "Only the overall gain is clear. Per-facet effects are within noise at n=45."
 
     return {
         "ablations": ablations,
-        "most_impactful_component": impact_ranking[0][0],
-        "most_impactful_drop": impact_ranking[0][1],
-        "ranking": impact_ranking
+        "key_finding": key_finding,
+        "delta_bare_schema": delta_bare,
+        "delta_lineage": delta_lineage,
+        "delta_profiling": delta_profiling,
+        "delta_glossary": delta_glossary,
     }

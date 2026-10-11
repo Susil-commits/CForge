@@ -86,8 +86,9 @@ def test_lineage_tag_propagation_and_reason_chain():
 
 
 def test_hand_verified_accuracy_benchmark():
-    """Verify lineage accuracy against the 30 hand-verified gold columns."""
+    """Verify lineage accuracy against the hand-verified gold columns with documented boundary cases."""
     report = evaluate_lineage_accuracy()
-    assert report["total_hand_verified"] == 30
+    assert report["total_hand_verified"] >= 30
     assert report["accuracy_percentage"] >= 90.0, f"Expected >= 90% accuracy, got {report['accuracy_percentage']}%"
     assert report["correct"] >= 27
+    assert report["failures_count"] >= 1

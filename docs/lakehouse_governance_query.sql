@@ -1,4 +1,4 @@
--- Step 2 Proof Query: Which certified tables contain PII and are consumed by dashboards?
+-- Lakehouse Governance Query: Which certified tables contain PII and are consumed by dashboards?
 -- Executed directly against ContextForge Parquet Metadata Lakehouse
 
 WITH RECURSIVE dashboard_lineage AS (

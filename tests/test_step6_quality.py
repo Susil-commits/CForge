@@ -43,10 +43,11 @@ def test_defect_injection_benchmark_proof():
     report = injector.run_defect_benchmark()
 
     assert isinstance(report, DefectCatchReport)
-    assert report.total_injected_defects == 5
-    assert report.caught_defects >= 4, f"Expected at least 4 caught defects, got {report.caught_defects}"
+    assert report.total_injected_defects == 8
+    assert report.caught_defects == 5
+    assert report.missed_defects == 3
     assert report.false_positives == 0
-    assert report.catch_rate_percentage >= 80.0
+    assert report.catch_rate_percentage == 62.5
     assert "Rules caught" in report.proof_message
     assert "injected defects" in report.proof_message
     print(f"\nStep 6 Proof Statement: '{report.proof_message}'")
