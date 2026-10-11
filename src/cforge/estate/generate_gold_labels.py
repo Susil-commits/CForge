@@ -306,7 +306,7 @@ LABELS = [
 
 
 def write_gold_labels() -> Path:
-    """Generate the data/gold_labels.csv ground-truth artifact."""
+    """Generate the data/gold_labels.csv ground-truth artifact with calibration and held-out test splits."""
     GOLD_LABELS_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(GOLD_LABELS_PATH, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
@@ -317,10 +317,14 @@ def write_gold_labels() -> Path:
             "is_pii",
             "pii_type",
             "true_business_description",
-            "glossary_term"
+            "glossary_term",
+            "split"
         ])
         for row in LABELS:
-            writer.writerow(row)
+            tbl = row[0]
+            # Held-out split contains unseen Northwind wholesale schemas and derived marts
+            split = "held_out" if tbl.startswith("raw_nw_") or tbl in ["customer_ltv", "mart_geo_performance"] else "calibration"
+            writer.writerow(list(row) + [split])
     return GOLD_LABELS_PATH
 
 

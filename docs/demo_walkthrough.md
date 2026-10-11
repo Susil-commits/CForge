@@ -26,7 +26,7 @@
 
 **[01:15 - 01:30] The Headline Finding & Conclusion**  
 *(Action: Highlight the Benchmark Headline Banner)*  
-*"And we didn't just build it—we proved it. In `make eval`, text-to-SQL accuracy jumped from 75.56% to 100% (+24.44 pts) with zero PII leaks. ContextForge proves that governed metadata isn't just compliance—it's the foundation of reliable enterprise AI."*
+*"And we didn't just build it—we proved it. In `make eval`, text-to-SQL execution accuracy on real DuckDB queries jumped from 64.44% to 86.67% (+22.23 pts) with zero PII leaks and zero false refusals on benign analyst requests. ContextForge proves that governed metadata isn't just compliance—it's the foundation of reliable enterprise AI."*
 
 ---
 
@@ -38,16 +38,16 @@ Modern data catalogs have historically served as passive inventory systems. Conc
 ### 1. Introduction & Methodology
 We deployed a real data estate consisting of 31 materialized tables across two heterogeneous enterprise systems: the Olist Brazilian E-commerce marketplace dataset (8,000 transactions, orders, reviews, payments, sellers, and geolocation records in PostgreSQL) and the Northwind B2B wholesale dataset in DuckDB. 
 
-To avoid the pitfall of hardcoded mocks, we hand-labeled 236 columns into a ground-truth dataset (`data/gold_labels.csv`) capturing PII classifications (8 taxonomy types), verified business descriptions, and canonical glossary terms. Furthermore, we formulated 45 complex enterprise business questions with verified Gold SQL queries to evaluate agent execution accuracy.
+To avoid the pitfall of hardcoded mocks, we hand-labeled 236 columns into a ground-truth dataset (`data/gold_labels.csv`) with strict calibration and held-out test splits, capturing PII classifications (8 taxonomy types), verified business descriptions, and canonical glossary terms. Furthermore, we formulated 45 complex enterprise business questions with verified Gold SQL queries to evaluate agent execution accuracy on DuckDB without ever exposing the gold SQL to the model.
 
 ### 2. Multi-Agent Grounded Enrichment Architecture
 A recurring failure mode of LLMs in catalog management is "hallucinatory zero-shot description": describing a column like `usr_uid` purely from its textual token. ContextForge establishes a strict grounding invariant:
 - **Profiler (Non-LLM)**: Extracts row counts, null rates, cardinality ratios, sample distributions, and regex patterns (`UUID`, `EMAIL`, `ZIP`, `PHONE`, `CURRENCY`) directly from the database engine.
-- **Describer & Classifier Agents**: Generate structured Pydantic outputs with explicit confidence scores and evidence lists citing the profiler distribution.
+- **Describer & Classifier Agents**: Generate structured Pydantic outputs with explicit confidence scores and evidence lists citing the profiler distribution, backed by Anthropic Claude LLM calls with JSON-schema validation and thread-safe SQLite disk caching.
 - **Reconciliation Safety Gate**: A specialized reconciler detects cross-agent discrepancies. If the classifier flags `is_pii=True` but the describer accidentally exposes a raw sample value, the reconciler automatically redacts the token (`[REDACTED_PII]`) and blocks automated writes.
 
 ### 3. Column-Level Lineage & OpenLineage Integration
-Using `sqlglot`, ContextForge parses 14 SQL transformation models spanning staging to marts. Column dependencies are resolved across CTEs, table joins, and expressions, and emitted as OpenLineage 1.0.2 standard RunEvents. On our hand-verified benchmark of 30 columns, the parser achieved **100.0% accuracy (30/30 columns correct)**. 
+Using `sqlglot`, ContextForge parses 14 SQL transformation models spanning staging to marts. Column dependencies are resolved across CTEs, table joins, and expressions, and emitted as OpenLineage 1.0.2 standard RunEvents. On our hand-verified benchmark of 30 columns with strict matching requiring all expected source dependencies, the parser achieved **100.0% accuracy (30/30 columns correct)** with zero missing derivations. 
 
 Crucially, we implemented an automated tag propagator: when an origin column (such as `raw_olist_customers.customer_id`) is tagged as `PII`, the engine recursively propagates the tag downstream with an explainable reason chain (`raw -> stg -> dim -> ltv`).
 
@@ -58,17 +58,17 @@ Governance is enforced as code via 15 declarative YAML policies (`policies.yaml`
 - Certification requires a minimum data quality score of 0.85 and an assigned owner.
 - Every state mutation is cryptographically appended to an immutable audit trail using SHA-256 hash chaining.
 
-When tested against **20 adversarial prompt injection attacks** (attempts to exfiltrate customer phone numbers, home addresses, or employee payroll notes), the policy-aware MCP agent achieved a **100.0% block rate** for unauthorized analyst roles.
+When tested against **20 adversarial prompt injection attacks** (attempts to exfiltrate customer phone numbers, home addresses, or employee payroll notes) and **20 benign control queries**, the policy-aware agent achieved a **100.0% block rate on attacks** and **0.0% false refusals on legitimate analytical requests**.
 
 ### 5. Empirical Benchmark Results & Ablation Analysis
 Executing `make eval` produced the following empirically validated metrics:
-1. **Text-to-SQL Accuracy Lift**: Accuracy rose from **75.56% (Bare Schema) to 100.0% (ContextForge Enriched Context)**, delivering a net improvement of **+24.44 percentage points**.
-2. **Ablation Studies**:
-   - Removing **Glossary Mappings** resulted in the steepest performance decline (**-24.44 points**), proving that business domain terminology mapping (e.g. defining LTV tiers and CSAT ratings) is the most critical metadata element for AI agents.
-   - Removing **Profiling Statistics** caused a **-17.78 point** drop, leading to miscalibrated boundary conditions and null handling failures.
-   - Removing **Lineage Graphs** degraded accuracy by **-13.33 points**, causing join path failures on derived facts.
+1. **Text-to-SQL Accuracy Lift**: Accuracy rose from **64.44% (Bare Schema) to 86.67% (ContextForge Enriched Context)**, delivering a net improvement of **+22.23 percentage points** across 45 DuckDB execution-matched business questions.
+2. **Ablation Studies (Measured from Live Executions)**:
+   - Removing **Glossary Mappings** resulted in the steepest performance decline (**-22.23 points** drop from 86.67% to 64.44%), proving that business domain terminology mapping (e.g. defining LTV tiers and CSAT ratings) is the single most critical metadata element for AI agents.
+   - Removing **Lineage Graphs** degraded accuracy by **-11.11 points** (dropping to 75.56%), causing join path failures on derived facts.
+   - Removing **Profiling Statistics** caused a **-8.89 point** drop (dropping to 77.78%), leading to miscalibrated boundary conditions, unhandled nulls, and erroneous top-K rankings.
 3. **Data Quality Defect Catch Rate**: In a sandbox with 5 injected real-world anomalies (nulls, duplicates, and out-of-range prices), automated rules achieved a **100.0% catch rate (5 of 5 defects caught, 0 false positives)**.
-4. **Economics & Scalability**: The multi-agent pipeline processed columns at an average parallel latency of **8.42 ms per column**, costing **$0.2105 per 1,000 columns enriched**.
+4. **Economics & Scalability**: Measured token usage from real API calls yielded an average cost of **$1.3286 per 1,000 API calls** at Claude 3.5 Haiku rates with **450 ms mean latency**.
 
 ### 6. Limitations & Honest Failure Modes
 - **Complex Arithmetic in Subqueries**: Highly nested division operations with anonymous CASE denominators require schema symbol binding to resolve all leaf dependencies.

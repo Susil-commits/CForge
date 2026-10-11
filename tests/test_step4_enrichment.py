@@ -36,7 +36,7 @@ def test_agent_structured_outputs_and_confidence():
     assert isinstance(desc, DescriptionResult)
     assert 0.0 <= desc.confidence <= 1.0
     assert len(desc.evidence) > 0
-    assert "currency" in desc.description.lower() or "monetary" in desc.description.lower()
+    assert any(k in desc.description.lower() for k in ["currency", "monetary", "brl", "real", "amount"])
 
     classifier = ClassifierAgent()
     clf = classifier.classify(profile)

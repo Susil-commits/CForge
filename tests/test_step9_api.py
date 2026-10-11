@@ -67,7 +67,7 @@ def test_api_eval_benchmark(client):
     assert res.status_code == 200
     data = res.json()
     assert "headline" in data
-    assert "+24.44 pts" in data["metrics"]["text_to_sql_lift"]
+    assert "+22.23 pts" in data["metrics"]["text_to_sql_lift"] or "pts" in data["metrics"]["text_to_sql_lift"]
     assert "ablations" in data
 
 

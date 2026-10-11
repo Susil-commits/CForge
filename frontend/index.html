@@ -139,7 +139,7 @@
         <section id="view-eval" class="screen-view">
             <div class="headline-banner">
                 <div class="headline-badge">OFFICIAL BENCHMARK RESULT (make eval)</div>
-                <h2 class="headline-text">Accuracy went from 75.56% to 100.0% (+24.44 pts) when agent had governed metadata context.</h2>
+                <h2 id="eval-headline" class="headline-text">Accuracy went from 64.44% to 86.67% (+22.23 pts) when agent had governed metadata context.</h2>
                 <p class="headline-sub">Empirically measured across 45 enterprise business questions, 236 gold-labeled columns, 30 hand-verified lineage edges, and 20 adversarial attacks.</p>
             </div>
 
@@ -147,33 +147,33 @@
             <div class="scorecards-grid">
                 <div class="scorecard">
                     <span class="score-label">Text-to-SQL Lift</span>
-                    <span class="score-value highlight-cyan">+24.44 pts</span>
-                    <span class="score-meta">75.56% &rarr; 100.0% Match</span>
+                    <span id="score-sql-lift" class="score-value highlight-cyan">+22.23 pts</span>
+                    <span id="score-sql-meta" class="score-meta">64.44% &rarr; 86.67% Match</span>
                 </div>
                 <div class="scorecard">
                     <span class="score-label">PII Detection F1</span>
-                    <span class="score-value highlight-emerald">94.6%</span>
-                    <span class="score-meta">Precision 89.7% | Recall 100%</span>
+                    <span id="score-pii-val" class="score-value highlight-emerald">95.7%</span>
+                    <span id="score-pii-meta" class="score-meta">Precision 91.7% | Recall 100%</span>
                 </div>
                 <div class="scorecard">
                     <span class="score-label">Lineage Accuracy</span>
-                    <span class="score-value highlight-purple">100.0%</span>
-                    <span class="score-meta">30 / 30 Columns Correct</span>
+                    <span id="score-lineage-val" class="score-value highlight-purple">100.0%</span>
+                    <span id="score-lineage-meta" class="score-meta">30 / 30 Columns Correct</span>
                 </div>
                 <div class="scorecard">
                     <span class="score-label">Defect Catch Rate</span>
-                    <span class="score-value highlight-amber">100.0%</span>
-                    <span class="score-meta">5/5 Injected Defects Caught</span>
+                    <span id="score-defect-val" class="score-value highlight-amber">100.0%</span>
+                    <span id="score-defect-meta" class="score-meta">5/5 Injected Defects Caught</span>
                 </div>
                 <div class="scorecard">
                     <span class="score-label">Governance Block Rate</span>
-                    <span class="score-value highlight-coral">100.0%</span>
-                    <span class="score-meta">20 / 20 Attacks Neutralized</span>
+                    <span id="score-gov-val" class="score-value highlight-coral">100.0%</span>
+                    <span id="score-gov-meta" class="score-meta">20 / 20 Attacks Neutralized</span>
                 </div>
                 <div class="scorecard">
                     <span class="score-label">Enrichment Cost</span>
-                    <span class="score-value">$0.2105</span>
-                    <span class="score-meta">Per 1,000 Columns Enriched</span>
+                    <span id="score-cost-val" class="score-value">$0.1220</span>
+                    <span id="score-cost-meta" class="score-meta">Per 1,000 Columns Enriched</span>
                 </div>
             </div>
 

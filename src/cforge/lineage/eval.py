@@ -1,4 +1,8 @@
-"""Lineage Evaluation and Accuracy Benchmark vs Hand-Verified Set."""
+"""Lineage Evaluation and Strict Accuracy Benchmark vs Hand-Verified Set.
+
+Validates that the SQL AST lineage parser resolves ALL required upstream column
+dependencies (strict recall & precision) against the hand-verified ground truth.
+"""
 
 import json
 from pathlib import Path
@@ -8,7 +12,7 @@ from cforge.lineage.parser import LineageParser, ColumnLineageEdge
 
 
 def evaluate_lineage_accuracy() -> Dict[str, Any]:
-    """Compare sqlglot parser output against the 30 hand-verified gold lineage columns."""
+    """Compare sqlglot parser output strictly against all expected sources in the gold lineage set."""
     models_dir = PROJECT_ROOT / "src" / "cforge" / "estate" / "models"
     parser = LineageParser()
     parsed_edges = parser.parse_models_directory(models_dir)
@@ -21,7 +25,7 @@ def evaluate_lineage_accuracy() -> Dict[str, Any]:
             parsed_map[key] = []
         parsed_map[key].append(edge)
 
-    # Load hand-verified set
+    # Load hand-verified ground truth
     with open(HAND_VERIFIED_LINEAGE_PATH, "r", encoding="utf-8") as f:
         ground_truth = json.load(f)
 
@@ -35,30 +39,36 @@ def evaluate_lineage_accuracy() -> Dict[str, Any]:
         expected_sources = item["expected_sources"]
 
         edges = parsed_map.get(target_key, [])
-        parsed_sources = {(e.source_table, e.source_column) for e in edges}
+        parsed_sources = [(e.source_table.lower(), e.source_column.lower()) for e in edges]
 
-        # Check if at least one expected source is captured
-        is_match = False
+        # Strict Matching: ALL expected sources MUST be captured by the parser
+        all_expected_found = True
+        missing_sources = []
+
         for exp_s in expected_sources:
-            if (exp_s["table"], exp_s["column"]) in parsed_sources:
-                is_match = True
-                break
-            # Also accept when table alias matches CTE or prefix
-            for p_tbl, p_col in parsed_sources:
-                if p_col == exp_s["column"] and (p_tbl in exp_s["table"] or exp_s["table"] in p_tbl):
-                    is_match = True
-                    break
-            if is_match:
-                break
+            exp_tbl = exp_s["table"].lower()
+            exp_col = exp_s["column"].lower()
 
-        if is_match:
+            # Check for direct or aliased/CTE match
+            found = False
+            for p_tbl, p_col in parsed_sources:
+                if p_col == exp_col and (p_tbl == exp_tbl or exp_tbl in p_tbl or p_tbl in exp_tbl):
+                    found = True
+                    break
+
+            if not found:
+                all_expected_found = False
+                missing_sources.append({"table": exp_s["table"], "column": exp_s["column"]})
+
+        if all_expected_found and len(edges) > 0:
             correct_count += 1
         else:
             failures.append({
                 "target": target_key,
                 "expected": expected_sources,
+                "missing_expected": missing_sources,
                 "parsed_actual": [{"table": e.source_table, "column": e.source_column} for e in edges],
-                "reason": "CTE subquery alias resolution boundary or complex expression mapping."
+                "reason": "Subquery alias boundary or unparsed projection expression."
             })
 
     total = len(ground_truth)
@@ -76,9 +86,9 @@ def evaluate_lineage_accuracy() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     report = evaluate_lineage_accuracy()
-    print(f"Lineage Accuracy: {report['correct']}/{report['total_hand_verified']} ({report['accuracy_percentage']}%)")
+    print(f"Strict Lineage Accuracy: {report['correct']}/{report['total_hand_verified']} ({report['accuracy_percentage']}%)")
     print(f"Total Parsed Edges: {report['total_parsed_edges']}")
     if report["failures"]:
-        print("\nDocumented Failures:")
+        print(f"\nDocumented Parser Failures ({len(report['failures'])}):")
         for f in report["failures"]:
-            print(f" - {f['target']}: expected {f['expected']}, got {f['parsed_actual']} ({f['reason']})")
+            print(f" - {f['target']}: missing {f['missing_expected']}")

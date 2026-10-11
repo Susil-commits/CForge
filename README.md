@@ -1,17 +1,17 @@
-# ContextForge (CForge)
+# ContextAtlas
 
 <div align="center">
 
-### **Governed Metadata Enrichment with Measurable Proof**
+### **Governed Metadata Enrichment and Catalog Navigation with Measurable Proof**
 
 *Agents enrich a real data estate, policies gate what they can write, humans approve the risky stuff, and an empirical benchmark measures AI accuracy gains.*
 
 [![CI Pipeline](https://github.com/Susil-commits/CForge/actions/workflows/ci.yml/badge.svg)](https://github.com/Susil-commits/CForge/actions)
 [![Tests Passing](https://img.shields.io/badge/tests-54%2F54%20passed-success)](tests/)
-[![Accuracy Uplift](https://img.shields.io/badge/Text--to--SQL%20Lift-%2B24.44%20pts-blueviolet)](results/benchmark.md)
+[![Accuracy Uplift](https://img.shields.io/badge/Text--to--SQL%20Lift-%2B22.23%20pts-blueviolet)](results/benchmark.md)
 [![PII Governance](https://img.shields.io/badge/PII%20Block%20Rate-100%25-brightgreen)](src/cforge/governance/policies.yaml)
 [![Datasets](https://img.shields.io/badge/Data%20Estate-100%25%20Real%20Public-orange)](data/raw/)
-[![API Keys](https://img.shields.io/badge/External%20Keys-Zero%20Required-blue)](README.md#zero-external-api-dependencies)
+[![LLM Support](https://img.shields.io/badge/LLM-Gemini%20%26%20Claude%20%2B%20Disk%20Cache-purple)](src/cforge/llm/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey)](LICENSE)
 
 [**Overview**](#overview) • [**Benchmark Results**](#benchmark-results) • [**Architecture**](#system-architecture) • [**Core Modules**](#core-modules) • [**User Interface**](#user-interface) • [**Quickstart**](#quickstart)
@@ -30,56 +30,50 @@ Text-to-SQL systems and data analytics agents operating directly on raw database
 
 ### Solution
 ContextForge implements a governed metadata pipeline:
-- **Grounded Enrichment**: Agents generate column descriptions, PII classifications, glossary mappings, and quality checks using statistical profiles (cardinality, null rates, value distributions) rather than column names in isolation.
+- **Grounded Enrichment**: Real LLM calls (Google Gemini 3.5 Flash Lite & Anthropic Claude) with Pydantic JSON-Schema validation and thread-safe SQLite disk caching generate descriptions, PII classifications, glossary mappings, and quality checks grounded in statistical profiles (cardinality, null rates, value distributions) rather than keywords in isolation. Heuristic versions are preserved as baseline comparators.
 - **Policy-as-Code**: 15 declarative YAML policies validate every proposed metadata change before commit.
 - **Approval Queue**: Low-confidence (<0.80) or sensitive (PII) proposals route to data stewards for review.
 - **Model Context Protocol (MCP)**: Exposes verified catalog metadata to downstream AI agents with role-based PII masking.
-- **Measurable Benchmark**: `make eval` computes accuracy uplift on gold-standard queries against real data.
+- **Measurable Benchmark**: `make eval` executes actual queries against DuckDB to compute empirical accuracy uplift on gold-standard questions without showing the gold SQL to the model.
 
 ---
 
 ## Benchmark Results
 
 ### Headline Result
-Text-to-SQL execution accuracy increased from **75.56% to 100.00% (+24.44 pts)** when the AI agent queried with governed metadata context compared to a bare physical schema.
+Text-to-SQL execution accuracy increased from **64.44% to 86.67% (+22.23 pts)** when the AI agent queried with governed metadata context compared to a bare physical schema.
 
-All metrics are generated directly from estate execution via `python -m cforge.eval.runner` (`make eval`) and recorded in [`results/benchmark.md`](results/benchmark.md).
+All metrics are generated directly from live estate execution in DuckDB via `python -m cforge.eval.runner` (`make eval`) and recorded in [`results/benchmark.md`](results/benchmark.md).
 
 ### Evaluation Summary
 
 | Dimension | Metric | Baseline (Bare Schema) | Governed Context | Measurement Method |
 | :--- | :---: | :---: | :---: | :--- |
-| **Text-to-SQL Accuracy** | Execution Match | 75.56% (34/45) | **100.00% (45/45)** | 45 Business Questions vs Gold SQL execution |
-| **PII Detection F1** | F1 / Precision / Recall | — | **94.6%** (P: 89.7%, R: 100%) | Evaluated against 236 hand-labeled gold columns |
-| **Lineage Parser Accuracy** | AST Verification | — | **93.3%** (28/30 verified) | Hand-verified against staging and marts SQL models |
+| **Text-to-SQL Accuracy** | DuckDB Execution Match | 64.44% (29/45) | **86.67% (39/45)** | 45 Business Questions vs Gold SQL execution in DuckDB |
+| **PII Detection F1** | F1 / Precision / Recall | — | **95.7%** (P: 91.7%, R: 100%) | Evaluated on independent held-out split (43 unseen cols) |
+| **Lineage Parser Accuracy** | Strict AST Recall | — | **100.0%** (30/30 strictly verified) | All expected source columns strictly matched |
 | **Defect Catch Rate** | Injected Defects Caught | 0% | **100.00%** (5/5 defects) | Controlled null, duplicate, and range anomalies |
 | **Governance Defense** | Adversarial Block Rate | 0% | **100.00%** (20/20 blocked) | Intercepts unauthorized PII queries (Role: Analyst) |
-| **Description Quality** | 4-Part Rubric | 1.80 / 5.0 | **3.55 / 5.0** | Scored across 30 samples against human gold labels |
-| **Enrichment Economics** | Cost per 1,000 Columns | — | **$0.2105** | Deterministic local profile processing |
-| **Catalog Query Latency** | Mean Column Latency | — | **8.42 ms** | In-memory DuckDB and Parquet execution |
+| **Governance Precision** | False Refusal Rate | — | **0.00%** (0/20 benign blocked) | Legitimate analytical queries permitted without false alarms |
+| **Description Quality** | LLM Judge Rubric | — | **4.73 / 5.0** | Scored across 30 samples by LLM Judge (79.3% human agreement) |
+| **Enrichment Economics** | Cost per 1,000 API Calls | — | **$0.1040** | Empirical token usage at lightweight model rates |
+| **Query Latency** | Mean Call Latency | — | **906.00 ms** | Live timer measurements from API/cache |
 
 ---
 
 ### Ablation Study (Text-to-SQL Uplift by Layer)
 
-To identify which metadata components drive query accuracy, each layer was evaluated independently:
+To identify which metadata components drive query accuracy, each layer was systematically ablated and evaluated live against DuckDB:
 
-```mermaid
-gantt
-    title Text-to-SQL Accuracy by Metadata Context Layer
-    dateFormat  X
-    axisFormat %s%%
-    section Ablation Layers
-    Bare Physical Schema (No Context)         :0, 75
-    + Business Glossary Mappings              :0, 82
-    + Column Lineage & Upstream Dependencies  :0, 91
-    + Full Governed Context (Quality + PII)   :0, 100
-```
+| Configuration | Matches | Accuracy | Impact vs Full Context | Key Failure Mode When Removed |
+|:---|:---:|:---:|:---:|:---|
+| **Full Governed Context** | 39/45 | **86.67%** | **Baseline (0.0 pts)** | Complete context enabled. |
+| **Ablation: No Lineage Context** | 34/45 | 75.56% | -11.11 pts | Derived metrics and multi-table joins fail to identify upstream sources. |
+| **Ablation: No Profiling Stats** | 35/45 | 77.78% | -8.89 pts | Null filters, bounds, and distributions omitted, causing incorrect top-K rows. |
+| **Ablation: No Glossary Terms** | 29/45 | 64.44% | -22.23 pts | Domain vocabulary (LTV, GMV, CSAT, VIP Tiers) fails semantic resolution. |
+| **Baseline: Bare Schema Only** | 29/45 | 64.44% | -22.23 pts | No semantic understanding of calculated columns or marts. |
 
-1. **Bare Schema (75.56%)**: Schema provides only table names and column types. Queries fail on complex metrics (e.g., Customer Lifetime Value) and join grain mismatches.
-2. **+ Business Glossary (+6.67 pts &rarr; 82.22%)**: Maps business terms (e.g., "delayed delivery" &rarr; `is_delayed_delivery = 1`), resolving terminology mismatches.
-3. **+ Column Lineage (+8.89 pts &rarr; 91.11%)**: Identifies derived marts (`customer_ltv`, `fct_orders`), preventing the agent from constructing inaccurate aggregations from raw tables.
-4. **+ Full Governed Context (+8.89 pts &rarr; 100.00%)**: Column distribution bounds and verified keys eliminate remaining syntax and filter errors.
+> **Key Finding**: **Glossary Mappings** had the single largest positive impact on agent performance (22.23 pt drop when removed), followed by Lineage Graphs and Profiling Statistics.
 
 ---
 

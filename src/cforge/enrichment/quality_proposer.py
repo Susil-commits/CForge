@@ -1,8 +1,12 @@
-"""Quality Proposer Agent: Proposes data quality validation rules grounded in column stats."""
+"""Quality Proposer Agent: Proposes data quality validation rules grounded in column stats.
 
-from typing import List, Dict, Any
+Provides both an LLM-powered agent with schema validation and a heuristic baseline agent.
+"""
+
+from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 from cforge.enrichment.profiler import ColumnProfile
+from cforge.llm.client import LLMClient, LLMAuthenticationError
 
 
 class SuggestedRule(BaseModel):
@@ -20,8 +24,10 @@ class QualityProposalResult(BaseModel):
     evidence: List[str]
 
 
-class QualityProposerAgent:
-    def __init__(self, model_name: str = "cforge-quality-proposer-v1"):
+class HeuristicQualityProposerAgent:
+    """Distribution & threshold baseline quality proposer agent."""
+
+    def __init__(self, model_name: str = "heuristic-rule-baseline"):
         self.model_name = model_name
 
     def propose_rules(self, profile: ColumnProfile) -> QualityProposalResult:
@@ -29,7 +35,6 @@ class QualityProposerAgent:
         rules: List[SuggestedRule] = []
         evidence: List[str] = []
 
-        # 1. NOT NULL check
         if profile.null_count == 0 and profile.total_rows > 0:
             rules.append(SuggestedRule(
                 rule_type="NOT_NULL",
@@ -40,7 +45,6 @@ class QualityProposerAgent:
             ))
             evidence.append("Null percentage is 0.0%.")
 
-        # 2. UNIQUE check
         if profile.is_unique:
             rules.append(SuggestedRule(
                 rule_type="UNIQUE",
@@ -51,7 +55,6 @@ class QualityProposerAgent:
             ))
             evidence.append(f"Distinct count equals total rows ({profile.distinct_count}).")
 
-        # 3. Numeric RANGE_CHECK
         if profile.avg_value is not None and profile.min_value is not None and profile.max_value is not None:
             try:
                 min_f = float(profile.min_value)
@@ -69,7 +72,6 @@ class QualityProposerAgent:
             except ValueError:
                 pass
 
-        # 4. PATTERN_MATCH check
         for pat in profile.detected_patterns:
             rules.append(SuggestedRule(
                 rule_type="PATTERN_MATCH",
@@ -80,7 +82,6 @@ class QualityProposerAgent:
             ))
             evidence.append(f"Detected pattern: {pat}.")
 
-        # Overall confidence
         avg_conf = sum(r.confidence for r in rules) / len(rules) if rules else 0.85
 
         return QualityProposalResult(
@@ -89,3 +90,62 @@ class QualityProposerAgent:
             confidence=round(avg_conf, 2),
             evidence=evidence
         )
+
+
+class LLMQualityProposerAgent:
+    """Real LLM-powered data quality assertion generator."""
+
+    SYSTEM_PROMPT = """You are an automated Data Quality Rule Proposer.
+Inspect the column profile statistics (null rates, uniqueness, numeric ranges, regex patterns) and propose enforceable data validation rules (NOT_NULL, UNIQUE, RANGE_CHECK, PATTERN_MATCH, REFERENTIAL_INTEGRITY) with appropriate thresholds and severity (ERROR or WARNING).
+Ensure all thresholds are mathematically grounded in the observed distribution.
+"""
+
+    def __init__(self, model_name: Optional[str] = None):
+        self.client = LLMClient(model_name=model_name)
+
+    def propose_rules(self, profile: ColumnProfile) -> QualityProposalResult:
+        """Call LLM with JSON-schema validation to generate quality rule proposals."""
+        user_prompt = f"""Table: {profile.table_name}
+Column: {profile.column_name}
+Data Type: {profile.data_type}
+Total Rows: {profile.total_rows}
+Null Count: {profile.null_count} ({profile.null_percentage}%)
+Distinct Values: {profile.distinct_count} (Unique Flag: {profile.is_unique})
+Min Value: {profile.min_value}
+Max Value: {profile.max_value}
+Avg Value: {profile.avg_value}
+Detected Patterns: {profile.detected_patterns}
+Sample Values: {profile.sample_values[:5] if profile.sample_values else []}
+
+Propose data quality rules adhering to the schema.
+"""
+        response = self.client.generate_structured(
+            system_prompt=self.SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            response_model=QualityProposalResult
+        )
+        return response.parsed
+
+
+class QualityProposerAgent:
+    """Facade Quality Proposer Agent with configurable execution mode ('auto', 'llm', 'heuristic')."""
+
+    def __init__(self, model_name: str = "cforge-quality-proposer-v1", mode: str = "auto"):
+        self.model_name = model_name
+        self.mode = mode
+        self.heuristic_agent = HeuristicQualityProposerAgent(model_name)
+        self.llm_agent = LLMQualityProposerAgent()
+
+    def propose_rules(self, profile: ColumnProfile) -> QualityProposalResult:
+        if self.mode == "heuristic":
+            return self.heuristic_agent.propose_rules(profile)
+        
+        if self.mode == "llm":
+            return self.llm_agent.propose_rules(profile)
+
+        try:
+            return self.llm_agent.propose_rules(profile)
+        except LLMAuthenticationError:
+            return self.heuristic_agent.propose_rules(profile)
+        except Exception:
+            return self.heuristic_agent.propose_rules(profile)

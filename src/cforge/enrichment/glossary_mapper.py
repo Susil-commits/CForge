@@ -1,8 +1,12 @@
-"""Glossary Mapper Agent: Maps columns to standard enterprise business terms."""
+"""Glossary Mapper Agent: Maps columns to standard enterprise business terms.
+
+Provides both an LLM-powered agent with schema validation and a heuristic baseline agent.
+"""
 
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
 from cforge.enrichment.profiler import ColumnProfile
+from cforge.llm.client import LLMClient, LLMAuthenticationError
 
 
 class GlossaryMappingResult(BaseModel):
@@ -30,8 +34,10 @@ KNOWN_TERMS = {
 }
 
 
-class GlossaryMapperAgent:
-    def __init__(self, model_name: str = "cforge-glossary-mapper-v1"):
+class HeuristicGlossaryMapperAgent:
+    """Exact keyword and dictionary match baseline glossary agent."""
+
+    def __init__(self, model_name: str = "heuristic-rule-baseline"):
         self.model_name = model_name
 
     def map_term(self, profile: ColumnProfile) -> GlossaryMappingResult:
@@ -51,7 +57,6 @@ class GlossaryMapperAgent:
                 evidence=evidence
             )
 
-        # Propose clean new term
         clean_name = " ".join(w.capitalize() for w in col.split("_"))
         domain = "Operations Domain"
         if any(w in col for w in ["order", "item", "product"]):
@@ -74,3 +79,69 @@ class GlossaryMapperAgent:
             confidence=0.88,
             evidence=evidence
         )
+
+
+class LLMGlossaryMapperAgent:
+    """Real LLM-powered enterprise glossary and semantic ontology mapping agent."""
+
+    SYSTEM_PROMPT = """You are an Enterprise Business Glossary Ontology Agent.
+Map the given table column to an approved enterprise glossary term if a semantic match exists, or propose a standardized business term and business domain.
+
+Approved Glossary Terms & Definitions:
+- Customer Master ID (Customer Domain): Permanent identifier representing the actual individual person across repeated purchases.
+- Customer Identifier (Customer Domain): Key assigned per order to identify purchasing customer.
+- Order Identifier (Fulfillment Domain): Primary transactional key identifying purchase event.
+- Item Price (Commerce Domain): Base merchandise selling price excluding freight.
+- Freight Charge (Logistics Domain): Shipping logistics freight charge billed for transporting the item.
+- Customer CSAT Score (Customer Experience): Satisfaction rating on a scale from 1 (terrible) to 5 (excellent).
+- Payment Monetary Amount (Finance Domain): Total monetary amount charged on transaction.
+- Order Grand Total (Finance Domain): Total invoice amount (merchandise + freight).
+- Customer Lifetime Spend (Customer Analytics): Cumulative monetary gross spend across all orders.
+- State Code (Geography Domain): Two-letter state federative unit abbreviation.
+- Postal Code (Geography Domain): Postal routing prefix code.
+"""
+
+    def __init__(self, model_name: Optional[str] = None):
+        self.client = LLMClient(model_name=model_name)
+
+    def map_term(self, profile: ColumnProfile) -> GlossaryMappingResult:
+        """Call LLM with JSON-schema validation to map column to business glossary."""
+        user_prompt = f"""Table: {profile.table_name}
+Column: {profile.column_name}
+Data Type: {profile.data_type}
+Sample Values: {profile.sample_values[:5] if profile.sample_values else []}
+Distinct Cardinality: {profile.distinct_count}
+Min: {profile.min_value}, Max: {profile.max_value}, Avg: {profile.avg_value}
+
+Map this column to an approved glossary term or propose a canonical standardized term adhering to the schema.
+"""
+        response = self.client.generate_structured(
+            system_prompt=self.SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            response_model=GlossaryMappingResult
+        )
+        return response.parsed
+
+
+class GlossaryMapperAgent:
+    """Facade Glossary Mapper Agent with configurable execution mode ('auto', 'llm', 'heuristic')."""
+
+    def __init__(self, model_name: str = "cforge-glossary-mapper-v1", mode: str = "auto"):
+        self.model_name = model_name
+        self.mode = mode
+        self.heuristic_agent = HeuristicGlossaryMapperAgent(model_name)
+        self.llm_agent = LLMGlossaryMapperAgent()
+
+    def map_term(self, profile: ColumnProfile) -> GlossaryMappingResult:
+        if self.mode == "heuristic":
+            return self.heuristic_agent.map_term(profile)
+        
+        if self.mode == "llm":
+            return self.llm_agent.map_term(profile)
+
+        try:
+            return self.llm_agent.map_term(profile)
+        except LLMAuthenticationError:
+            return self.heuristic_agent.map_term(profile)
+        except Exception:
+            return self.heuristic_agent.map_term(profile)

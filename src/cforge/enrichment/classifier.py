@@ -1,21 +1,27 @@
-"""Classifier Agent: Classifies PII, regulatory sensitivity, and compliance tags."""
+"""Classifier Agent: Classifies PII, regulatory sensitivity, and compliance tags.
+
+Provides both an LLM-powered agent with schema validation and a heuristic baseline agent.
+"""
 
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from cforge.enrichment.profiler import ColumnProfile
+from cforge.llm.client import LLMClient, LLMAuthenticationError
 
 
 class ClassificationResult(BaseModel):
     is_pii: bool = Field(description="Whether the column contains Personally Identifiable Information.")
-    pii_type: str = Field(description="Specific PII classification category (or NONE).")
+    pii_type: str = Field(description="Specific PII classification category: CUSTOMER_ID, PERSON_NAME, EMAIL, PHONE_NUMBER, POSTAL_CODE, PHYSICAL_ADDRESS, FINANCIAL, CONFIDENTIAL_NOTES, NONE.")
     sensitivity_level: str = Field(description="Data sensitivity: PUBLIC, INTERNAL, CONFIDENTIAL, RESTRICTED.")
     confidence: float = Field(ge=0.0, le=1.0, description="Confidence score.")
     evidence: List[str] = Field(description="Grounded evidence supporting classification.")
     regulatory_domains: List[str] = Field(description="Relevant data privacy frameworks: LGPD, GDPR, PCI-DSS.")
 
 
-class ClassifierAgent:
-    def __init__(self, model_name: str = "cforge-classifier-v1"):
+class HeuristicClassifierAgent:
+    """Keyword, regex, and rule-based baseline classifier agent."""
+
+    def __init__(self, model_name: str = "heuristic-rule-baseline"):
         self.model_name = model_name
 
     def classify(self, profile: ColumnProfile, upstream_tags: Optional[List[str]] = None) -> ClassificationResult:
@@ -30,7 +36,6 @@ class ClassifierAgent:
         confidence = 0.90
         regulations: List[str] = []
 
-        # Check upstream lineage tags first (lineage grounding)
         if upstream_tags and any("PII" in t for t in upstream_tags):
             is_pii = True
             pii_type = "CUSTOMER_ID"
@@ -39,7 +44,6 @@ class ClassifierAgent:
             evidence.append(f"Derived directly from upstream parent column classified as PII: {upstream_tags}.")
             regulations.extend(["LGPD", "GDPR"])
 
-        # Check regex patterns
         if "EMAIL_PATTERN" in patterns or "email" in col:
             is_pii = True
             pii_type = "EMAIL"
@@ -113,3 +117,80 @@ class ClassifierAgent:
             evidence=evidence,
             regulatory_domains=list(set(regulations))
         )
+
+
+class LLMClassifierAgent:
+    """Real LLM-powered privacy and PII classification agent."""
+
+    SYSTEM_PROMPT = """You are an expert Data Privacy & Governance Classifier.
+Analyze the column profile to identify Personally Identifiable Information (PII) under GDPR and LGPD frameworks.
+
+Classification Taxonomies:
+- CUSTOMER_ID: Unique customer tokens or account IDs identifying individual persons.
+- PERSON_NAME: Individual person first names, last names, recipient contact names.
+- EMAIL: Electronic mail contact addresses.
+- PHONE_NUMBER: Direct phone, mobile, fax numbers.
+- POSTAL_CODE: Detailed residential/delivery postal routing codes (CEP / Zip).
+- PHYSICAL_ADDRESS: Street addresses, residential apartment, delivery locations.
+- FINANCIAL: Payment card instruments, payment monetary amounts, financing installment details.
+- CONFIDENTIAL_NOTES: Free-form review feedback or customer messages with potential personal disclosures.
+- NONE: Non-personal operational data, product SKUs, seller IDs, date timestamps, status codes, metrics.
+
+Sensitivity Levels:
+- RESTRICTED: Direct PII or financial data requiring masking & strict access gates.
+- CONFIDENTIAL: Indirect PII or sensitive feedback requiring need-to-know controls.
+- INTERNAL: Standard enterprise operational data.
+- PUBLIC: Publicly open reference tables.
+"""
+
+    def __init__(self, model_name: Optional[str] = None):
+        self.client = LLMClient(model_name=model_name)
+
+    def classify(self, profile: ColumnProfile, upstream_tags: Optional[List[str]] = None) -> ClassificationResult:
+        """Call LLM with JSON-schema validation to classify column privacy & PII."""
+        user_prompt = f"""Table: {profile.table_name}
+Column: {profile.column_name}
+Data Type: {profile.data_type}
+Total Rows: {profile.total_rows}
+Null Rate: {profile.null_percentage}%
+Distinct Values: {profile.distinct_count} (Unique Key: {profile.is_unique})
+Min Value: {profile.min_value}
+Max Value: {profile.max_value}
+Avg Value: {profile.avg_value}
+Detected Patterns: {profile.detected_patterns}
+Sample Values: {profile.sample_values[:5] if profile.sample_values else []}
+Neighbor Columns: {profile.neighbor_columns[:6]}
+Upstream Tags: {upstream_tags or []}
+
+Classify this column adhering to the schema.
+"""
+        response = self.client.generate_structured(
+            system_prompt=self.SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            response_model=ClassificationResult
+        )
+        return response.parsed
+
+
+class ClassifierAgent:
+    """Facade Classifier Agent with configurable execution mode ('auto', 'llm', 'heuristic')."""
+
+    def __init__(self, model_name: str = "cforge-classifier-v1", mode: str = "auto"):
+        self.model_name = model_name
+        self.mode = mode
+        self.heuristic_agent = HeuristicClassifierAgent(model_name)
+        self.llm_agent = LLMClassifierAgent()
+
+    def classify(self, profile: ColumnProfile, upstream_tags: Optional[List[str]] = None) -> ClassificationResult:
+        if self.mode == "heuristic":
+            return self.heuristic_agent.classify(profile, upstream_tags)
+        
+        if self.mode == "llm":
+            return self.llm_agent.classify(profile, upstream_tags)
+
+        try:
+            return self.llm_agent.classify(profile, upstream_tags)
+        except LLMAuthenticationError:
+            return self.heuristic_agent.classify(profile, upstream_tags)
+        except Exception:
+            return self.heuristic_agent.classify(profile, upstream_tags)

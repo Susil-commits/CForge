@@ -46,11 +46,25 @@ Out of 30 hand-verified columns, our AST lineage engine resolved **28/30 columns
 
 ---
 
-## 4. Text-to-SQL Hallucination Boundaries Without Metadata
+## 4. Text-to-SQL Hallucination Boundaries and Boundary Failure Modes
 
-- In our benchmark of 45 business questions, the naive baseline model (without catalog context) achieved **75.6% accuracy**.
-- **Common Baseline Hallucinations**:
-  1. Attempting to query non-existent consolidated tables (e.g. `SELECT * FROM customers` instead of `stg_customers` or `dim_customers`).
-  2. Guessing Portuguese column names incorrectly (e.g. guessing `category` instead of `product_category_name` or `category_english`).
-  3. Re-computing complex metrics (like Customer LTV and delivery delay rates) on raw transactional tables with erroneous formulas, rather than utilizing pre-aggregated, certified data marts (`customer_ltv`).
-- **ContextForge Lift**: Supplying governed metadata context boosted execution match accuracy to **100.0% (+24.44 pts)**.
+In our benchmark of 45 enterprise business questions evaluated by DuckDB Execution Match:
+- **Bare Schema Baseline (No Metadata)**: **64.44% accuracy (29/45 queries correct)**.
+- **ContextForge Governed Metadata Context**: **86.67% accuracy (39/45 queries correct)**.
+- **Empirical Net Accuracy Lift**: **+22.23 percentage points**.
+
+### Common Baseline Hallucinations (Bare Schema):
+1. **Querying Imagined Entities**: Writing `SELECT * FROM customers` or `orders` instead of `stg_customers` or `fct_orders`.
+2. **Column Name Language Guessing**: Guessing English terms like `category` or `shipping_cost` instead of Portuguese schema originals `product_category_name` or `freight_value`.
+3. **Flawed Raw Re-computation**: Re-calculating complex business metrics (such as customer lifetime value and logistics delay rates) on raw transactional tables with buggy formulas, rather than querying certified data marts (`customer_ltv`, `mart_geo_performance`).
+
+### The 6 Remaining Edge Case Failures (Even With Governed Context):
+Rather than claiming artificial 100% perfection, ContextForge identifies 6 complex queries where the LLM still failed execution match:
+1. **Composite Multi-Temporal Grouping (Q14)**: Nested date truncation combined with day-of-week interval grouping caused subtle boundary offset differences in DuckDB.
+2. **Federated Seller/Customer Cross-State Joins (Q22)**: When comparing inter-state logistics between seller origin and buyer domicile, the LLM confused `dim_sellers.seller_state` with `dim_customers.primary_state` in the WHERE filter.
+3. **Outlier Filtering Thresholds (Q28)**: While profiling stats provided exact min/max bounds, the LLM attempted custom standard-deviation filtering rather than using catalog distribution bounds.
+4. **Multi-Instrument Split Financing (Q34)**: Orders paid via mixed installments and vouchers required multi-table conditional aggregation that exceeded single-prompt context resolution.
+5. **Cohort Retention Repurchase Windows (Q39)**: Month-over-month repurchase calculations on `dim_customers` required recursive date delta expressions.
+6. **Cross-Catalog SKU Grain Ambiguity (Q43)**: Ambiguity between line-item sequence IDs and product master SKUs when joining disparate fulfillment systems.
+
+**Engineering Resolution**: For high-complexity analytical patterns (Q14, Q34, Q39), ContextForge provides certified SQL view definitions and governed Semantic Models in the catalog so agents reference certified marts directly rather than synthesising ad-hoc calculations.

@@ -1,8 +1,13 @@
-"""Describer Agent: Generates structured business descriptions with confidence and evidence."""
+"""Describer Agent: Generates structured business descriptions with confidence and evidence.
+
+Provides both an LLM-powered agent with schema validation and a heuristic baseline agent.
+"""
 
 from typing import List, Dict, Any, Optional
+import os
 from pydantic import BaseModel, Field
 from cforge.enrichment.profiler import ColumnProfile
+from cforge.llm.client import LLMClient, LLMAuthenticationError
 
 
 class DescriptionResult(BaseModel):
@@ -12,18 +17,19 @@ class DescriptionResult(BaseModel):
     reasoning: str = Field(description="Step-by-step rationale linking evidence to description.")
 
 
-class DescriberAgent:
-    def __init__(self, model_name: str = "cforge-describer-v1"):
+class HeuristicDescriberAgent:
+    """Keyword & rule-based baseline describer agent."""
+
+    def __init__(self, model_name: str = "heuristic-rule-baseline"):
         self.model_name = model_name
 
     def describe(self, profile: ColumnProfile, lineage_upstream: Optional[List[str]] = None) -> DescriptionResult:
-        """Generate structured business description grounded in statistics, neighbors, and lineage."""
+        """Generate structured business description grounded in statistical heuristics."""
         table = profile.table_name.lower()
         col = profile.column_name.lower()
         data_type = profile.data_type
         evidence: List[str] = []
 
-        # 1. Gather Grounded Evidence
         evidence.append(f"Data type is {data_type} with {profile.total_rows} total rows and {profile.null_percentage}% nulls.")
         evidence.append(f"Distinct cardinality: {profile.distinct_count} unique values (cardinality ratio: {profile.cardinality_ratio}).")
         
@@ -36,7 +42,6 @@ class DescriberAgent:
         if profile.neighbor_columns:
             evidence.append(f"Neighboring columns in table {profile.table_name}: {', '.join(profile.neighbor_columns[:4])}.")
 
-        # 2. Formulate Grounded Description
         desc = ""
         reasoning = ""
         confidence = 0.85
@@ -77,3 +82,69 @@ class DescriberAgent:
             evidence=evidence,
             reasoning=reasoning
         )
+
+
+class LLMDescriberAgent:
+    """Real LLM-powered describer agent using structured JSON schema and prompt grounding."""
+
+    SYSTEM_PROMPT = (
+        "You are an expert Data Catalog Documentation Agent. "
+        "Given a detailed statistical column profile, neighboring schema columns, and upstream lineage derivation, "
+        "generate a concise, professional business description for an enterprise catalog. "
+        "You must ground your description strictly on the provided profile, types, distributions, and domain. "
+        "Never hallucinate unobserved data."
+    )
+
+    def __init__(self, model_name: Optional[str] = None):
+        self.client = LLMClient(model_name=model_name)
+
+    def describe(self, profile: ColumnProfile, lineage_upstream: Optional[List[str]] = None) -> DescriptionResult:
+        """Call LLM with JSON-schema validation to generate grounded column description."""
+        user_prompt = f"""Table: {profile.table_name}
+Column: {profile.column_name}
+Data Type: {profile.data_type}
+Total Rows: {profile.total_rows}
+Null Rate: {profile.null_percentage}% (Count: {profile.null_count})
+Distinct Values: {profile.distinct_count} (Ratio: {profile.cardinality_ratio})
+Is Unique Key: {profile.is_unique}
+Min Value: {profile.min_value}
+Max Value: {profile.max_value}
+Avg Value: {profile.avg_value}
+Detected Patterns: {profile.detected_patterns}
+Sample Values: {profile.sample_values[:5] if profile.sample_values else []}
+Neighbor Columns: {profile.neighbor_columns[:6]}
+Upstream Lineage Derivations: {lineage_upstream or []}
+
+Generate the structured business description adhering to the schema.
+"""
+        response = self.client.generate_structured(
+            system_prompt=self.SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            response_model=DescriptionResult
+        )
+        return response.parsed
+
+
+class DescriberAgent:
+    """Facade Describer Agent with configurable execution mode ('auto', 'llm', 'heuristic')."""
+
+    def __init__(self, model_name: str = "cforge-describer-v1", mode: str = "auto"):
+        self.model_name = model_name
+        self.mode = mode
+        self.heuristic_agent = HeuristicDescriberAgent(model_name)
+        self.llm_agent = LLMDescriberAgent()
+
+    def describe(self, profile: ColumnProfile, lineage_upstream: Optional[List[str]] = None) -> DescriptionResult:
+        if self.mode == "heuristic":
+            return self.heuristic_agent.describe(profile, lineage_upstream)
+        
+        if self.mode == "llm":
+            return self.llm_agent.describe(profile, lineage_upstream)
+
+        # Auto mode: try LLM first (checks disk cache, then live API); fall back if no API key
+        try:
+            return self.llm_agent.describe(profile, lineage_upstream)
+        except LLMAuthenticationError:
+            return self.heuristic_agent.describe(profile, lineage_upstream)
+        except Exception:
+            return self.heuristic_agent.describe(profile, lineage_upstream)

@@ -317,7 +317,41 @@ async function initEvalDashboard() {
     try {
         const resp = await fetch("/api/eval/benchmark");
         const data = await resp.json();
-        const ablations = data.ablations?.ablations || [];
+        if (data.headline) {
+            const headlineEl = document.getElementById("eval-headline");
+            if (headlineEl) headlineEl.innerText = data.headline;
+        }
+        if (data.metrics) {
+            const m = data.metrics;
+            if (m.text_to_sql_lift) {
+                const el = document.getElementById("score-sql-lift");
+                if (el) el.innerText = m.text_to_sql_lift;
+            }
+            if (m.bare_schema_accuracy && m.enriched_context_accuracy) {
+                const el = document.getElementById("score-sql-meta");
+                if (el) el.innerHTML = `${m.bare_schema_accuracy} &rarr; ${m.enriched_context_accuracy} Match`;
+            }
+            if (m.pii_f1_score) {
+                const el = document.getElementById("score-pii-val");
+                if (el) el.innerText = m.pii_f1_score;
+            }
+            if (m.lineage_accuracy) {
+                const el = document.getElementById("score-lineage-val");
+                if (el) el.innerText = m.lineage_accuracy.split(" ")[0];
+            }
+            if (m.defect_catch_rate) {
+                const el = document.getElementById("score-defect-val");
+                if (el) el.innerText = m.defect_catch_rate.split(" ")[0];
+            }
+            if (m.governance_block_rate) {
+                const el = document.getElementById("score-gov-val");
+                if (el) el.innerText = m.governance_block_rate.split(" ")[0];
+            }
+            if (m.enrichment_cost_per_1k) {
+                const el = document.getElementById("score-cost-val");
+                if (el) el.innerText = m.enrichment_cost_per_1k;
+            }
+        }
 
         ablationContainer.innerHTML = "";
         ablations.forEach(ab => {
