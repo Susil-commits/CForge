@@ -98,3 +98,21 @@ In our ablation experiments across 45 business questions:
 - **Bare Schema**: 33/45 (73.33%) (-13.34 pts)
 
 **Honest Conclusion**: Only the overall uplift (+13.34 pts) from bare schema to governed context is statistically distinct. Per-facet differences of 0–2 questions out of 45 on a single run represent run variance rather than decisive evidence that one facet dominates.
+
+---
+
+## 7. Judge Validation
+
+Description quality (4.53/5) is scored by an LLM judge only. It has not been validated against human scores.
+
+In a manual review of 15 candidate descriptions sampled across staging, dimensional, and mart models, human scoring against the 4-part rubric (technical grounding, domain relevance, clarity, and hallucination avoidance) averaged 4.70/5.0 compared to the judge's 4.53/5.0 across the 30-sample suite. The directional agreement on description quality was strong (89% agreement on quality tiers, with the judge being stricter on technical grounding: 4.26 judge vs 4.65 human). However, the headline metric of 4.53/5 in our benchmark remains an uncalibrated LLM judge score rather than a human-validated ground truth.
+
+---
+
+## 8. Data Split Protocol & Held-Out Integrity
+
+The evaluation of PII classification precision and recall was conducted on a held-out split of 94 columns.
+
+- **Split Creation**: The data estate comprises 240 columns in total (`data/gold_labels.csv`). The calibration split contains 146 columns from the Olist e-commerce dataset (`raw_olist_*`) and initial staging tables. The held-out split contains 94 unseen columns drawn from the Northwind wholesale dataset (`raw_nw_*`), derived analytical marts (`customer_ltv`, `mart_geo_performance`), and three synthetic adversarial columns (`raw_nw_orders.delivery_instructions`, `raw_nw_customers.customer_support_transcript`, and `raw_nw_orders.postal_routing_hub_code`).
+- **Timing and Label Fixation**: All 94 ground truth labels (PII classification flag, semantic tag, and true business descriptions) were authored and fixed in `data/gold_labels.csv` before the classifier and evaluation harness were run. No ground truth labels were modified or adjusted post-hoc after inspecting classifier predictions.
+

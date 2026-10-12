@@ -9,9 +9,9 @@
 [![CI Pipeline](https://github.com/Susil-commits/CForge/actions/workflows/ci.yml/badge.svg)](https://github.com/Susil-commits/CForge/actions)
 [![Tests Passing](https://img.shields.io/badge/tests-54%2F54%20passed-success)](tests/)
 [![Accuracy Uplift](https://img.shields.io/badge/Text--to--SQL%20Lift-%2B13.34%20pts-blueviolet)](results/benchmark.md)
-[![PII Governance](https://img.shields.io/badge/Governance%20Block%20Rate-87.0%25-brightgreen)](src/cforge/governance/policies.yaml)
-[![Datasets](https://img.shields.io/badge/Data%20Estate-100%25%20Real%20Public-orange)](data/raw/)
-[![LLM Support](https://img.shields.io/badge/LLM-Gemini%20%26%20Claude%20%2B%20Disk%20Cache-purple)](src/cforge/llm/)
+[![PII Governance](https://img.shields.io/badge/Governance-Attacks%20blocked%2087.0%25%20%7C%20False%20refusals%2013.0%25-brightgreen)](src/cforge/governance/policies.yaml)
+[![Datasets](https://img.shields.io/badge/Data%20Estate-Real%20public%20data%20%2B%20synthetic%20adversarial%20columns-orange)](data/raw/)
+[![LLM Support](https://img.shields.io/badge/LLM-Gemini%20(benchmarked)%3B%20Claude%20client%20implemented%2C%20not%20benchmarked-purple)](src/cforge/llm/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey)](LICENSE)
 
 [**Executive Pitch**](#the-pitch-deck-problem--solution) • [**Benchmark Results**](#benchmark-results) • [**Architecture**](#system-architecture) • [**Core Modules**](#core-modules) • [**User Interface**](#user-interface) • [**Quickstart**](#quickstart)
@@ -26,7 +26,7 @@
 
 ### 1. The Real-World Problem: Why AI Data Agents Fail in Enterprise
 
-Enterprises are investing heavily in "Talk-to-Data" conversational agents, BI copilots, and autonomous Text-to-SQL workflows. Yet in practice, over **80% of deployments fail or stall before production** due to three fatal architectural gaps:
+Enterprises are investing heavily in "Talk-to-Data" conversational agents, BI copilots, and automated Text-to-SQL workflows. Yet in practice, many deployments fail or stall before production due to architectural gaps:
 
 1. **The Context Deficit (Silent Hallucinations & Broken Math)**
    * Production databases are filled with cryptic column names (`usr_uid`, `tot_amt_curr`, `stat_cd`) and complex relational joins.
@@ -38,31 +38,25 @@ Enterprises are investing heavily in "Talk-to-Data" conversational agents, BI co
    * When an unauthorized user asks a natural question like *"Show me order details for our high-value accounts"*, a naive text-to-SQL agent will eagerly query and return unmasked customer names, emails, phone numbers, and home addresses.
    * **Result**: Catastrophic compliance violations, privacy breaches, and regulatory fines.
 
-3. **The Static Catalog Cemetery (The Passive Human Wiki Trap)**
-   * Enterprise data catalogs (Collibra, Alation) were engineered as passive human wikis.
-   * Manually documenting tens of thousands of columns demands unsustainable data steward labor. The moment an engineer deploys a new dbt migration, the documentation is obsolete.
-   * **Result**: Catalogs sit abandoned, and downstream AI agents have no standardized, real-time protocol (like MCP) to query them at inference time.
-
 ---
 
 ### 2. Why Existing Workarounds Fail
 
 | Approach | How It Operates | Why It Fails in Enterprise AI |
 | :--- | :--- | :--- |
-| **Bare Schema Text-to-SQL** | Directly feeds table DDL into LLM system prompts. | High failure rate (**26.7% error rate** on our benchmark); zero privacy protection or role filtering. |
+| **Bare Schema Text-to-SQL** | Directly feeds table DDL into LLM system prompts. | 73.3% accuracy on bare schema baseline (12/45 errors); zero privacy protection or role filtering. |
 | **Vector RAG over Docs** | Embeds wikis or data dictionaries into vector stores. | Unstructured chunks lose relational foreign keys, schema constraints, and column data types. |
 | **Model Fine-Tuning** | Trains models on past historical SQL queries. | Brittle, cost-prohibitive, obsolete on next schema migration, and offers zero runtime policy enforcement. |
-| **Legacy Data Catalogs** | Manual web portals for human data steward documentation. | Static, perpetually out-of-date, and lacks agentic API protocols (MCP) for real-time model inference. |
 
 ---
 
 ### 3. The Solution: ContextForge
 
-**ContextForge is the autonomous data estate intelligence runtime that sits between your data warehouse and downstream AI agents.** It transforms data governance from a passive human chore into an active, real-time engine:
+ContextForge is a metadata enrichment and policy governance layer that sits between a data warehouse and downstream AI agents. Across 45 execution-checked business questions on DuckDB, it lifted Text-to-SQL accuracy from 73.3% to 86.7% (+13.34 pts) while intercepting 87.0% of adversarial PII extraction attempts.
 
 ```mermaid
 flowchart LR
-    A[Enterprise Data Estate<br/>Postgres · DuckDB · Lakehouse] --> B[ContextForge Intelligence Layer<br/>• Statistical Profiling<br/>• AST Column Lineage<br/>• Policy-as-Code Gate]
+    A[Enterprise Data Estate<br/>DuckDB (Postgres init SQL provided) · Lakehouse] --> B[ContextForge Intelligence Layer<br/>• Statistical Profiling<br/>• AST Column Lineage<br/>• Policy-as-Code Gate]
     B --> C[Model Context Protocol (MCP)<br/>Role-Based Masking & Dynamic Schema]
     C --> D[Enterprise AI Agents<br/>Claude · ChatGPT · Cursor · BI]
 ```
@@ -70,7 +64,7 @@ flowchart LR
 * **Grounded Statistical Enrichment**: Instead of hallucinating descriptions from column names alone, specialized agents combine non-LLM statistical profiling (cardinality, null rates, value distributions) with structured Pydantic JSON schemas and explicit confidence scores.
 * **Deterministic AST Column Lineage**: Uses `sqlglot` to parse multi-table transforms, window functions, and CTEs into OpenLineage standard events.
 * **Automated Multi-Hop Tag Propagation**: Sensitivity tags (e.g., `PII:CUSTOMER_ID`) automatically cascade downstream across arbitrary DAG depth with an auditable reason chain.
-* **Policy-as-Code Guardrails**: 15 declarative YAML policies gate every catalog write. Risky proposals route to a Human-in-the-Loop Steward Queue, backed by a cryptographic SHA-256 audit log.
+* **Policy-as-Code Guardrails**: Declarative YAML policies gate every catalog write. Risky proposals route to a Human-in-the-Loop Steward Queue, backed by a cryptographic SHA-256 audit log.
 * **Model Context Protocol (MCP) Server**: Provides dynamic, role-governed schema context and automated column masking (`[RESTRICTED_PII]`) directly to any AI client at inference time.
 * **Empirically Proven**: Lifts text-to-SQL execution accuracy from **73.3% to 86.7% (+13.34 pts)** on live database execution while blocking 87.0% of adversarial PII extraction attempts.
 
@@ -90,11 +84,11 @@ All metrics are generated directly from live estate execution in DuckDB via `pyt
 | **Text-to-SQL Accuracy** | DuckDB Execution Match | 73.33% (33/45) | **86.67% (39/45)** | 45 Business Questions vs Gold SQL execution in DuckDB |
 | **PII Detection F1** | F1 / Precision / Recall | — | **94.3%** (P: 96.2%, R: 92.6%) | Evaluated on independent held-out split (94 unseen cols) |
 | **Lineage Parser Accuracy** | Strict AST Recall | — | **97.4%** (38/39 verified) | Hand-verified set; 1 boundary failure in correlated subquery |
-| **Defect Catch Rate** | Injected Defects Caught | 0% | **62.5%** (5/8 defects) | Catches schema defects, misses 3 relational & semantic defects |
-| **Governance Defense** | Adversarial Block Rate | 0% | **87.0%** (20/23 blocked) | Intercepts unauthorized PII queries (Role: Analyst) |
+| **Defect Catch Rate** | Injected Defects Caught | n/a (no gate) | **62.5%** (5/8 defects) | Catches schema defects, misses 3 relational & semantic defects |
+| **Governance Defense** | Adversarial Block Rate | n/a (no gate) | **87.0%** (20/23 blocked) | Intercepts unauthorized PII queries (Role: Analyst) |
 | **Governance Precision** | False Refusal Rate | — | **13.0%** (3/23 benign blocked) | Legitimate analytical queries blocked on sensitive keywords |
 | **Description Quality** | LLM Judge Rubric | — | **4.53 / 5.0** | Scored across 30 samples by LLM Judge on 4-part rubric |
-| **Enrichment Economics** | Cost per 1,000 API Calls | — | **$0.1024** | Empirical token usage at gemini-3.1-flash-lite rates |
+| **Enrichment Economics** | Cost per 1,000 API calls, gemini-3.1-flash-lite rates | — | **$0.1024** | Empirical token usage at gemini-3.1-flash-lite rates |
 | **Query Latency** | Mean Call Latency | — | **6607.16 ms** | Live timer measurements from real model API calls |
 
 ---
@@ -104,7 +98,7 @@ All metrics are generated directly from live estate execution in DuckDB via `pyt
 To identify which metadata components drive query accuracy, each layer was systematically ablated and evaluated live against DuckDB:
 
 | Configuration | Matches | Accuracy | Impact vs Full Context | Key Failure Mode When Removed |
-|:---|:---:|:---:|:---:|:---|
+| :--- | :---: | :---: | :---: | :--- |
 | **Full Governed Context** | 39/45 | **86.67%** | **Baseline (0.0 pts)** | Complete context enabled. |
 | **Ablation: No Lineage Context** | 37/45 | 82.22% | -4.45 pts | Derived metrics and multi-table joins fail to identify upstream sources. |
 | **Ablation: No Profiling Stats** | 39/45 | 86.67% | -0.00 pts | No net execution change observed on 45-question suite (39/45 matched). |
@@ -122,15 +116,15 @@ ContextForge operates across four planes:
 ```mermaid
 flowchart TB
     subgraph S1 ["1. Real Multi-System Estate"]
-        Olist["Olist Brazilian E-Commerce<br/>(PostgreSQL · 9 Tables)"]
+        Olist["Olist Brazilian E-Commerce<br/>(DuckDB · 9 Tables)"]
         Northwind["Northwind Wholesale<br/>(DuckDB · 8 Tables)"]
-        Transform["14 SQL Transformation Models<br/>(Staging to Marts · 31 Total Tables)"]
+        Transform["SQL Transformation Models<br/>(Staging to Marts)"]
         Olist --> Transform
         Northwind --> Transform
     end
 
     subgraph S2 ["2. Metadata Lakehouse & Lineage"]
-        Store[("Metadata Catalog Store<br/>(DuckDB / PostgreSQL)")]
+        Store[("Metadata Catalog Store<br/>DuckDB (Postgres init SQL provided)")]
         Parser["AST Column Lineage Engine<br/>(sqlglot · OpenLineage Standard)"]
         Lakehouse["Parquet Lakehouse Export<br/>(Nightly Snapshots · SQL Queryable)"]
         Transform --> Parser
@@ -142,7 +136,7 @@ flowchart TB
         Profiler["Statistical Profiler (Non-LLM)"]
         Agents["Agent Ensemble<br/>(Describer · Classifier · Glossary · Quality)"]
         Reconciler["Discrepancy Reconciler<br/>(PII Leak Filter · Redaction)"]
-        PolicyEngine["Policy-as-Code Engine<br/>(15 YAML Rules)"]
+        PolicyEngine["Policy-as-Code Engine<br/>(Declarative YAML Rules)"]
         Queue["Steward Approval Queue<br/>(High-Risk Gate)"]
         Audit["Immutable Audit Log<br/>(SHA-256 Hash Chain)"]
 
@@ -171,12 +165,15 @@ flowchart TB
 
 ## Core Modules
 
-ContextForge consists of 10 modular components:
+ContextForge consists of modular components:
 
 ### 1. Real Data Estate
-- Uses public transactional datasets: [Olist Brazilian E-Commerce](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) (9 tables) and [Northwind](https://github.com/graphql-compose/graphql-compose-examples) (8 tables). No mock data rows.
-- 14 SQL models (`stg_customers`, `fct_orders`, `dim_products`, `customer_ltv`, `mart_geo_performance`) materialize 31 estate tables.
-- Ground truth set: [`data/gold_labels.csv`](data/gold_labels.csv) contains **236 hand-labeled columns** with verified PII types, true descriptions, and glossary terms.
+- Uses public transactional datasets: [Olist Brazilian E-Commerce](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) and [Northwind](https://github.com/graphql-compose/graphql-compose-examples). No mock data rows.
+- SQL transformation models (`stg_customers`, `fct_orders`, `dim_products`, `customer_ltv`, `mart_geo_performance`) materialize the estate tables.
+- Ground truth set: [`data/gold_labels.csv`](data/gold_labels.csv) contains hand-labeled columns with verified PII types, true descriptions, and glossary terms.
+
+#### Data Provenance
+Olist and Northwind are real public datasets. The columns `delivery_instructions`, `customer_support_transcript`, and `postal_routing_hub_code`, along with the `mart_federated_shipments` and `mart_unified_events` models, were added by us as synthetic adversarial test cases.
 
 ### 2. Graph Metadata Store & Parquet Lakehouse
 - Relational schema in [`src/cforge/catalog/models.py`](src/cforge/catalog/models.py) models databases, schemas, tables, columns, tags, glossary terms, and lineage edges.
@@ -187,7 +184,7 @@ ContextForge consists of 10 modular components:
 ### 3. Column-Level Lineage Engine
 - [`src/cforge/lineage/parser.py`](src/cforge/lineage/parser.py) uses `sqlglot` AST traversal to extract column-to-column dependencies.
 - Emits OpenLineage standard RunEvents to [`data/openlineage_events.json`](data/openlineage_events.json).
-- [`src/cforge/lineage/propagator.py`](src/cforge/lineage/propagator.py) propagates sensitivity tags (e.g., PII) downstream across arbitrary lineage depth with an audit trail.
+- [`src/cforge/lineage/propagator.py`](src/cforge/lineage/propagator.py) propagates sensitivity tags (e.g., PII) downstream across lineage depth with an audit trail.
 
 ### 4. Grounded Multi-Agent Enrichment
 - [`Profiler`](src/cforge/agents/profiler.py) computes statistical distributions, cardinality, and null rates.
@@ -195,7 +192,7 @@ ContextForge consists of 10 modular components:
 - [`Reconciler`](src/cforge/agents/reconciler.py) detects contradictions and redacts PII sample values from proposed descriptions (`[REDACTED_PII]`).
 
 ### 5. Policy-as-Code Governance Layer
-- 15 YAML policies in [`src/cforge/governance/policies.yaml`](src/cforge/governance/policies.yaml) evaluated before writes:
+- Declarative YAML policies in [`src/cforge/governance/policies.yaml`](src/cforge/governance/policies.yaml) evaluated before writes:
   - `POL-001`: Descriptions cannot contain sample values.
   - `POL-002`: PII-tagged columns require steward approval.
   - `POL-003`: Agent confidence below 0.80 routes to review.
@@ -221,11 +218,11 @@ ContextForge consists of 10 modular components:
 - [`TalkToDataAgent`](src/cforge/mcp/agent.py) cites policies (`POL-002`, `POL-006`) when refusing unauthorized data queries.
 
 ### 8. Evaluation Harness (`make eval`)
-- Evaluates 45 business questions with gold SQL, 236 ground-truth column labels, and 20 adversarial prompts.
+- Evaluates 45 business questions with gold SQL, 94 held-out columns, and 23 adversarial prompts alongside 23 benign control prompts.
 - Runs via `python -m cforge.eval.runner` or `make eval`.
 - Failure cases and boundary limits are documented in [`docs/failures_and_limitations.md`](docs/failures_and_limitations.md).
 
-### 9. Web Interface (4 Screens)
+### 9. Web Interface
 - **Lineage DAG**: Interactive graph showing staging-to-marts topology and downstream PII propagation paths.
 - **Asset Catalog**: Technical schema attributes, column profiling statistics, and enriched descriptions.
 - **Approval Queue**: Interface for data stewards to inspect proposals and review before/after diffs.
@@ -273,7 +270,7 @@ pip install -e .
 ### 2. Run Tests
 ```bash
 python -m pytest tests -v
-# Runs all 54 tests across all 10 modules
+# Runs all 54 tests across all modules
 ```
 
 ### 3. Run Benchmark (`make eval`)
@@ -288,7 +285,8 @@ python -m uvicorn cforge.api.app:app --host 127.0.0.1 --port 8000 --reload
 ```
 Open **`http://127.0.0.1:8000/`** in your browser.
 
-### 5. Start PostgreSQL (Optional)
+### 5. PostgreSQL Init Script (Optional)
+Postgres initialization SQL is generated via `export_postgres_init_sql()` for Docker Compose deployment. All evaluation and tests execute on DuckDB.
 ```bash
 docker compose up -d
 ```
@@ -317,8 +315,8 @@ CForge/
 ├── .github/workflows/ci.yml       # GitHub Actions test workflow
 ├── data/
 │   ├── raw/                       # Real public datasets (Olist & Northwind CSVs)
-│   ├── gold_labels.csv            # 236 hand-labeled ground-truth columns
-│   ├── hand_verified_lineage.json # 30 hand-verified column lineage references
+│   ├── gold_labels.csv            # Hand-labeled ground-truth columns
+│   ├── hand_verified_lineage.json # 39 hand-verified column lineage references
 │   ├── business_questions.json    # 45 business questions with gold SQL
 │   ├── injected_defects.json      # Controlled defect injection test cases
 │   ├── openlineage_events.json    # OpenLineage RunEvent export
@@ -326,11 +324,11 @@ CForge/
 ├── docs/
 │   ├── schema_diagram.md          # Entity relationship diagrams
 │   ├── decisions.md               # Architectural Decision Records (ADR 001-007)
-│   ├── propagation_trace.md       # Trace of 3-hop downstream PII propagation
+│   ├── propagation_trace.md       # Trace of downstream PII propagation
 │   ├── context_server_comparison.md # Side-by-side with/without context proof
 │   ├── pitch_deck.md              # Executive problem-solution pitch deck
 │   └── failures_and_limitations.md# Failure and boundary analysis
-├── frontend/                      # 4-screen web interface
+├── frontend/                      # Web interface
 │   ├── index.html                 # HTML structure
 │   ├── index.css                  # Vanilla CSS stylesheet
 │   └── app.js                     # UI state and API client
@@ -341,9 +339,9 @@ CForge/
 │   ├── agents/                    # Grounded agents and reconciler
 │   ├── api/                       # FastAPI application and endpoints
 │   ├── catalog/                   # Relational store, models, and lakehouse
-│   ├── estate/                    # Dataset loader and 14 SQL models
+│   ├── estate/                    # Dataset loader and SQL models
 │   ├── eval/                      # Evaluation runner, rubric judge, and ablations
-│   ├── governance/                # Policy engine (15 YAML rules), queue, and audit log
+│   ├── governance/                # Policy engine (YAML rules), queue, and audit log
 │   ├── lineage/                   # sqlglot AST parser, OpenLineage, and tag propagator
 │   ├── mcp/                       # MCP server and policy-aware agent
 │   └── quality/                   # Rule runner and defect injector
