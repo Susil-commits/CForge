@@ -42,6 +42,24 @@ class LineageParser:
     def __init__(self, dialect: str = "duckdb"):
         self.dialect = dialect
 
+    def _resolve_column_through_ctes(self, col_name: str, table_ref: str, ctes: dict[str, exp.CTE], table_aliases: dict[str, str]) -> list[tuple[str, str]]:
+        """Recursively trace a column reference through Common Table Expressions (CTEs) to find underlying physical tables."""
+        if table_ref in ctes:
+            cte = ctes[table_ref]
+            selects = list(cte.this.find_all(exp.Select))
+            sources = []
+            for cte_select in selects:
+                cte_aliases = {t.alias_or_name: t.name for t in cte_select.find_all(exp.Table) if t.name and t.alias_or_name}
+                for cte_expr in cte_select.expressions:
+                    if cte_expr.alias_or_name == col_name or (isinstance(cte_expr, exp.Column) and cte_expr.name == col_name):
+                        for inner_col in cte_expr.find_all(exp.Column):
+                            inner_tbl = cte_aliases.get(inner_col.table, inner_col.table or (list(cte_aliases.values())[0] if cte_aliases else "source"))
+                            sources.extend(self._resolve_column_through_ctes(inner_col.name, inner_tbl, ctes, table_aliases))
+            if sources:
+                return sources
+        real_tbl = table_aliases.get(table_ref, table_ref)
+        return [(real_tbl, col_name)]
+
     def parse_query_lineage(self, target_table_name: str, sql_text: str) -> list[ColumnLineageEdge]:
         """Parse a SQL query and extract all column lineage edges targeting target_table_name."""
         edges: list[ColumnLineageEdge] = []
@@ -97,10 +115,11 @@ class LineageParser:
             elif isinstance(expr, (exp.Count, exp.Sum, exp.Avg, exp.Min, exp.Max)):
                 tx_type = "AGGREGATION"
 
-            # Use sqlglot lineage tool first
+            sources: set[tuple[str, str]] = set()
+
+            # 1. Use sqlglot lineage tool first
             try:
                 node = lineage(col_alias, sql_text, dialect=self.dialect)
-                sources = set()
                 for leaf in node.walk():
                     if leaf.name and leaf.name != col_alias:
                         # Extract table.col or col
@@ -111,31 +130,26 @@ class LineageParser:
                             sources.add((real_tbl, c_name))
                         elif len(name_parts) == 1 and table_aliases:
                             sources.add((list(table_aliases.values())[0], name_parts[0]))
-
-                for s_tbl, s_col in sources:
-                    edges.append(ColumnLineageEdge(
-                        source_table=s_tbl,
-                        source_column=s_col,
-                        target_table=target_table_name,
-                        target_column=col_alias,
-                        transformation_type=tx_type,
-                        expression=expr.sql()
-                    ))
             except Exception:
-                # Fallback to direct AST column traversal
-                cols_in_expr = list(expr.find_all(exp.Column))
-                for col_node in cols_in_expr:
-                    col_name = col_node.name
-                    tbl_alias = col_node.table or ""
-                    real_tbl = table_aliases.get(tbl_alias, tbl_alias or (list(table_aliases.values())[0] if table_aliases else "source"))
-                    edges.append(ColumnLineageEdge(
-                        source_table=real_tbl,
-                        source_column=col_name,
-                        target_table=target_table_name,
-                        target_column=col_alias,
-                        transformation_type=tx_type,
-                        expression=expr.sql()
-                    ))
+                pass
+
+            # 2. Resilient CTE-aware traversal if sqlglot lineage threw or produced empty sources
+            if not sources:
+                for col_node in expr.find_all(exp.Column):
+                    tbl_ref = col_node.table or (list(table_aliases.values())[0] if table_aliases else "source")
+                    tbl_ref = table_aliases.get(tbl_ref, tbl_ref)
+                    for r_tbl, r_col in self._resolve_column_through_ctes(col_node.name, tbl_ref, ctes, table_aliases):
+                        sources.add((r_tbl, r_col))
+
+            for s_tbl, s_col in sources:
+                edges.append(ColumnLineageEdge(
+                    source_table=s_tbl,
+                    source_column=s_col,
+                    target_table=target_table_name,
+                    target_column=col_alias,
+                    transformation_type=tx_type,
+                    expression=expr.sql()
+                ))
 
         return edges
 
