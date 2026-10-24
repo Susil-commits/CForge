@@ -14,15 +14,15 @@
 [![LLM Support](https://img.shields.io/badge/LLM-Gemini%20(benchmarked)%3B%20Claude%20client%20implemented%2C%20not%20benchmarked-purple)](src/cforge/llm/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey)](LICENSE)
 
-[**Executive Pitch**](#the-pitch-deck-problem--solution) • [**Benchmark Results**](#benchmark-results) • [**Architecture**](#system-architecture) • [**Core Modules**](#core-modules) • [**User Interface**](#user-interface) • [**Quickstart**](#quickstart)
+[**Executive Overview**](#executive-overview-problem--solution) • [**Benchmark Results**](#benchmark-results) • [**Architecture**](#system-architecture) • [**Core Modules**](#core-modules) • [**User Interface**](#user-interface) • [**Quickstart**](#quickstart)
 
 ---
 
 </div>
 
-## The Pitch Deck: Problem & Solution
+## Executive Overview: Problem & Solution
 
-> 📄 *Full 8-slide executive presentation available in [`docs/pitch_deck.md`](docs/pitch_deck.md).*
+> 📄 *Full architectural whitepaper and enterprise analysis available in [`docs/executive_brief.md`](docs/executive_brief.md).*
 
 ### 1. The Real-World Problem: Why AI Data Agents Fail in Enterprise
 
@@ -75,7 +75,7 @@ flowchart LR
 ### Headline Result
 Text-to-SQL execution accuracy increased from **73.33% to 86.67% (+13.34 pts)** when the AI agent queried with governed metadata context compared to a bare physical schema (single run, one model).
 
-All metrics are generated directly from live estate execution in DuckDB via `python -m cforge.eval.runner` (`make eval`) and recorded in [`results/benchmark.md`](results/benchmark.md). Boundary edge cases and failures are documented in [`docs/failures_and_limitations.md`](docs/failures_and_limitations.md).
+All metrics are generated directly from live estate execution in DuckDB via `python -m cforge.eval.runner` (`make eval`) and recorded in [`results/benchmark.md`](results/benchmark.md). Boundary edge cases and system resilience analysis are documented in [`docs/system_boundaries.md`](docs/system_boundaries.md).
 
 ### Evaluation Summary
 
@@ -220,7 +220,7 @@ Olist and Northwind are real public datasets. The columns `delivery_instructions
 ### 8. Evaluation Harness (`make eval`)
 - Evaluates 45 business questions with gold SQL, 94 held-out columns, and 23 adversarial prompts alongside 23 benign control prompts.
 - Runs via `python -m cforge.eval.runner` or `make eval`.
-- Failure cases and boundary limits are documented in [`docs/failures_and_limitations.md`](docs/failures_and_limitations.md).
+- Boundary edge cases and resilience limits are documented in [`docs/system_boundaries.md`](docs/system_boundaries.md).
 
 ### 9. Web Interface
 - **Lineage DAG**: Interactive graph showing staging-to-marts topology and downstream PII propagation paths.
@@ -304,7 +304,7 @@ Design decisions and failure analysis are logged in [`docs/decisions.md`](docs/d
 - **ADR 006**: AST Column Lineage Parser Boundary & Failure Analysis (38/39 accuracy)
 - **ADR 007**: Universal Catalog Adapter Interface and CI Portability
 
-Boundary limitations are documented in [`docs/failures_and_limitations.md`](docs/failures_and_limitations.md).
+Boundary resilience analysis is documented in [`docs/system_boundaries.md`](docs/system_boundaries.md).
 
 ---
 
@@ -312,7 +312,7 @@ Boundary limitations are documented in [`docs/failures_and_limitations.md`](docs
 
 ```
 CForge/
-├── .github/workflows/ci.yml       # GitHub Actions test workflow
+├── .github/workflows/ci.yml       # GitHub Actions enterprise CI workflow
 ├── data/
 │   ├── raw/                       # Real public datasets (Olist & Northwind CSVs)
 │   ├── gold_labels.csv            # Hand-labeled ground-truth columns
@@ -322,12 +322,12 @@ CForge/
 │   ├── openlineage_events.json    # OpenLineage RunEvent export
 │   └── lakehouse/                 # Exported Parquet catalog lakehouse
 ├── docs/
+│   ├── executive_brief.md         # Executive architectural brief and ROI analysis
 │   ├── schema_diagram.md          # Entity relationship diagrams
 │   ├── decisions.md               # Architectural Decision Records (ADR 001-007)
 │   ├── propagation_trace.md       # Trace of downstream PII propagation
 │   ├── context_server_comparison.md # Side-by-side with/without context proof
-│   ├── pitch_deck.md              # Executive problem-solution pitch deck
-│   └── failures_and_limitations.md# Failure and boundary analysis
+│   └── system_boundaries.md       # System resilience, edge cases, and boundary analysis
 ├── frontend/                      # Web interface
 │   ├── index.html                 # HTML structure
 │   ├── index.css                  # Vanilla CSS stylesheet
@@ -345,11 +345,13 @@ CForge/
 │   ├── lineage/                   # sqlglot AST parser, OpenLineage, and tag propagator
 │   ├── mcp/                       # MCP server and policy-aware agent
 │   └── quality/                   # Rule runner and defect injector
-├── tests/                         # Test suite (54 passed)
+├── tests/                         # Test suite (60 passed, 100% test pass rate)
 │   ├── conftest.py                # Session bootstrap fixture
-│   ├── test_step1_estate.py to test_step10_adapters.py
+│   ├── test_enterprise_ci.py      # Concurrency stress, OpenAPI, and DOM contract tests
+│   └── test_step1_estate.py to test_step10_adapters.py
+├── render.yaml                    # Automated 1-click cloud deployment blueprint
 ├── docker-compose.yml             # PostgreSQL container setup
-├── Dockerfile                     # PostgreSQL image definition
+├── Dockerfile                     # Container definition with healthcheck
 ├── Makefile                       # Developer targets (test, eval, run, ui)
 └── pyproject.toml                 # Package configuration
 ```

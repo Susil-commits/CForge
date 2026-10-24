@@ -155,7 +155,7 @@ We evaluated 45 complex enterprise business questions spanning customer retentio
 - **ContextForge Enriched Context**: {sql_metrics['enriched_context_matches']} / {sql_metrics['total_questions']} correct ({sql_metrics['enriched_context_accuracy_pct']}%)
 - **Net Accuracy Gain**: **+{sql_metrics['accuracy_improvement_points']} percentage points**
 
-See [failures_and_limitations.md](docs/failures_and_limitations.md) for detailed query-level breakdown of the 6 queries where enriched context failed execution match.
+See [system_boundaries.md](docs/system_boundaries.md) for detailed query-level breakdown of the 6 queries where enriched context failed execution match.
 
 ---
 
