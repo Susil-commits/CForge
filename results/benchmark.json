@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-11 17:03:28 UTC",
+  "timestamp": "2026-10-24 16:21:41 UTC",
   "headline": "73.3% -> 86.7% on 45 execution-checked business questions (+13.34 pts), single run, one model.",
   "metrics": {
     "text_to_sql_lift": "+13.34 pts",
@@ -12,7 +12,7 @@
     "false_refusal_rate": "13.0%",
     "description_quality": "4.53 / 5.0",
     "enrichment_cost_per_1k": "$0.1024",
-    "latency_ms": "6607.16 ms"
+    "latency_ms": "6617.08 ms"
   },
   "pii": {
     "true_positives": 25,
@@ -67,12 +67,12 @@
             "column": "_col_0"
           },
           {
-            "table": "raw_nw_orders",
-            "column": "ship_via"
-          },
-          {
             "table": "fed_orders",
             "column": "carrier_code"
+          },
+          {
+            "table": "raw_nw_orders",
+            "column": "ship_via"
           }
         ],
         "reason": "Subquery alias boundary or unparsed projection expression."
@@ -965,5 +965,5 @@
     "delta_glossary": 2.23
   },
   "cost_per_1k_cols": 0.1024,
-  "avg_latency_ms_per_col": 6607.16
+  "avg_latency_ms_per_col": 6617.08
 }
