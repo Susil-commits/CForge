@@ -133,15 +133,24 @@ class LineageParser:
             except Exception:
                 pass
 
-            # 2. Resilient CTE-aware traversal if sqlglot lineage threw or produced empty sources
-            if not sources:
+            # 2. Unroll intermediate CTE references to physical base tables
+            final_sources: set[tuple[str, str]] = set()
+            for s_tbl, s_col in sources:
+                if s_tbl in ctes:
+                    for r_tbl, r_col in self._resolve_column_through_ctes(s_col, s_tbl, ctes, table_aliases):
+                        final_sources.add((r_tbl, r_col))
+                else:
+                    final_sources.add((s_tbl, s_col))
+
+            # 3. Resilient CTE-aware traversal if no sources could be resolved
+            if not final_sources:
                 for col_node in expr.find_all(exp.Column):
                     tbl_ref = col_node.table or (list(table_aliases.values())[0] if table_aliases else "source")
                     tbl_ref = table_aliases.get(tbl_ref, tbl_ref)
                     for r_tbl, r_col in self._resolve_column_through_ctes(col_node.name, tbl_ref, ctes, table_aliases):
-                        sources.add((r_tbl, r_col))
+                        final_sources.add((r_tbl, r_col))
 
-            for s_tbl, s_col in sources:
+            for s_tbl, s_col in final_sources:
                 edges.append(ColumnLineageEdge(
                     source_table=s_tbl,
                     source_column=s_col,
