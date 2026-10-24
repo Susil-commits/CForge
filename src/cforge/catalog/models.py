@@ -1,8 +1,9 @@
 """Metadata domain models for ContextForge."""
 
-from enum import Enum
-from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
+from enum import Enum
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -31,13 +32,13 @@ class TagSource(str, Enum):
 
 class Asset(BaseModel):
     asset_id: str
-    parent_id: Optional[str] = None
+    parent_id: str | None = None
     asset_type: AssetType
     name: str
-    display_name: Optional[str] = None
-    description: Optional[str] = None
-    data_type: Optional[str] = None
-    owner: Optional[str] = "Data Governance Guild"
+    display_name: str | None = None
+    description: str | None = None
+    data_type: str | None = None
+    owner: str | None = "Data Governance Guild"
     certification_status: CertificationStatus = CertificationStatus.DRAFT
     quality_score: float = 1.0
     version: int = 1
@@ -49,10 +50,10 @@ class Tag(BaseModel):
     tag_id: str
     asset_id: str
     tag_name: str
-    tag_value: Optional[str] = None
+    tag_value: str | None = None
     confidence: float = 1.0
     source: TagSource = TagSource.AGENT
-    reason: Optional[str] = None
+    reason: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -61,7 +62,7 @@ class GlossaryTerm(BaseModel):
     term_name: str
     definition: str
     domain: str = "Enterprise E-Commerce"
-    synonyms: List[str] = Field(default_factory=list)
+    synonyms: list[str] = Field(default_factory=list)
 
 
 class LineageEdge(BaseModel):
@@ -69,7 +70,7 @@ class LineageEdge(BaseModel):
     source_asset_id: str
     target_asset_id: str
     transformation_type: str = "TRANSFORMATION"
-    transformation_logic: Optional[str] = None
+    transformation_logic: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -79,7 +80,7 @@ class AssetHistory(BaseModel):
     version: int
     change_type: str
     changed_by: str
-    before_state: Optional[Dict[str, Any]] = None
-    after_state: Dict[str, Any]
-    reason: Optional[str] = None
+    before_state: dict[str, Any] | None = None
+    after_state: dict[str, Any]
+    reason: str | None = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

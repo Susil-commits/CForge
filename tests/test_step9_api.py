@@ -1,13 +1,14 @@
 """Test Suite for Step 9: Web API and 4-Screen UI Endpoints."""
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
+
 from cforge.api.app import app
 
 
 @pytest.fixture
 def client():
-    from cforge.api.app import app, store
+    from cforge.api.app import store
     if store.conn.execute("SELECT COUNT(*) FROM assets").fetchone()[0] == 0:
         store.populate_from_estate()
     return TestClient(app)

@@ -1,11 +1,9 @@
 """Test Suite for Step 1: Real Data Estate."""
 
-from pathlib import Path
 import csv
-import duckdb
-import pytest
-from cforge.config import ESTATE_DB_PATH, GOLD_LABELS_PATH, DATA_DIR
-from cforge.estate.loader import init_duckdb_estate, export_postgres_init_sql
+
+from cforge.config import GOLD_LABELS_PATH
+from cforge.estate.loader import export_postgres_init_sql, init_duckdb_estate
 
 
 def test_gold_labels_exists_and_meets_quota():

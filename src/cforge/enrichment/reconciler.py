@@ -1,11 +1,11 @@
 """Reconciler Agent: Resolves disagreements across agents and prevents PII data leakage."""
 
-from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
-from cforge.enrichment.profiler import ColumnProfile
-from cforge.enrichment.describer import DescriptionResult
+
 from cforge.enrichment.classifier import ClassificationResult
+from cforge.enrichment.describer import DescriptionResult
 from cforge.enrichment.glossary_mapper import GlossaryMappingResult
+from cforge.enrichment.profiler import ColumnProfile
 from cforge.enrichment.quality_proposer import QualityProposalResult
 
 
@@ -27,8 +27,8 @@ class ReconciledEnrichment(BaseModel):
     suggested_rules_count: int
     overall_confidence: float
     can_auto_write: bool
-    flags: List[ReconciliationFlag] = Field(default_factory=list)
-    reconciled_evidence: List[str] = Field(default_factory=list)
+    flags: list[ReconciliationFlag] = Field(default_factory=list)
+    reconciled_evidence: list[str] = Field(default_factory=list)
 
 
 class EnrichmentReconciler:
@@ -38,7 +38,7 @@ class EnrichmentReconciler:
                   glossary: GlossaryMappingResult,
                   quality: QualityProposalResult) -> ReconciledEnrichment:
         """Reconcile multi-agent outputs, enforce safety gates, and resolve conflicts."""
-        flags: List[ReconciliationFlag] = []
+        flags: list[ReconciliationFlag] = []
         can_auto_write = True
         final_description = desc.description
 

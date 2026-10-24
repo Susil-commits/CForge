@@ -3,19 +3,19 @@
 Connects directly to the live ContextForge MetadataStore for high-performance synchronization.
 """
 
-from typing import List, Dict, Any, Optional
 from pathlib import Path
+
 from cforge.adapters.base import BaseCatalogAdapter
-from cforge.catalog.models import Asset, Tag, GlossaryTerm, LineageEdge
+from cforge.catalog.models import Asset, GlossaryTerm, LineageEdge, Tag
 from cforge.catalog.store import MetadataStore
 from cforge.config import METADATA_DB_PATH
 
 
 class DuckDBCatalogAdapter(BaseCatalogAdapter):
-    def __init__(self, db_path: Optional[Path] = None):
+    def __init__(self, db_path: Path | None = None):
         self.store = MetadataStore(db_path or METADATA_DB_PATH)
 
-    def pull_assets(self) -> List[Asset]:
+    def pull_assets(self) -> list[Asset]:
         rows = self.store.conn.execute("""
             SELECT asset_id, parent_id, asset_type, name, display_name, description, data_type, owner, certification_status, quality_score, version
             FROM assets
@@ -37,12 +37,12 @@ class DuckDBCatalogAdapter(BaseCatalogAdapter):
             ))
         return assets
 
-    def push_assets(self, assets: List[Asset]) -> bool:
+    def push_assets(self, assets: list[Asset]) -> bool:
         for a in assets:
             self.store.upsert_asset(a.model_dump(mode="json"))
         return True
 
-    def pull_tags(self) -> List[Tag]:
+    def pull_tags(self) -> list[Tag]:
         rows = self.store.conn.execute("""
             SELECT tag_id, asset_id, tag_name, tag_value, confidence, source, reason
             FROM tags
@@ -60,7 +60,7 @@ class DuckDBCatalogAdapter(BaseCatalogAdapter):
             ))
         return tags
 
-    def push_tags(self, tags: List[Tag]) -> bool:
+    def push_tags(self, tags: list[Tag]) -> bool:
         for t in tags:
             self.store.add_tag(
                 asset_id=t.asset_id,
@@ -72,13 +72,13 @@ class DuckDBCatalogAdapter(BaseCatalogAdapter):
             )
         return True
 
-    def pull_glossary(self) -> List[GlossaryTerm]:
+    def pull_glossary(self) -> list[GlossaryTerm]:
         rows = self.store.conn.execute("""
             SELECT term_id, term_name, definition, domain FROM glossary_terms
         """).fetchall()
         return [GlossaryTerm(term_id=r[0], term_name=r[1], definition=r[2], domain=r[3]) for r in rows]
 
-    def push_glossary(self, terms: List[GlossaryTerm]) -> bool:
+    def push_glossary(self, terms: list[GlossaryTerm]) -> bool:
         for g in terms:
             self.store.conn.execute("""
                 INSERT OR REPLACE INTO glossary_terms (term_id, term_name, definition, domain)
@@ -86,7 +86,7 @@ class DuckDBCatalogAdapter(BaseCatalogAdapter):
             """, (g.term_id, g.term_name, g.definition, g.domain))
         return True
 
-    def pull_lineage(self) -> List[LineageEdge]:
+    def pull_lineage(self) -> list[LineageEdge]:
         rows = self.store.conn.execute("""
             SELECT edge_id, source_asset_id, target_asset_id, transformation_type, transformation_logic
             FROM lineage_edges
@@ -102,7 +102,7 @@ class DuckDBCatalogAdapter(BaseCatalogAdapter):
             for r in rows
         ]
 
-    def push_lineage(self, edges: List[LineageEdge]) -> bool:
+    def push_lineage(self, edges: list[LineageEdge]) -> bool:
         for e in edges:
             self.store.add_lineage_edge(
                 source_asset_id=e.source_asset_id,

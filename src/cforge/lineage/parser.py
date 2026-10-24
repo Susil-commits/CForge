@@ -4,8 +4,8 @@ Extracts column-to-column dependencies across SQL queries, CTEs, and table joins
 """
 
 from pathlib import Path
-from typing import Dict, List, Set, Tuple, Optional, Any
-import sqlglot
+from typing import Any
+
 from sqlglot import exp, parse_one
 from sqlglot.lineage import lineage
 
@@ -14,7 +14,7 @@ class ColumnLineageEdge:
     def __init__(self, source_table: str, source_column: str,
                  target_table: str, target_column: str,
                  transformation_type: str = "DIRECT_COPY",
-                 expression: Optional[str] = None):
+                 expression: str | None = None):
         self.source_table = source_table
         self.source_column = source_column
         self.target_table = target_table
@@ -22,7 +22,7 @@ class ColumnLineageEdge:
         self.transformation_type = transformation_type
         self.expression = expression
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "source": f"{self.source_table}.{self.source_column}",
             "target": f"{self.target_table}.{self.target_column}",
@@ -42,16 +42,16 @@ class LineageParser:
     def __init__(self, dialect: str = "duckdb"):
         self.dialect = dialect
 
-    def parse_query_lineage(self, target_table_name: str, sql_text: str) -> List[ColumnLineageEdge]:
+    def parse_query_lineage(self, target_table_name: str, sql_text: str) -> list[ColumnLineageEdge]:
         """Parse a SQL query and extract all column lineage edges targeting target_table_name."""
-        edges: List[ColumnLineageEdge] = []
+        edges: list[ColumnLineageEdge] = []
         try:
             tree = parse_one(sql_text, read=self.dialect)
         except Exception:
             return edges
 
         # Extract table aliases in FROM and JOINs
-        table_aliases: Dict[str, str] = {}
+        table_aliases: dict[str, str] = {}
         for table in tree.find_all(exp.Table):
             t_name = table.name
             t_alias = table.alias_or_name
@@ -59,7 +59,7 @@ class LineageParser:
                 table_aliases[t_alias] = t_name
 
         # Extract CTE names
-        ctes: Dict[str, exp.CTE] = {}
+        ctes: dict[str, exp.CTE] = {}
         for with_exp in tree.find_all(exp.With):
             for cte in with_exp.expressions:
                 ctes[cte.alias] = cte
@@ -139,9 +139,9 @@ class LineageParser:
 
         return edges
 
-    def parse_models_directory(self, models_dir: Path) -> List[ColumnLineageEdge]:
+    def parse_models_directory(self, models_dir: Path) -> list[ColumnLineageEdge]:
         """Parse all .sql files in the models directory and extract cross-table lineage."""
-        all_edges: List[ColumnLineageEdge] = []
+        all_edges: list[ColumnLineageEdge] = []
         for sql_file in models_dir.glob("*.sql"):
             table_name = sql_file.stem
             sql_text = sql_file.read_text(encoding="utf-8")

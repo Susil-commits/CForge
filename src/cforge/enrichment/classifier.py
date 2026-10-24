@@ -4,10 +4,11 @@ Provides both an LLM-powered agent with schema validation and a heuristic baseli
 """
 
 import re
-from typing import List, Optional
+
 from pydantic import BaseModel, Field
+
 from cforge.enrichment.profiler import ColumnProfile
-from cforge.llm.client import LLMClient, LLMAuthenticationError
+from cforge.llm.client import LLMAuthenticationError, LLMClient
 
 
 class ClassificationResult(BaseModel):
@@ -15,8 +16,8 @@ class ClassificationResult(BaseModel):
     pii_type: str = Field(description="Specific PII classification category: CUSTOMER_ID, PERSON_NAME, EMAIL, PHONE_NUMBER, POSTAL_CODE, PHYSICAL_ADDRESS, FINANCIAL, CONFIDENTIAL_NOTES, NONE.")
     sensitivity_level: str = Field(description="Data sensitivity: PUBLIC, INTERNAL, CONFIDENTIAL, RESTRICTED.")
     confidence: float = Field(ge=0.0, le=1.0, description="Confidence score.")
-    evidence: List[str] = Field(description="Grounded evidence supporting classification.")
-    regulatory_domains: List[str] = Field(description="Relevant data privacy frameworks: LGPD, GDPR, PCI-DSS.")
+    evidence: list[str] = Field(description="Grounded evidence supporting classification.")
+    regulatory_domains: list[str] = Field(description="Relevant data privacy frameworks: LGPD, GDPR, PCI-DSS.")
 
 
 class HeuristicClassifierAgent:
@@ -25,17 +26,17 @@ class HeuristicClassifierAgent:
     def __init__(self, model_name: str = "heuristic-rule-baseline"):
         self.model_name = model_name
 
-    def classify(self, profile: ColumnProfile, upstream_tags: Optional[List[str]] = None) -> ClassificationResult:
+    def classify(self, profile: ColumnProfile, upstream_tags: list[str] | None = None) -> ClassificationResult:
         """Classify PII and sensitivity grounded in column profile statistics and lineage."""
         col_clean = re.sub(r"[^a-zA-Z0-9]", "", profile.column_name).lower()
         patterns = profile.detected_patterns
-        evidence: List[str] = []
+        evidence: list[str] = []
 
         is_pii = False
         pii_type = "NONE"
         sensitivity = "INTERNAL"
         confidence = 0.90
-        regulations: List[str] = []
+        regulations: list[str] = []
 
         if upstream_tags and any("PII" in t for t in upstream_tags):
             is_pii = True
@@ -151,10 +152,10 @@ Sensitivity Levels:
 - PUBLIC: Publicly open reference tables.
 """
 
-    def __init__(self, model_name: Optional[str] = None):
+    def __init__(self, model_name: str | None = None):
         self.client = LLMClient(model_name=model_name)
 
-    def classify(self, profile: ColumnProfile, upstream_tags: Optional[List[str]] = None) -> ClassificationResult:
+    def classify(self, profile: ColumnProfile, upstream_tags: list[str] | None = None) -> ClassificationResult:
         """Call LLM with JSON-schema validation to classify column privacy & PII."""
         user_prompt = f"""Table: {profile.table_name}
 Column: {profile.column_name}
@@ -189,7 +190,7 @@ class ClassifierAgent:
         self.heuristic_agent = HeuristicClassifierAgent(model_name)
         self.llm_agent = LLMClassifierAgent()
 
-    def classify(self, profile: ColumnProfile, upstream_tags: Optional[List[str]] = None) -> ClassificationResult:
+    def classify(self, profile: ColumnProfile, upstream_tags: list[str] | None = None) -> ClassificationResult:
         if self.mode == "heuristic":
             return self.heuristic_agent.classify(profile, upstream_tags)
         

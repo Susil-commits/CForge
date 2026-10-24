@@ -1,13 +1,12 @@
 """Test Suite for Step 8: Evaluation Harness and Benchmark Generation."""
 
-import pytest
 from cforge.config import BENCHMARK_PATH
-from cforge.eval.pii_eval import evaluate_pii_classification
-from cforge.eval.desc_eval import evaluate_description_quality
-from cforge.eval.sql_eval import TextToSQLEvaluator
-from cforge.eval.governance_eval import evaluate_governance_block_rate
 from cforge.eval.ablations import run_ablation_benchmarks
+from cforge.eval.desc_eval import evaluate_description_quality
+from cforge.eval.governance_eval import evaluate_governance_block_rate
+from cforge.eval.pii_eval import evaluate_pii_classification
 from cforge.eval.runner import run_full_evaluation
+from cforge.eval.sql_eval import TextToSQLEvaluator
 
 
 def test_pii_evaluation_metrics():

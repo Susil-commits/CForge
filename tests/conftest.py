@@ -1,10 +1,10 @@
 """Global Pytest Fixtures and Environment Bootstrapping."""
 
-from pathlib import Path
 import pytest
+
+from cforge.catalog.store import MetadataStore
 from cforge.config import ESTATE_DB_PATH, METADATA_DB_PATH
 from cforge.estate.loader import init_duckdb_estate
-from cforge.catalog.store import MetadataStore
 
 
 @pytest.fixture(scope="session", autouse=True)

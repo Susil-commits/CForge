@@ -4,7 +4,8 @@ Runs empirical ablation experiments by systematically removing lineage, profilin
 or glossary terms from the context provided to the LLM and executing against DuckDB.
 """
 
-from typing import Dict, List, Any, Optional
+from typing import Any
+
 import duckdb
 
 from cforge.config import ESTATE_DB_PATH
@@ -15,7 +16,7 @@ from cforge.eval.sql_eval import (
 )
 
 
-def run_ablation_benchmarks(estate_db_path: Optional[str] = None, model_name: Optional[str] = None) -> Dict[str, Any]:
+def run_ablation_benchmarks(estate_db_path: str | None = None, model_name: str | None = None) -> dict[str, Any]:
     """Execute ablation experiments removing lineage, profiling stats, or glossary terms."""
     db_path = estate_db_path or str(ESTATE_DB_PATH)
     conn = duckdb.connect(db_path, read_only=True)

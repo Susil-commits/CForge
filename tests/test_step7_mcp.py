@@ -1,8 +1,9 @@
 """Test Suite for Step 7: Context Server via MCP and Policy-Aware Agent."""
 
 import pytest
+
+from cforge.mcp.agent import AgentResponse, TalkToDataAgent
 from cforge.mcp.server import MCPServer
-from cforge.mcp.agent import TalkToDataAgent, AgentResponse
 
 
 @pytest.fixture

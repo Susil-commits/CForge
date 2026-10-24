@@ -1,9 +1,17 @@
 """Test Suite for Step 10: Portability and Packaging Adapters."""
 
 import pytest
-from cforge.catalog.models import Asset, Tag, GlossaryTerm, LineageEdge, AssetType, CertificationStatus
-from cforge.adapters.file_adapter import FileJsonAdapter
+
 from cforge.adapters.duckdb_adapter import DuckDBCatalogAdapter
+from cforge.adapters.file_adapter import FileJsonAdapter
+from cforge.catalog.models import (
+    Asset,
+    AssetType,
+    CertificationStatus,
+    GlossaryTerm,
+    LineageEdge,
+    Tag,
+)
 
 
 @pytest.fixture

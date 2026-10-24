@@ -1,9 +1,11 @@
 """Approval Queue for Governed Metadata Changes."""
 
-from typing import Dict, List, Any, Optional
-from datetime import datetime, timezone
 import uuid
+from datetime import datetime, timezone
+from typing import Any
+
 from pydantic import BaseModel, Field
+
 from cforge.governance.engine import PolicyEngine, PolicyEvaluationResult
 
 
@@ -12,22 +14,22 @@ class ChangeProposal(BaseModel):
     asset_id: str
     change_type: str  # UPDATE_DESCRIPTION, ADD_TAG, CHANGE_CERTIFICATION, PROPOSE_RULE
     proposed_by: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
     status: str = "PENDING"  # PENDING, APPROVED, REJECTED, AUTO_APPROVED
-    evaluation: Optional[PolicyEvaluationResult] = None
-    reviewed_by: Optional[str] = None
-    reviewed_at: Optional[datetime] = None
-    review_notes: Optional[str] = None
+    evaluation: PolicyEvaluationResult | None = None
+    reviewed_by: str | None = None
+    reviewed_at: datetime | None = None
+    review_notes: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ApprovalQueue:
-    def __init__(self, engine: Optional[PolicyEngine] = None):
+    def __init__(self, engine: PolicyEngine | None = None):
         self.engine = engine or PolicyEngine()
-        self.queue: Dict[str, ChangeProposal] = {}
+        self.queue: dict[str, ChangeProposal] = {}
 
     def submit_proposal(self, asset_id: str, change_type: str,
-                        proposed_by: str, payload: Dict[str, Any]) -> ChangeProposal:
+                        proposed_by: str, payload: dict[str, Any]) -> ChangeProposal:
         """Submit a proposal, evaluate policies, and either auto-approve or queue for review."""
         eval_result = self.engine.evaluate_write_proposal(payload)
         
@@ -55,7 +57,7 @@ class ApprovalQueue:
         self.queue[proposal.proposal_id] = proposal
         return proposal
 
-    def get_pending(self) -> List[ChangeProposal]:
+    def get_pending(self) -> list[ChangeProposal]:
         """List all proposals currently waiting for human steward review."""
         return [p for p in self.queue.values() if p.status == "PENDING"]
 

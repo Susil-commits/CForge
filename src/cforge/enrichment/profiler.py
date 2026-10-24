@@ -4,16 +4,17 @@ Extracts real distributions, null rates, cardinality ratios, sample values,
 and regex pattern matches directly from the database estate.
 """
 
-from typing import Dict, List, Any, Optional
 import re
+
 import duckdb
 from pydantic import BaseModel, Field
+
 from cforge.config import ESTATE_DB_PATH
 
 # Standard Governance Regex Patterns
 PATTERNS = {
-    "UUID_PATTERN": re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I),
-    "HEX_ID_PATTERN": re.compile(r"^[0-9a-f]{32}$", re.I),
+    "UUID_PATTERN": re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE),
+    "HEX_ID_PATTERN": re.compile(r"^[0-9a-f]{32}$", re.IGNORECASE),
     "EMAIL_PATTERN": re.compile(r"^[\w\.-]+@[\w\.-]+\.\w+$"),
     "PHONE_PATTERN": re.compile(r"^\+?[\d\s\(\)-]{7,20}$"),
     "ZIP_PATTERN": re.compile(r"^\d{4,5}(-\d{3,4})?$"),
@@ -32,16 +33,16 @@ class ColumnProfile(BaseModel):
     distinct_count: int
     cardinality_ratio: float
     is_unique: bool
-    min_value: Optional[str] = None
-    max_value: Optional[str] = None
-    avg_value: Optional[float] = None
-    sample_values: List[str] = Field(default_factory=list)
-    detected_patterns: List[str] = Field(default_factory=list)
-    neighbor_columns: List[str] = Field(default_factory=list)
+    min_value: str | None = None
+    max_value: str | None = None
+    avg_value: float | None = None
+    sample_values: list[str] = Field(default_factory=list)
+    detected_patterns: list[str] = Field(default_factory=list)
+    neighbor_columns: list[str] = Field(default_factory=list)
 
 
 class EstateProfiler:
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: str | None = None):
         self.db_path = str(db_path or ESTATE_DB_PATH)
 
     def profile_column(self, table_name: str, column_name: str) -> ColumnProfile:
@@ -129,7 +130,7 @@ class EstateProfiler:
             neighbor_columns=neighbors
         )
 
-    def profile_table(self, table_name: str) -> Dict[str, ColumnProfile]:
+    def profile_table(self, table_name: str) -> dict[str, ColumnProfile]:
         """Profile all columns of a table."""
         conn = duckdb.connect(self.db_path, read_only=True)
         cols = [r[0] for r in conn.execute(f"DESCRIBE {table_name}").fetchall()]

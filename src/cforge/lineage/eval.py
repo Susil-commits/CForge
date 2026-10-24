@@ -5,20 +5,20 @@ dependencies (strict recall & precision) against the hand-verified ground truth.
 """
 
 import json
-from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any
+
 from cforge.config import HAND_VERIFIED_LINEAGE_PATH, PROJECT_ROOT
-from cforge.lineage.parser import LineageParser, ColumnLineageEdge
+from cforge.lineage.parser import ColumnLineageEdge, LineageParser
 
 
-def evaluate_lineage_accuracy() -> Dict[str, Any]:
+def evaluate_lineage_accuracy() -> dict[str, Any]:
     """Compare sqlglot parser output strictly against all expected sources in the gold lineage set."""
     models_dir = PROJECT_ROOT / "src" / "cforge" / "estate" / "models"
     parser = LineageParser()
     parsed_edges = parser.parse_models_directory(models_dir)
 
     # Index parsed edges: (target_table, target_column) -> list of sources
-    parsed_map: Dict[str, List[ColumnLineageEdge]] = {}
+    parsed_map: dict[str, list[ColumnLineageEdge]] = {}
     for edge in parsed_edges:
         key = f"{edge.target_table}.{edge.target_column}"
         if key not in parsed_map:
@@ -30,7 +30,7 @@ def evaluate_lineage_accuracy() -> Dict[str, Any]:
         ground_truth = json.load(f)
 
     correct_count = 0
-    failures: List[Dict[str, Any]] = []
+    failures: list[dict[str, Any]] = []
 
     for item in ground_truth:
         target_tbl = item["target_table"]

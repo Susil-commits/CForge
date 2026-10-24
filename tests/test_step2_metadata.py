@@ -1,11 +1,9 @@
 """Test Suite for Step 2: Metadata Model, Store, and Lakehouse Export."""
 
-from pathlib import Path
-import duckdb
 import pytest
-from cforge.config import METADATA_DB_PATH, LAKEHOUSE_DIR
-from cforge.catalog.store import MetadataStore
+
 from cforge.catalog.lakehouse import MetadataLakehouse
+from cforge.catalog.store import MetadataStore
 
 
 @pytest.fixture(scope="module")

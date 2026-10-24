@@ -5,13 +5,16 @@ hand-verified ground-truth dataset with strict train/held-out splits.
 """
 
 import csv
-from typing import Dict, Any, List, Optional
+from typing import Any
+
 from cforge.config import GOLD_LABELS_PATH
-from cforge.enrichment.profiler import EstateProfiler, ColumnProfile
-from cforge.enrichment.classifier import ClassifierAgent, HeuristicClassifierAgent, LLMClassifierAgent
+from cforge.enrichment.classifier import (
+    ClassifierAgent,
+    HeuristicClassifierAgent,
+)
+from cforge.enrichment.profiler import ColumnProfile, EstateProfiler
 
-
-HARD_CASE_PROFILES: Dict[tuple, ColumnProfile] = {
+HARD_CASE_PROFILES: dict[tuple, ColumnProfile] = {
     ("raw_nw_orders", "delivery_instructions"): ColumnProfile(
         table_name="raw_nw_orders",
         column_name="delivery_instructions",
@@ -77,7 +80,7 @@ HARD_CASE_PROFILES: Dict[tuple, ColumnProfile] = {
 }
 
 
-def compute_metrics(tp: int, fp: int, fn: int, tn: int) -> Dict[str, Any]:
+def compute_metrics(tp: int, fp: int, fn: int, tn: int) -> dict[str, Any]:
     """Compute precision, recall, and F1 score."""
     precision = round(tp / (tp + fp) if (tp + fp) > 0 else 0.0, 4)
     recall = round(tp / (tp + fn) if (tp + fn) > 0 else 0.0, 4)
@@ -94,7 +97,7 @@ def compute_metrics(tp: int, fp: int, fn: int, tn: int) -> Dict[str, Any]:
     }
 
 
-def evaluate_pii_classification(split: Optional[str] = "held_out", agent_mode: str = "heuristic") -> Dict[str, Any]:
+def evaluate_pii_classification(split: str | None = "held_out", agent_mode: str = "heuristic") -> dict[str, Any]:
     """Evaluate PII classification performance.
     
     Args:

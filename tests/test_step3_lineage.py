@@ -1,13 +1,12 @@
 """Test Suite for Step 3: Column-Level Lineage Engine."""
 
-from pathlib import Path
 import json
-import pytest
-from cforge.config import PROJECT_ROOT, DATA_DIR
-from cforge.lineage.parser import LineageParser
-from cforge.lineage.openlineage import OpenLineageEmitter
-from cforge.lineage.propagator import LineagePropagator
+
+from cforge.config import DATA_DIR, PROJECT_ROOT
 from cforge.lineage.eval import evaluate_lineage_accuracy
+from cforge.lineage.openlineage import OpenLineageEmitter
+from cforge.lineage.parser import LineageParser
+from cforge.lineage.propagator import LineagePropagator
 
 
 def test_sqlglot_model_parsing():

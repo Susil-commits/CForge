@@ -4,13 +4,13 @@ Downloads real public datasets (Olist Brazilian E-commerce & Northwind)
 and materializes them into raw tables and transformed models in DuckDB/PostgreSQL.
 """
 
-from pathlib import Path
-import csv
 import io
 import urllib.request
+from pathlib import Path
+
 import duckdb
-from typing import Dict, List, Optional
-from cforge.config import RAW_DATA_DIR, ESTATE_DB_PATH, DATA_DIR
+
+from cforge.config import DATA_DIR, ESTATE_DB_PATH, RAW_DATA_DIR
 
 OLIST_BASE_URL = "https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/"
 NORTHWIND_BASE_URL = "https://raw.githubusercontent.com/graphql-compose/graphql-compose-examples/master/examples/northwind/data/csv/"
@@ -60,10 +60,10 @@ def download_csv_sample(url: str, output_path: Path, max_rows: int = 5000) -> Pa
     return output_path
 
 
-def load_raw_estate(max_rows_per_table: int = 5000) -> Dict[str, Path]:
+def load_raw_estate(max_rows_per_table: int = 5000) -> dict[str, Path]:
     """Download and prepare all real public dataset CSV files."""
     RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
-    downloaded_files: Dict[str, Path] = {}
+    downloaded_files: dict[str, Path] = {}
 
     for table_name, filename in OLIST_FILES.items():
         url = OLIST_BASE_URL + filename
@@ -82,7 +82,7 @@ def load_raw_estate(max_rows_per_table: int = 5000) -> Dict[str, Path]:
     return downloaded_files
 
 
-def init_duckdb_estate(db_path: Optional[Path] = None, force_recreate: bool = False) -> duckdb.DuckDBPyConnection:
+def init_duckdb_estate(db_path: Path | None = None, force_recreate: bool = False) -> duckdb.DuckDBPyConnection:
     """Initialize DuckDB database with raw tables and execute all transformation models."""
     target_path = db_path or ESTATE_DB_PATH
     target_path.parent.mkdir(parents=True, exist_ok=True)
@@ -132,7 +132,7 @@ def init_duckdb_estate(db_path: Optional[Path] = None, force_recreate: bool = Fa
     return conn
 
 
-def export_postgres_init_sql(output_sql_path: Optional[Path] = None) -> Path:
+def export_postgres_init_sql(output_sql_path: Path | None = None) -> Path:
     """Generate init_postgres.sql for docker-compose based on DuckDB estate tables."""
     target = output_sql_path or (DATA_DIR / "init_postgres.sql")
     target.parent.mkdir(parents=True, exist_ok=True)

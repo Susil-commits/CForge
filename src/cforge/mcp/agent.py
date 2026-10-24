@@ -1,23 +1,25 @@
 """Policy-Aware 'Talk to Data' Agent powered by ContextForge MCP."""
 
-from typing import Dict, List, Any, Optional
 import re
+from typing import Any
+
 import duckdb
 from pydantic import BaseModel, Field
+
 from cforge.config import ESTATE_DB_PATH
+from cforge.llm.client import LLMClient
 from cforge.mcp.server import MCPServer
-from cforge.llm.client import LLMClient, LLMAuthenticationError
 
 
 class AgentResponse(BaseModel):
     question: str
     caller_role: str
     status: str  # SUCCESS, REFUSED_BY_POLICY, MASKED_RESULT
-    policy_citation: Optional[str] = None
-    sql_generated: Optional[str] = None
-    data_result: Optional[List[Dict[str, Any]]] = None
+    policy_citation: str | None = None
+    sql_generated: str | None = None
+    data_result: list[dict[str, Any]] | None = None
     explanation: str
-    tools_called: List[str] = Field(default_factory=list)
+    tools_called: list[str] = Field(default_factory=list)
 
 
 def clean_sql_output(raw_text: str) -> str:
@@ -28,10 +30,9 @@ def clean_sql_output(raw_text: str) -> str:
         query = match.group(1).strip()
     else:
         query = raw
-    lines = [l for l in query.splitlines() if not l.strip().startswith("--")]
+    lines = [line for line in query.splitlines() if not line.strip().startswith("--")]
     clean = " ".join(lines).strip()
-    if clean.endswith(";"):
-        clean = clean[:-1]
+    clean = clean.removesuffix(";")
     return clean
 
 
@@ -45,7 +46,7 @@ class TalkToDataAgent:
         "Return ONLY the SQL query inside ```sql ... ``` code block. Do NOT include extraneous markdown commentary."
     )
 
-    def __init__(self, mcp_server: Optional[MCPServer] = None, estate_db_path: Optional[str] = None, model_name: Optional[str] = None):
+    def __init__(self, mcp_server: MCPServer | None = None, estate_db_path: str | None = None, model_name: str | None = None):
         self.mcp = mcp_server or MCPServer()
         self.estate_path = estate_db_path or str(ESTATE_DB_PATH)
         self.client = LLMClient(model_name=model_name)

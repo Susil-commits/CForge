@@ -1,9 +1,8 @@
 """Test Suite for Step 6: Data Quality Loop and Defect Catch Rate."""
 
-import pytest
 from cforge.enrichment.quality_proposer import SuggestedRule
+from cforge.quality.injector import DefectCatchReport, DefectInjector
 from cforge.quality.runner import QualityRunner, TableQualityReport
-from cforge.quality.injector import DefectInjector, DefectCatchReport
 
 
 def test_quality_runner_on_clean_estate():

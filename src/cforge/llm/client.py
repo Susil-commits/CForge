@@ -6,11 +6,12 @@ import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Generic, Optional, Type, TypeVar
+from typing import Any, Generic, TypeVar
+
 from pydantic import BaseModel, ValidationError
 
 from cforge.config import PROJECT_ROOT
-from cforge.llm.cache import LLMDiskCache, CachedResponse
+from cforge.llm.cache import LLMDiskCache
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -41,7 +42,6 @@ DEFAULT_MODEL = "gemini-3.1-flash-lite"
 
 class LLMAuthenticationError(Exception):
     """Raised when an LLM API call is attempted without configured credentials."""
-    pass
 
 
 @dataclass
@@ -67,7 +67,7 @@ class TextLLMResponse:
     model: str
 
 
-def extract_json_from_text(text: str) -> Dict[str, Any]:
+def extract_json_from_text(text: str) -> dict[str, Any]:
     """Extract and parse JSON object from raw LLM text output."""
     text = text.strip()
     fence_match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
@@ -86,7 +86,7 @@ def extract_json_from_text(text: str) -> Dict[str, Any]:
 class LLMClient:
     """Unified LLM Client providing JSON-schema validation, token accounting, and disk caching."""
 
-    def __init__(self, model_name: Optional[str] = None, cache_path: Optional[Path] = None):
+    def __init__(self, model_name: str | None = None, cache_path: Path | None = None):
         self.cache = LLMDiskCache(cache_path)
         self._gemini_client = None
         self._anthropic_client = None
@@ -106,7 +106,7 @@ class LLMClient:
         else:
             self.model = DEFAULT_MODEL
 
-    def _get_key(self, var_name: str) -> Optional[str]:
+    def _get_key(self, var_name: str) -> str | None:
         # Check environment
         val = os.getenv(var_name)
         if val:
@@ -168,8 +168,8 @@ class LLMClient:
         self,
         system_prompt: str,
         user_prompt: str,
-        response_model: Type[T],
-        model: Optional[str] = None
+        response_model: type[T],
+        model: str | None = None
     ) -> StructuredLLMResponse[T]:
         """Generate structured data strictly validated against a Pydantic schema."""
         target_model = model or self.model
@@ -283,7 +283,7 @@ class LLMClient:
         self,
         system_prompt: str,
         user_prompt: str,
-        model: Optional[str] = None
+        model: str | None = None
     ) -> TextLLMResponse:
         """Generate text/SQL response with real token and cost accounting."""
         target_model = model or self.model

@@ -4,23 +4,21 @@ Exposes REST endpoints for the 4-screen UI: Lineage Graph, Asset Explorer,
 Approval Queue, and Benchmark Dashboard.
 """
 
-from typing import Dict, List, Any, Optional
-from pathlib import Path
-from fastapi import FastAPI, HTTPException, Query
+import json
+import os
+
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-import os
-import json
-from cforge.config import PROJECT_ROOT, BENCHMARK_PATH, BENCHMARK_JSON_PATH
 from cforge.catalog.store import MetadataStore
-from cforge.mcp.server import MCPServer
-from cforge.mcp.agent import TalkToDataAgent
-from cforge.governance.engine import PolicyEngine
-from cforge.governance.approval import ApprovalQueue
-from cforge.eval.runner import run_full_evaluation
+from cforge.config import BENCHMARK_JSON_PATH, BENCHMARK_PATH, PROJECT_ROOT
 from cforge.eval.ablations import run_ablation_benchmarks
+from cforge.governance.approval import ApprovalQueue
+from cforge.governance.engine import PolicyEngine
+from cforge.mcp.agent import TalkToDataAgent
+from cforge.mcp.server import MCPServer
 
 app = FastAPI(
     title="ContextForge API",
@@ -67,7 +65,7 @@ approval_queue.submit_proposal(
 class ReviewRequest(BaseModel):
     steward_name: str
     decision: str  # APPROVE or REJECT
-    notes: Optional[str] = "Reviewed via ContextForge Governance Console"
+    notes: str | None = "Reviewed via ContextForge Governance Console"
 
 
 class ChatRequest(BaseModel):
@@ -189,7 +187,7 @@ def get_lineage_graph():
 
 
 @app.get("/api/assets")
-def list_assets(query: Optional[str] = None, pii_only: bool = False):
+def list_assets(query: str | None = None, pii_only: bool = False):
     """List assets with raw technical metadata vs enriched context comparison."""
     with store.lock:
         sql = """

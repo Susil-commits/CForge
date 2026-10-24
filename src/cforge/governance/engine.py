@@ -3,10 +3,12 @@
 Evaluates YAML-defined policies prior to any catalog writes and flags violations or approval gates.
 """
 
-from typing import Dict, List, Any, Optional
 from pathlib import Path
+from typing import Any
+
 import yaml
 from pydantic import BaseModel, Field
+
 from cforge.config import POLICIES_PATH
 
 
@@ -22,27 +24,27 @@ class PolicyEvaluationResult(BaseModel):
     passed: bool
     can_write: bool
     requires_approval: bool
-    approval_reasons: List[str] = Field(default_factory=list)
-    violations: List[PolicyViolation] = Field(default_factory=list)
+    approval_reasons: list[str] = Field(default_factory=list)
+    violations: list[PolicyViolation] = Field(default_factory=list)
     policies_checked_count: int
 
 
 class PolicyEngine:
-    def __init__(self, policies_file: Optional[Path] = None):
+    def __init__(self, policies_file: Path | None = None):
         self.policies_path = policies_file or POLICIES_PATH
         self.policies = self._load_policies()
 
-    def _load_policies(self) -> List[Dict[str, Any]]:
+    def _load_policies(self) -> list[dict[str, Any]]:
         if not self.policies_path.exists():
             return []
         with open(self.policies_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
             return data.get("policies", [])
 
-    def evaluate_write_proposal(self, proposal: Dict[str, Any]) -> PolicyEvaluationResult:
+    def evaluate_write_proposal(self, proposal: dict[str, Any]) -> PolicyEvaluationResult:
         """Evaluate a candidate write proposal against all active policies."""
-        violations: List[PolicyViolation] = []
-        approval_reasons: List[str] = []
+        violations: list[PolicyViolation] = []
+        approval_reasons: list[str] = []
         requires_approval = False
         blocked = False
 

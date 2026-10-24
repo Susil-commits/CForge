@@ -2,6 +2,7 @@
 
 import csv
 from pathlib import Path
+
 from cforge.config import GOLD_LABELS_PATH
 
 LABELS = [

@@ -1,10 +1,11 @@
 """Immutable Cryptographic Audit Trail for Governance Actions."""
 
-from typing import Dict, List, Any, Optional
-from datetime import datetime, timezone
 import hashlib
 import json
-from pydantic import BaseModel, Field
+from datetime import datetime, timezone
+from typing import Any
+
+from pydantic import BaseModel
 
 
 class AuditRecord(BaseModel):
@@ -15,15 +16,15 @@ class AuditRecord(BaseModel):
     actor: str
     asset_id: str
     action: str
-    policy_ids_evaluated: List[str]
-    before_state: Optional[Dict[str, Any]]
-    after_state: Dict[str, Any]
-    diff: Dict[str, Any]
+    policy_ids_evaluated: list[str]
+    before_state: dict[str, Any] | None
+    after_state: dict[str, Any]
+    diff: dict[str, Any]
 
 
 class ImmutableAuditLog:
     def __init__(self):
-        self.chain: List[AuditRecord] = []
+        self.chain: list[AuditRecord] = []
         self._genesis()
 
     def _genesis(self):
@@ -43,16 +44,16 @@ class ImmutableAuditLog:
         ))
 
     def append(self, actor: str, asset_id: str, action: str,
-               policies_evaluated: List[str],
-               before_state: Optional[Dict[str, Any]],
-               after_state: Dict[str, Any]) -> AuditRecord:
+               policies_evaluated: list[str],
+               before_state: dict[str, Any] | None,
+               after_state: dict[str, Any]) -> AuditRecord:
         """Append an immutable audit entry with SHA-256 hash chaining."""
         prev_record = self.chain[-1]
         rec_id = len(self.chain)
         t_now = datetime.now(timezone.utc).isoformat()
 
         # Compute field diff
-        diff: Dict[str, Any] = {}
+        diff: dict[str, Any] = {}
         if before_state:
             for k, v in after_state.items():
                 if before_state.get(k) != v:

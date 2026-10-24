@@ -1,37 +1,132 @@
-name: ContextForge CI
+name: ContextForge Enterprise CI
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  # ========================================================
+  # STAGE 1: Security & Secret Leak Prevention Gate
+  # ========================================================
+  security-gate:
+    name: Security & Secret Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Verify Sensitive Files Excluded
+        run: |
+          echo "Verifying no credentials or private environment files are tracked..."
+          if git ls-files | grep -E '(\.env$|\.pem$|\.key$|id_rsa|\.duckdb$)'; then
+            echo "::error::Sensitive files detected in Git tree!"
+            exit 1
+          fi
+          echo "[OK] No sensitive credentials or binaries found in Git tree."
+
+      - name: Verify Gitignore Invariants
+        run: |
+          test -f .gitignore || { echo "::error::Missing .gitignore"; exit 1; }
+          grep -q "\.env" .gitignore || { echo "::error::.env not in .gitignore"; exit 1; }
+          grep -q "\.duckdb" .gitignore || { echo "::error::.duckdb not in .gitignore"; exit 1; }
+          echo "[OK] .gitignore security invariants verified."
+
+  # ========================================================
+  # STAGE 2: Code Quality & Static Analysis Gate
+  # ========================================================
+  code-quality:
+    name: Code Quality & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install Linting Tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+
+      - name: Run Ruff Static Analysis
+        run: |
+          ruff check src/ tests/ --select E,F,W --ignore E501,W291,W292,W293,BLE001,RUF,TRY,SIM,S110,F841 --output-format=github
+
+  # ========================================================
+  # STAGE 3: Test Suite & Coverage Matrix
+  # ========================================================
+  test-suite:
+    name: Test Matrix (Python ${{ matrix.python-version }})
+    needs: [security-gate, code-quality]
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.11", "3.12"]
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -e .
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          pip install -e ".[dev]"
 
-    - name: Run Test Suite Across All Steps
-      run: |
-        pytest tests/ -v --durations=10
+      - name: Execute Full Test Suite & Coverage
+        run: |
+          pytest tests/ -v \
+            --durations=10 \
+            --cov=cforge \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml
 
-    - name: Execute Benchmark Harness
-      run: |
-        python -m cforge.eval.runner
+      - name: Run ContextForge Evaluation Harness
+        run: |
+          python -m cforge.eval.runner
+
+      - name: Validate Benchmark Artifacts
+        run: |
+          test -f results/benchmark_report.md || { echo "::error::Missing benchmark_report.md"; exit 1; }
+          echo "[OK] Evaluation benchmark artifacts generated and verified."
+
+  # ========================================================
+  # STAGE 4: Container Build & Artifact Packaging Gate
+  # ========================================================
+  container-build:
+    name: Docker Container Build
+    needs: [test-suite]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: actions/setup-buildx-action@v3
+
+      - name: Build Container Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: contextforge:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -4,9 +4,9 @@ Executes quality validation rules against DuckDB/PostgreSQL, computes asset qual
 and attaches verification metrics to catalog assets.
 """
 
-from typing import Dict, List, Any, Optional
 import duckdb
 from pydantic import BaseModel, Field
+
 from cforge.config import ESTATE_DB_PATH
 from cforge.enrichment.quality_proposer import SuggestedRule
 
@@ -28,11 +28,11 @@ class TableQualityReport(BaseModel):
     failed_rules: int
     quality_score: float
     can_certify: bool
-    rule_results: List[RuleExecutionResult] = Field(default_factory=list)
+    rule_results: list[RuleExecutionResult] = Field(default_factory=list)
 
 
 class QualityRunner:
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: str | None = None):
         self.db_path = str(db_path or ESTATE_DB_PATH)
 
     def execute_rule(self, conn: duckdb.DuckDBPyConnection, table_name: str, rule: SuggestedRule) -> RuleExecutionResult:
@@ -93,10 +93,10 @@ class QualityRunner:
             details=details
         )
 
-    def evaluate_table_quality(self, table_name: str, rules: List[SuggestedRule]) -> TableQualityReport:
+    def evaluate_table_quality(self, table_name: str, rules: list[SuggestedRule]) -> TableQualityReport:
         """Run all quality rules for a table and compute weighted quality score."""
         conn = duckdb.connect(self.db_path, read_only=True)
-        results: List[RuleExecutionResult] = []
+        results: list[RuleExecutionResult] = []
 
         if not rules:
             return TableQualityReport(

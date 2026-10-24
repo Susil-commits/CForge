@@ -3,17 +3,16 @@
 Provides both an LLM-powered agent with schema validation and a heuristic baseline agent.
 """
 
-from typing import List, Dict, Any, Optional
-import os
 from pydantic import BaseModel, Field
+
 from cforge.enrichment.profiler import ColumnProfile
-from cforge.llm.client import LLMClient, LLMAuthenticationError
+from cforge.llm.client import LLMAuthenticationError, LLMClient
 
 
 class DescriptionResult(BaseModel):
     description: str = Field(description="Clear business description of what the column stores.")
     confidence: float = Field(ge=0.0, le=1.0, description="Confidence score between 0.0 and 1.0.")
-    evidence: List[str] = Field(description="List of verifiable facts grounding this description.")
+    evidence: list[str] = Field(description="List of verifiable facts grounding this description.")
     reasoning: str = Field(description="Step-by-step rationale linking evidence to description.")
 
 
@@ -23,12 +22,12 @@ class HeuristicDescriberAgent:
     def __init__(self, model_name: str = "heuristic-rule-baseline"):
         self.model_name = model_name
 
-    def describe(self, profile: ColumnProfile, lineage_upstream: Optional[List[str]] = None) -> DescriptionResult:
+    def describe(self, profile: ColumnProfile, lineage_upstream: list[str] | None = None) -> DescriptionResult:
         """Generate structured business description grounded in statistical heuristics."""
         table = profile.table_name.lower()
         col = profile.column_name.lower()
         data_type = profile.data_type
-        evidence: List[str] = []
+        evidence: list[str] = []
 
         evidence.append(f"Data type is {data_type} with {profile.total_rows} total rows and {profile.null_percentage}% nulls.")
         evidence.append(f"Distinct cardinality: {profile.distinct_count} unique values (cardinality ratio: {profile.cardinality_ratio}).")
@@ -52,11 +51,11 @@ class HeuristicDescriberAgent:
                 reasoning = "Column name contains 'id' and profile confirms 100% unique cardinality."
                 confidence = 0.96
             else:
-                desc = f"Foreign key reference identifier associating records with upstream entity."
+                desc = "Foreign key reference identifier associating records with upstream entity."
                 reasoning = "Column contains 'id' with non-unique distribution indicating relational foreign key."
                 confidence = 0.92
         elif any(t in col for t in ["price", "amount", "revenue", "spend", "value", "freight", "total", "brl", "cost", "gmv", "ticket"]) or "NUMERIC_CURRENCY_PATTERN" in profile.detected_patterns:
-            desc = f"Monetary currency value representing transaction amount in Brazilian Real (BRL)."
+            desc = "Monetary currency value representing transaction amount in Brazilian Real (BRL)."
             reasoning = f"Numeric data type {data_type} with column name or patterns denoting financial currency."
             confidence = 0.94
         elif any(t in col for t in ["date", "time", "timestamp", "at"]):
@@ -64,11 +63,11 @@ class HeuristicDescriberAgent:
             reasoning = "Temporal column name and ISO timestamp patterns in data distribution."
             confidence = 0.95
         elif any(t in col for t in ["city", "state", "zip", "postal", "geo"]):
-            desc = f"Geographic spatial location attribute defining territorial boundary or routing."
+            desc = "Geographic spatial location attribute defining territorial boundary or routing."
             reasoning = "Spatial naming and discrete regional cardinality."
             confidence = 0.93
         elif any(t in col for t in ["score", "rating", "satisfaction"]):
-            desc = f"Numerical satisfaction assessment metric evaluating customer fulfillment experience."
+            desc = "Numerical satisfaction assessment metric evaluating customer fulfillment experience."
             reasoning = f"Bounded metric range {profile.min_value} to {profile.max_value} matching survey CSAT scales."
             confidence = 0.94
         else:
@@ -95,10 +94,10 @@ class LLMDescriberAgent:
         "Never hallucinate unobserved data."
     )
 
-    def __init__(self, model_name: Optional[str] = None):
+    def __init__(self, model_name: str | None = None):
         self.client = LLMClient(model_name=model_name)
 
-    def describe(self, profile: ColumnProfile, lineage_upstream: Optional[List[str]] = None) -> DescriptionResult:
+    def describe(self, profile: ColumnProfile, lineage_upstream: list[str] | None = None) -> DescriptionResult:
         """Call LLM with JSON-schema validation to generate grounded column description."""
         user_prompt = f"""Table: {profile.table_name}
 Column: {profile.column_name}
@@ -134,7 +133,7 @@ class DescriberAgent:
         self.heuristic_agent = HeuristicDescriberAgent(model_name)
         self.llm_agent = LLMDescriberAgent()
 
-    def describe(self, profile: ColumnProfile, lineage_upstream: Optional[List[str]] = None) -> DescriptionResult:
+    def describe(self, profile: ColumnProfile, lineage_upstream: list[str] | None = None) -> DescriptionResult:
         if self.mode == "heuristic":
             return self.heuristic_agent.describe(profile, lineage_upstream)
         

@@ -1,6 +1,7 @@
 """Governance Evaluation: Adversarial Attack Block Rate and Benign False Refusal Rate."""
 
-from typing import Dict, List, Any
+from typing import Any
+
 from cforge.mcp.agent import TalkToDataAgent
 
 ADVERSARIAL_PROMPTS = [
@@ -58,7 +59,7 @@ BENIGN_CONTROL_PROMPTS = [
 ]
 
 
-def evaluate_governance_block_rate() -> Dict[str, Any]:
+def evaluate_governance_block_rate() -> dict[str, Any]:
     """Test policy-aware agent against adversarial attacks and benign control prompts for role ANALYST."""
     agent = TalkToDataAgent()
     

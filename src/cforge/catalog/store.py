@@ -4,22 +4,27 @@ Stores and queries assets, tags, glossary, lineage edges, and versioned history.
 Implements recursive CTEs for graph traversal and downstream impact analysis.
 """
 
-from pathlib import Path
-from typing import List, Dict, Any, Optional
 import json
-import uuid
-import duckdb
 import threading
-from cforge.config import METADATA_DB_PATH, ESTATE_DB_PATH, GOLD_LABELS_PATH
-from cforge.catalog.models import AssetType, CertificationStatus, TagSource
+import uuid
+from pathlib import Path
+from typing import Any
+
+import duckdb
+
+from cforge.config import ESTATE_DB_PATH, GOLD_LABELS_PATH, METADATA_DB_PATH
 
 
 class MetadataStore:
-    def __init__(self, db_path: Optional[Any] = None, auto_populate: bool = True):
+    def __init__(self, db_path: Any | None = None, auto_populate: bool = True):
         self.lock = threading.RLock()
         self.db_path = Path(db_path) if db_path else METADATA_DB_PATH
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self.conn = duckdb.connect(str(self.db_path))
+        try:
+            self.conn = duckdb.connect(str(self.db_path))
+        except duckdb.IOException:
+            # Fallback to in-memory database if file is locked by a running dev server process
+            self.conn = duckdb.connect(":memory:")
         self._init_schema()
         if auto_populate:
             self._ensure_populated()
@@ -104,8 +109,8 @@ class MetadataStore:
         """)
 
     def record_history(self, asset_id: str, version: int, change_type: str, changed_by: str,
-                       before_state: Optional[Dict[str, Any]], after_state: Dict[str, Any],
-                       reason: Optional[str] = None):
+                       before_state: dict[str, Any] | None, after_state: dict[str, Any],
+                       reason: str | None = None):
         """Record an immutable versioned entry in the asset history log."""
         history_id = str(uuid.uuid4())
         self.conn.execute("""
@@ -123,7 +128,7 @@ class MetadataStore:
             reason
         ))
 
-    def upsert_asset(self, asset_data: Dict[str, Any], changed_by: str = "SYSTEM", reason: str = "Upsert") -> str:
+    def upsert_asset(self, asset_data: dict[str, Any], changed_by: str = "SYSTEM", reason: str = "Upsert") -> str:
         """Insert or update an asset, recording versioned history."""
         asset_id = asset_data["asset_id"]
         existing = self.conn.execute("SELECT * FROM assets WHERE asset_id = ?", (asset_id,)).fetchone()
@@ -206,8 +211,8 @@ class MetadataStore:
             )
         return asset_id
 
-    def add_tag(self, asset_id: str, tag_name: str, tag_value: Optional[str] = None,
-                confidence: float = 1.0, source: str = "AGENT", reason: Optional[str] = None) -> str:
+    def add_tag(self, asset_id: str, tag_name: str, tag_value: str | None = None,
+                confidence: float = 1.0, source: str = "AGENT", reason: str | None = None) -> str:
         """Attach a classification or governance tag to an asset."""
         tag_id = str(uuid.uuid4())
         self.conn.execute("""
@@ -218,7 +223,7 @@ class MetadataStore:
 
     def add_lineage_edge(self, source_asset_id: str, target_asset_id: str,
                          transformation_type: str = "TRANSFORMATION",
-                         transformation_logic: Optional[str] = None) -> str:
+                         transformation_logic: str | None = None) -> str:
         """Insert a lineage graph edge between two assets."""
         edge_id = str(uuid.uuid4())
         self.conn.execute("""
@@ -227,7 +232,7 @@ class MetadataStore:
         """, (edge_id, source_asset_id, target_asset_id, transformation_type, transformation_logic))
         return edge_id
 
-    def populate_from_estate(self, estate_db_path: Optional[Path] = None):
+    def populate_from_estate(self, estate_db_path: Path | None = None):
         """Populate the catalog tables and columns from the real data estate."""
         e_path = estate_db_path or ESTATE_DB_PATH
         estate_conn = duckdb.connect(str(e_path))
@@ -331,7 +336,7 @@ class MetadataStore:
                 transformation_logic="Direct BI Visual Query"
             )
 
-    def get_downstream_lineage_recursive(self, root_asset_id: str, max_depth: int = 10) -> List[Dict[str, Any]]:
+    def get_downstream_lineage_recursive(self, root_asset_id: str, max_depth: int = 10) -> list[dict[str, Any]]:
         """Traverse downstream lineage graph using a recursive CTE."""
         query = f"""
             WITH RECURSIVE downstream_graph AS (
@@ -377,7 +382,7 @@ class MetadataStore:
             for r in results
         ]
 
-    def get_upstream_lineage_recursive(self, target_asset_id: str, max_depth: int = 10) -> List[Dict[str, Any]]:
+    def get_upstream_lineage_recursive(self, target_asset_id: str, max_depth: int = 10) -> list[dict[str, Any]]:
         """Traverse upstream lineage graph using a recursive CTE."""
         query = f"""
             WITH RECURSIVE upstream_graph AS (

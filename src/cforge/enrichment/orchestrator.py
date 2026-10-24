@@ -1,16 +1,17 @@
 """Multi-Agent Parallel Orchestrator with Token, Latency, and Cost Accounting."""
 
-from typing import Dict, List, Any, Optional
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import duckdb
 from pydantic import BaseModel, Field
+
 from cforge.config import ESTATE_DB_PATH
-from cforge.enrichment.profiler import EstateProfiler, ColumnProfile
-from cforge.enrichment.describer import DescriberAgent, DescriptionResult
-from cforge.enrichment.classifier import ClassifierAgent, ClassificationResult
-from cforge.enrichment.glossary_mapper import GlossaryMapperAgent, GlossaryMappingResult
-from cforge.enrichment.quality_proposer import QualityProposerAgent, QualityProposalResult
+from cforge.enrichment.classifier import ClassifierAgent
+from cforge.enrichment.describer import DescriberAgent
+from cforge.enrichment.glossary_mapper import GlossaryMapperAgent
+from cforge.enrichment.profiler import EstateProfiler
+from cforge.enrichment.quality_proposer import QualityProposerAgent
 from cforge.enrichment.reconciler import EnrichmentReconciler, ReconciledEnrichment
 
 
@@ -33,7 +34,7 @@ class EstateEnrichmentSummary(BaseModel):
     queued_for_review_count: int
     reconciliation_flags_count: int
     summary_message: str
-    telemetry: List[AssetEnrichmentTelemetry] = Field(default_factory=list)
+    telemetry: list[AssetEnrichmentTelemetry] = Field(default_factory=list)
 
 
 class MultiAgentOrchestrator:
@@ -41,7 +42,7 @@ class MultiAgentOrchestrator:
     COST_PER_1K_INPUT = 0.00015
     COST_PER_1K_OUTPUT = 0.00060
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: str | None = None):
         self.profiler = EstateProfiler(db_path or str(ESTATE_DB_PATH))
         self.describer = DescriberAgent()
         self.classifier = ClassifierAgent()
@@ -50,7 +51,7 @@ class MultiAgentOrchestrator:
         self.reconciler = EnrichmentReconciler()
 
     def enrich_column(self, table_name: str, column_name: str,
-                      upstream_lineage: Optional[List[str]] = None) -> AssetEnrichmentTelemetry:
+                      upstream_lineage: list[str] | None = None) -> AssetEnrichmentTelemetry:
         """Execute all 5 agents and reconciler for a single column with telemetry."""
         start_time = time.perf_counter()
 
@@ -88,20 +89,20 @@ class MultiAgentOrchestrator:
             reconciled=reconciled
         )
 
-    def enrich_estate(self, max_workers: int = 8, limit_tables: Optional[List[str]] = None) -> EstateEnrichmentSummary:
+    def enrich_estate(self, max_workers: int = 8, limit_tables: list[str] | None = None) -> EstateEnrichmentSummary:
         """Run multi-agent enrichment across the entire estate in parallel."""
         start_time = time.perf_counter()
         conn = duckdb.connect(self.profiler.db_path, read_only=True)
         all_tables = [r[0] for r in conn.execute("SHOW TABLES").fetchall()]
         
         target_tables = limit_tables if limit_tables else all_tables
-        tasks: List[tuple] = []
+        tasks: list[tuple] = []
         for t in target_tables:
             cols = [r[0] for r in conn.execute(f"DESCRIBE {t}").fetchall()]
             for c in cols:
                 tasks.append((t, c))
 
-        telemetries: List[AssetEnrichmentTelemetry] = []
+        telemetries: list[AssetEnrichmentTelemetry] = []
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_col = {
                 executor.submit(self.enrich_column, t, c): (t, c)

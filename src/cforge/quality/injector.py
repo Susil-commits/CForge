@@ -4,14 +4,15 @@ Injects controlled defects (nulls, duplicates, out-of-range values) into a sandb
 and validates how many anomalies are successfully caught by automated quality rules.
 """
 
-from typing import Dict, List, Any, Optional, Tuple
-from pathlib import Path
 import shutil
+from pathlib import Path
+
 import duckdb
 from pydantic import BaseModel, Field
-from cforge.config import ESTATE_DB_PATH, DATA_DIR
+
+from cforge.config import DATA_DIR, ESTATE_DB_PATH
 from cforge.enrichment.quality_proposer import SuggestedRule
-from cforge.quality.runner import QualityRunner, TableQualityReport
+from cforge.quality.runner import QualityRunner
 
 
 class InjectedDefect(BaseModel):
@@ -30,11 +31,11 @@ class DefectCatchReport(BaseModel):
     false_positives: int
     catch_rate_percentage: float
     proof_message: str
-    injected_details: List[InjectedDefect] = Field(default_factory=list)
+    injected_details: list[InjectedDefect] = Field(default_factory=list)
 
 
 class DefectInjector:
-    def __init__(self, estate_db_path: Optional[Path] = None, sandbox_db_path: Optional[Path] = None):
+    def __init__(self, estate_db_path: Path | None = None, sandbox_db_path: Path | None = None):
         self.estate_path = estate_db_path or ESTATE_DB_PATH
         self.sandbox_path = sandbox_db_path or (DATA_DIR / "defect_sandbox.duckdb")
 
@@ -46,10 +47,10 @@ class DefectInjector:
         shutil.copy2(self.estate_path, self.sandbox_path)
         return self.sandbox_path
 
-    def inject_defects(self) -> List[InjectedDefect]:
+    def inject_defects(self) -> list[InjectedDefect]:
         """Inject known defects into the sandbox database."""
         conn = duckdb.connect(str(self.sandbox_path))
-        defects: List[InjectedDefect] = []
+        defects: list[InjectedDefect] = []
 
         # Defect 1: Inject NULL into non-nullable order_id in stg_orders
         conn.execute("""
@@ -179,7 +180,7 @@ class DefectInjector:
         defects = self.inject_defects()
 
         # Define quality rules expected to catch these defects
-        rules_suite: Dict[str, List[SuggestedRule]] = {
+        rules_suite: dict[str, list[SuggestedRule]] = {
             "stg_orders": [
                 SuggestedRule(rule_type="NOT_NULL", parameters={"column": "order_id"}, severity="ERROR", confidence=0.99, rationale="Order ID cannot be null.")
             ],

@@ -4,13 +4,12 @@ Scores catalog column descriptions against a 4-part rubric using an LLM Judge
 evaluating technical grounding, domain relevance, clarity, and hallucination detection.
 """
 
-from typing import Dict, List, Any, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 from cforge.enrichment.profiler import EstateProfiler
-from cforge.enrichment.describer import DescriberAgent
-from cforge.llm.client import LLMClient, LLMAuthenticationError
-
+from cforge.llm.client import LLMAuthenticationError, LLMClient
 
 # 30 representative estate columns evaluated across staging, dimensional, and mart layers
 BENCHMARK_COLUMNS = [
@@ -71,7 +70,7 @@ Rubric Dimensions:
 Calculate the overall_score as the arithmetic mean of technical_grounding, domain_relevance, and clarity (penalized by -1.5 if hallucination is detected).
 """
 
-    def __init__(self, model_name: Optional[str] = None):
+    def __init__(self, model_name: str | None = None):
         self.client = LLMClient(model_name=model_name)
 
     def evaluate_sample(
@@ -128,18 +127,18 @@ Evaluate this description and return your judgment adhering to the schema.
         )
 
 
-def evaluate_description_quality(use_llm: bool = False) -> Dict[str, Any]:
+def evaluate_description_quality(use_llm: bool = False) -> dict[str, Any]:
     """Score descriptions across 30 benchmark columns using the LLM Judge rubric."""
     from cforge.enrichment.describer import HeuristicDescriberAgent
     profiler = EstateProfiler()
     describer = HeuristicDescriberAgent()
     judge = DescriptionLLMJudge()
 
-    judge_scores: List[float] = []
-    grounding_scores: List[float] = []
-    relevance_scores: List[float] = []
-    clarity_scores: List[float] = []
-    hallucination_flags: List[bool] = []
+    judge_scores: list[float] = []
+    grounding_scores: list[float] = []
+    relevance_scores: list[float] = []
+    clarity_scores: list[float] = []
+    hallucination_flags: list[bool] = []
 
     for tbl, col in BENCHMARK_COLUMNS:
         try:

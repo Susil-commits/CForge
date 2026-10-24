@@ -1,13 +1,15 @@
 """Test Suite for Step 4: Multi-Agent Grounded Enrichment."""
 
-import pytest
-from cforge.enrichment.profiler import EstateProfiler, ColumnProfile
+from cforge.enrichment.classifier import ClassificationResult, ClassifierAgent
 from cforge.enrichment.describer import DescriberAgent, DescriptionResult
-from cforge.enrichment.classifier import ClassifierAgent, ClassificationResult
 from cforge.enrichment.glossary_mapper import GlossaryMapperAgent, GlossaryMappingResult
-from cforge.enrichment.quality_proposer import QualityProposerAgent, QualityProposalResult
-from cforge.enrichment.reconciler import EnrichmentReconciler
 from cforge.enrichment.orchestrator import MultiAgentOrchestrator
+from cforge.enrichment.profiler import ColumnProfile, EstateProfiler
+from cforge.enrichment.quality_proposer import (
+    QualityProposalResult,
+    QualityProposerAgent,
+)
+from cforge.enrichment.reconciler import EnrichmentReconciler
 
 
 def test_statistical_profiler_on_real_tables():

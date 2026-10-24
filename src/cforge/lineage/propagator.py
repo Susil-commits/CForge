@@ -4,8 +4,9 @@ Propagates sensitivity and classification tags (e.g. PII) downstream across colu
 with explainable reason chains and decay metrics.
 """
 
-from typing import Dict, List, Set, Tuple, Any, Optional
 from collections import deque
+from typing import Any
+
 from cforge.lineage.parser import ColumnLineageEdge
 
 
@@ -13,7 +14,7 @@ class PropagatedTag:
     def __init__(self, target_table: str, target_column: str,
                  tag_name: str, tag_value: str,
                  confidence: float, hop_count: int,
-                 reason_chain: List[str]):
+                 reason_chain: list[str]):
         self.target_table = target_table
         self.target_column = target_column
         self.tag_name = tag_name
@@ -22,7 +23,7 @@ class PropagatedTag:
         self.hop_count = hop_count
         self.reason_chain = reason_chain
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "target": f"{self.target_table}.{self.target_column}",
             "table_name": self.target_table,
@@ -37,13 +38,13 @@ class PropagatedTag:
 
 
 class LineagePropagator:
-    def __init__(self, edges: List[ColumnLineageEdge]):
+    def __init__(self, edges: list[ColumnLineageEdge]):
         self.edges = edges
         self._build_graph()
 
     def _build_graph(self):
         """Construct adjacency lists for column-level graph."""
-        self.downstream: Dict[str, List[ColumnLineageEdge]] = {}
+        self.downstream: dict[str, list[ColumnLineageEdge]] = {}
         for edge in self.edges:
             src_key = f"{edge.source_table}.{edge.source_column}"
             if src_key not in self.downstream:
@@ -52,11 +53,11 @@ class LineagePropagator:
 
     def propagate_tag(self, initial_table: str, initial_column: str,
                       tag_name: str = "PII", tag_value: str = "CONFIDENTIAL",
-                      initial_confidence: float = 1.0, max_hops: int = 6) -> List[PropagatedTag]:
+                      initial_confidence: float = 1.0, max_hops: int = 6) -> list[PropagatedTag]:
         """Trace tag downstream along column-level lineage graph."""
         root_key = f"{initial_table}.{initial_column}"
-        propagated_results: List[PropagatedTag] = []
-        visited: Set[str] = {root_key}
+        propagated_results: list[PropagatedTag] = []
+        visited: set[str] = {root_key}
 
         # Queue contains: (current_key, current_table, current_col, current_conf, hop_count, chain)
         queue = deque([(

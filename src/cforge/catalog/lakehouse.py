@@ -5,23 +5,25 @@ analytical SQL querying over metadata (lakehouse architecture).
 """
 
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Any
+
 import duckdb
-from cforge.config import LAKEHOUSE_DIR, METADATA_DB_PATH
+
 from cforge.catalog.store import MetadataStore
+from cforge.config import LAKEHOUSE_DIR, METADATA_DB_PATH
 
 
 class MetadataLakehouse:
-    def __init__(self, lakehouse_dir: Optional[Path] = None, metadata_db_path: Optional[Path] = None):
+    def __init__(self, lakehouse_dir: Path | None = None, metadata_db_path: Path | None = None):
         self.lakehouse_dir = lakehouse_dir or LAKEHOUSE_DIR
         self.lakehouse_dir.mkdir(parents=True, exist_ok=True)
         self.metadata_db_path = metadata_db_path or METADATA_DB_PATH
 
-    def export_lakehouse(self) -> Dict[str, Path]:
+    def export_lakehouse(self) -> dict[str, Path]:
         """Export all catalog tables to individual Parquet files."""
         store = MetadataStore(self.metadata_db_path)
         tables = ["assets", "tags", "glossary_terms", "asset_glossary_mappings", "lineage_edges", "asset_history"]
-        exported: Dict[str, Path] = {}
+        exported: dict[str, Path] = {}
 
         for table in tables:
             parquet_path = self.lakehouse_dir / f"{table}.parquet"
@@ -31,7 +33,7 @@ class MetadataLakehouse:
 
         return exported
 
-    def query(self, sql_query: str) -> List[tuple]:
+    def query(self, sql_query: str) -> list[tuple]:
         """Execute analytical SQL query directly against the Parquet metadata lakehouse."""
         conn = duckdb.connect()
         # Register views pointing directly to the Parquet files
@@ -43,7 +45,7 @@ class MetadataLakehouse:
         
         return conn.execute(sql_query).fetchall()
 
-    def query_certified_tables_with_pii_consumed_by_dashboards(self) -> List[Dict[str, Any]]:
+    def query_certified_tables_with_pii_consumed_by_dashboards(self) -> list[dict[str, Any]]:
         """Answers: 'Which certified tables contain PII and are consumed by dashboards?'
 
         Straight from the Parquet lakehouse export using DuckDB!

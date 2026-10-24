@@ -3,10 +3,10 @@
 Provides both an LLM-powered agent with schema validation and a heuristic baseline agent.
 """
 
-from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
+
 from cforge.enrichment.profiler import ColumnProfile
-from cforge.llm.client import LLMClient, LLMAuthenticationError
+from cforge.llm.client import LLMAuthenticationError, LLMClient
 
 
 class GlossaryMappingResult(BaseModel):
@@ -15,7 +15,7 @@ class GlossaryMappingResult(BaseModel):
     definition: str = Field(description="Standardized definition of the term.")
     is_new_term: bool = Field(description="True if the term is newly proposed.")
     confidence: float = Field(ge=0.0, le=1.0, description="Mapping confidence score.")
-    evidence: List[str] = Field(description="Evidence grounding this mapping.")
+    evidence: list[str] = Field(description="Evidence grounding this mapping.")
 
 
 KNOWN_TERMS = {
@@ -43,7 +43,7 @@ class HeuristicGlossaryMapperAgent:
     def map_term(self, profile: ColumnProfile) -> GlossaryMappingResult:
         """Map column to existing enterprise terms or propose an ontology term."""
         col = profile.column_name.lower()
-        evidence: List[str] = []
+        evidence: list[str] = []
 
         if col in KNOWN_TERMS:
             name, domain, defn = KNOWN_TERMS[col]
@@ -101,7 +101,7 @@ Approved Glossary Terms & Definitions:
 - Postal Code (Geography Domain): Postal routing prefix code.
 """
 
-    def __init__(self, model_name: Optional[str] = None):
+    def __init__(self, model_name: str | None = None):
         self.client = LLMClient(model_name=model_name)
 
     def map_term(self, profile: ColumnProfile) -> GlossaryMappingResult:

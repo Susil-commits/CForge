@@ -4,24 +4,28 @@ Executes all benchmarks and generates results/benchmark.md with real, reproducib
 No hardcoded metrics, no guaranteed-by-construction shortcuts.
 """
 
-from typing import Dict, Any
-from pathlib import Path
-from datetime import datetime, timezone
 import json
 import os
+from datetime import datetime, timezone
+from typing import Any
 
-from cforge.config import RESULTS_DIR, BENCHMARK_PATH, BENCHMARK_JSON_PATH, LLM_CACHE_PATH
-from cforge.eval.pii_eval import evaluate_pii_classification
-from cforge.eval.desc_eval import evaluate_description_quality
-from cforge.lineage.eval import evaluate_lineage_accuracy
-from cforge.quality.injector import DefectInjector
-from cforge.eval.sql_eval import TextToSQLEvaluator
-from cforge.eval.governance_eval import evaluate_governance_block_rate
+from cforge.config import (
+    BENCHMARK_JSON_PATH,
+    BENCHMARK_PATH,
+    LLM_CACHE_PATH,
+    RESULTS_DIR,
+)
 from cforge.eval.ablations import run_ablation_benchmarks
+from cforge.eval.desc_eval import evaluate_description_quality
+from cforge.eval.governance_eval import evaluate_governance_block_rate
+from cforge.eval.pii_eval import evaluate_pii_classification
+from cforge.eval.sql_eval import TextToSQLEvaluator
+from cforge.lineage.eval import evaluate_lineage_accuracy
 from cforge.llm.cache import LLMDiskCache
+from cforge.quality.injector import DefectInjector
 
 
-def run_full_evaluation() -> Dict[str, Any]:
+def run_full_evaluation() -> dict[str, Any]:
     """Execute all benchmarks and compute real metrics."""
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")

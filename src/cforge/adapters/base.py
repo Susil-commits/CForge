@@ -5,49 +5,41 @@ tags, business glossary terms, and column-level lineage with enterprise catalogs
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
-from cforge.catalog.models import Asset, Tag, GlossaryTerm, LineageEdge
+
+from cforge.catalog.models import Asset, GlossaryTerm, LineageEdge, Tag
 
 
 class BaseCatalogAdapter(ABC):
     """Abstract Base Class for enterprise catalog adapters (DataHub, OpenMetadata, Atlan, File)."""
 
     @abstractmethod
-    def pull_assets(self) -> List[Asset]:
+    def pull_assets(self) -> list[Asset]:
         """Retrieve all catalog assets from the target system."""
-        pass
 
     @abstractmethod
-    def push_assets(self, assets: List[Asset]) -> bool:
+    def push_assets(self, assets: list[Asset]) -> bool:
         """Publish assets to the target catalog system."""
-        pass
 
     @abstractmethod
-    def pull_tags(self) -> List[Tag]:
+    def pull_tags(self) -> list[Tag]:
         """Retrieve sensitivity and governance classifications."""
-        pass
 
     @abstractmethod
-    def push_tags(self, tags: List[Tag]) -> bool:
+    def push_tags(self, tags: list[Tag]) -> bool:
         """Publish classifications and governance tags."""
-        pass
 
     @abstractmethod
-    def pull_glossary(self) -> List[GlossaryTerm]:
+    def pull_glossary(self) -> list[GlossaryTerm]:
         """Retrieve business glossary terms."""
-        pass
 
     @abstractmethod
-    def push_glossary(self, terms: List[GlossaryTerm]) -> bool:
+    def push_glossary(self, terms: list[GlossaryTerm]) -> bool:
         """Publish business glossary terms."""
-        pass
 
     @abstractmethod
-    def pull_lineage(self) -> List[LineageEdge]:
+    def pull_lineage(self) -> list[LineageEdge]:
         """Retrieve column-level lineage graph edges."""
-        pass
 
     @abstractmethod
-    def push_lineage(self, edges: List[LineageEdge]) -> bool:
+    def push_lineage(self, edges: list[LineageEdge]) -> bool:
         """Publish lineage graph edges."""
-        pass

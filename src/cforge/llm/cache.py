@@ -7,7 +7,8 @@ import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
+
 from cforge.config import LLM_CACHE_PATH
 
 
@@ -16,7 +17,7 @@ class CachedResponse:
     cache_key: str
     model: str
     response_text: str
-    parsed_json: Optional[Dict[str, Any]]
+    parsed_json: dict[str, Any] | None
     input_tokens: int
     output_tokens: int
     latency_ms: float
@@ -29,7 +30,7 @@ class LLMDiskCache:
 
     _lock = threading.Lock()
 
-    def __init__(self, db_path: Optional[Path] = None):
+    def __init__(self, db_path: Path | None = None):
         self.db_path = Path(db_path or LLM_CACHE_PATH)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_db()
@@ -42,9 +43,8 @@ class LLMDiskCache:
         return conn
 
     def _init_db(self) -> None:
-        with self._lock:
-            with self._get_connection() as conn:
-                conn.execute("""
+        with self._lock, self._get_connection() as conn:
+            conn.execute("""
                     CREATE TABLE IF NOT EXISTS llm_cache (
                         cache_key TEXT PRIMARY KEY,
                         model TEXT NOT NULL,
@@ -60,20 +60,20 @@ class LLMDiskCache:
                         created_at TEXT NOT NULL
                     );
                 """)
-                conn.execute("""
+            conn.execute("""
                     CREATE INDEX IF NOT EXISTS idx_llm_cache_model 
                     ON llm_cache(model);
                 """)
-                conn.commit()
+            conn.commit()
 
     @staticmethod
-    def compute_key(model: str, system_prompt: str, user_prompt: str, schema_dict: Optional[Dict[str, Any]] = None) -> str:
+    def compute_key(model: str, system_prompt: str, user_prompt: str, schema_dict: dict[str, Any] | None = None) -> str:
         """Compute deterministic SHA-256 cache key from model, prompts, and schema."""
         schema_str = json.dumps(schema_dict, sort_keys=True) if schema_dict else ""
         content = f"{model.strip()}||{system_prompt.strip()}||{user_prompt.strip()}||{schema_str}"
         return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
-    def get(self, cache_key: str) -> Optional[CachedResponse]:
+    def get(self, cache_key: str) -> CachedResponse | None:
         """Retrieve cached response if available."""
         with self._get_connection() as conn:
             cursor = conn.execute(
@@ -102,9 +102,9 @@ class LLMDiskCache:
                 created_at=row["created_at"]
             )
 
-    def get_by_prompt(self, system_prompt: str, user_prompt: str) -> Optional[CachedResponse]:
+    def get_by_prompt(self, system_prompt: str, user_prompt: str) -> CachedResponse | None:
         """Retrieve cached response by prompt content if model-specific cache key missed."""
-        prompt_hash = hashlib.sha256(f"{system_prompt.strip()}||{user_prompt.strip()}".encode("utf-8")).hexdigest()
+        prompt_hash = hashlib.sha256(f"{system_prompt.strip()}||{user_prompt.strip()}".encode()).hexdigest()
         with self._get_connection() as conn:
             cursor = conn.execute(
                 "SELECT * FROM llm_cache WHERE prompt_hash = ? ORDER BY created_at DESC LIMIT 1",
@@ -140,36 +140,35 @@ class LLMDiskCache:
         system_prompt: str,
         user_prompt: str,
         response_text: str,
-        parsed_json: Optional[Dict[str, Any]],
+        parsed_json: dict[str, Any] | None,
         input_tokens: int,
         output_tokens: int,
         latency_ms: float,
         cost_usd: float
     ) -> None:
         """Save response and telemetry to disk cache."""
-        prompt_hash = hashlib.sha256(f"{system_prompt}||{user_prompt}".encode("utf-8")).hexdigest()
+        prompt_hash = hashlib.sha256(f"{system_prompt}||{user_prompt}".encode()).hexdigest()
         parsed_str = json.dumps(parsed_json) if parsed_json is not None else None
         now_utc = datetime.now(timezone.utc).isoformat()
 
-        with self._lock:
-            with self._get_connection() as conn:
-                conn.execute(
-                    """
+        with self._lock, self._get_connection() as conn:
+            conn.execute(
+                """
                     INSERT OR REPLACE INTO llm_cache 
                     (cache_key, model, prompt_hash, system_prompt, user_prompt, 
                      response_text, parsed_json, input_tokens, output_tokens, 
                      latency_ms, cost_usd, created_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
-                    (
-                        cache_key, model, prompt_hash, system_prompt, user_prompt,
-                        response_text, parsed_str, input_tokens, output_tokens,
-                        round(latency_ms, 2), round(cost_usd, 6), now_utc
-                    )
+                (
+                    cache_key, model, prompt_hash, system_prompt, user_prompt,
+                    response_text, parsed_str, input_tokens, output_tokens,
+                    round(latency_ms, 2), round(cost_usd, 6), now_utc
                 )
-                conn.commit()
+            )
+            conn.commit()
 
-    def stats(self, model: Optional[str] = None) -> Dict[str, Any]:
+    def stats(self, model: str | None = None) -> dict[str, Any]:
         """Aggregate total cached calls, tokens, latency, and cost, optionally filtered by model."""
         query = """
             SELECT 

@@ -3,15 +3,17 @@
 Provides both an LLM-powered agent with schema validation and a heuristic baseline agent.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
+
 from cforge.enrichment.profiler import ColumnProfile
-from cforge.llm.client import LLMClient, LLMAuthenticationError
+from cforge.llm.client import LLMAuthenticationError, LLMClient
 
 
 class SuggestedRule(BaseModel):
     rule_type: str = Field(description="Type: NOT_NULL, UNIQUE, RANGE_CHECK, PATTERN_MATCH, REFERENTIAL_INTEGRITY.")
-    parameters: Dict[str, Any] = Field(default_factory=dict, description="Rule arguments and thresholds.")
+    parameters: dict[str, Any] = Field(default_factory=dict, description="Rule arguments and thresholds.")
     severity: str = Field(description="Enforcement severity: ERROR or WARNING.")
     confidence: float = Field(ge=0.0, le=1.0, description="Proposal confidence score.")
     rationale: str = Field(description="Mathematical and contextual justification for the rule.")
@@ -19,9 +21,9 @@ class SuggestedRule(BaseModel):
 
 class QualityProposalResult(BaseModel):
     column_name: str
-    suggested_rules: List[SuggestedRule]
+    suggested_rules: list[SuggestedRule]
     confidence: float
-    evidence: List[str]
+    evidence: list[str]
 
 
 class HeuristicQualityProposerAgent:
@@ -32,8 +34,8 @@ class HeuristicQualityProposerAgent:
 
     def propose_rules(self, profile: ColumnProfile) -> QualityProposalResult:
         """Propose automated data quality checks based on distribution statistics."""
-        rules: List[SuggestedRule] = []
-        evidence: List[str] = []
+        rules: list[SuggestedRule] = []
+        evidence: list[str] = []
 
         if profile.null_count == 0 and profile.total_rows > 0:
             rules.append(SuggestedRule(
@@ -100,7 +102,7 @@ Inspect the column profile statistics (null rates, uniqueness, numeric ranges, r
 Ensure all thresholds are mathematically grounded in the observed distribution.
 """
 
-    def __init__(self, model_name: Optional[str] = None):
+    def __init__(self, model_name: str | None = None):
         self.client = LLMClient(model_name=model_name)
 
     def propose_rules(self, profile: ColumnProfile) -> QualityProposalResult:

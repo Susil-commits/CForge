@@ -6,11 +6,12 @@ strictly against the Gold SQL benchmark. The Gold SQL is NEVER provided to the L
 
 import json
 import re
-from typing import Dict, List, Any, Optional
+from typing import Any
+
 import duckdb
 
 from cforge.config import BUSINESS_QUESTIONS_PATH, ESTATE_DB_PATH
-from cforge.llm.client import LLMClient, LLMAuthenticationError
+from cforge.llm.client import LLMAuthenticationError, LLMClient
 
 
 def normalize_val(v: Any) -> str:
@@ -22,7 +23,7 @@ def normalize_val(v: Any) -> str:
     return str(v).strip().lower()
 
 
-def compare_execution_results(res1: List[tuple], res2: List[tuple]) -> bool:
+def compare_execution_results(res1: list[tuple], res2: list[tuple]) -> bool:
     """Compare two SQL execution outputs for equivalence (order-agnostic)."""
     if len(res1) != len(res2):
         return False
@@ -47,10 +48,9 @@ def clean_sql(raw_text: str) -> str:
         query = raw_text
     
     # Strip trailing semicolons or markdown noise
-    lines = [l for l in query.splitlines() if not l.strip().startswith("--")]
+    lines = [line for line in query.splitlines() if not line.strip().startswith("--")]
     clean = " ".join(lines).strip()
-    if clean.endswith(";"):
-        clean = clean[:-1]
+    clean = clean.removesuffix(";")
     return clean
 
 
@@ -73,7 +73,7 @@ def build_bare_schema_context(conn: duckdb.DuckDBPyConnection) -> str:
     return "\n\n".join(schema_parts)
 
 
-def build_enriched_context(conn: duckdb.DuckDBPyConnection, exclude_facet: Optional[str] = None) -> str:
+def build_enriched_context(conn: duckdb.DuckDBPyConnection, exclude_facet: str | None = None) -> str:
     """Build Enriched Governed Catalog Context, optionally ablating one facet.
     
     Facets that can be ablated: 'lineage', 'profiling', 'glossary'.
@@ -191,7 +191,7 @@ class TextToSQLEvaluator:
         "Return ONLY the SQL query inside ```sql ... ``` code block. Do NOT include markdown text or commentary."
     )
 
-    def __init__(self, estate_db_path: Optional[str] = None, model_name: Optional[str] = None):
+    def __init__(self, estate_db_path: str | None = None, model_name: str | None = None):
         self.estate_path = estate_db_path or str(ESTATE_DB_PATH)
         self.conn = duckdb.connect(self.estate_path, read_only=True)
         with open(BUSINESS_QUESTIONS_PATH, "r", encoding="utf-8") as f:
@@ -209,7 +209,7 @@ class TextToSQLEvaluator:
         )
         return clean_sql(resp.text)
 
-    def evaluate_condition(self, context: str, condition_name: str) -> Dict[str, Any]:
+    def evaluate_condition(self, context: str, condition_name: str) -> dict[str, Any]:
         """Execute all questions for a specific schema context against DuckDB."""
         matches = 0
         total = len(self.questions)
@@ -267,7 +267,7 @@ class TextToSQLEvaluator:
             "details": details
         }
 
-    def evaluate(self) -> Dict[str, Any]:
+    def evaluate(self) -> dict[str, Any]:
         """Run execution match benchmark for Bare Schema vs Enriched Context across all questions."""
         bare_eval = self.evaluate_condition(self.bare_context, "Bare Schema Baseline")
         enriched_eval = self.evaluate_condition(self.enriched_context, "ContextForge Enriched Context")

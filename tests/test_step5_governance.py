@@ -4,9 +4,10 @@ Includes 16+ distinct policy test cases and 3-hop lineage tag propagation proof.
 """
 
 import pytest
-from cforge.governance.engine import PolicyEngine
+
 from cforge.governance.approval import ApprovalQueue
 from cforge.governance.audit import ImmutableAuditLog
+from cforge.governance.engine import PolicyEngine
 from cforge.lineage.parser import ColumnLineageEdge
 from cforge.lineage.propagator import LineagePropagator
 

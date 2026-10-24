@@ -3,27 +3,28 @@
 Converts internal column-level lineage graph into standard OpenLineage RunEvents.
 """
 
-from typing import List, Dict, Any, Optional
-from datetime import datetime, timezone
-import uuid
 import json
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
-from cforge.lineage.parser import ColumnLineageEdge
+from typing import Any
+
 from cforge.config import DATA_DIR
+from cforge.lineage.parser import ColumnLineageEdge
 
 
 class OpenLineageEmitter:
     def __init__(self, namespace: str = "cforge.dataops"):
         self.namespace = namespace
 
-    def create_run_event(self, job_name: str, input_tables: List[str],
-                         output_table: str, edges: List[ColumnLineageEdge]) -> Dict[str, Any]:
+    def create_run_event(self, job_name: str, input_tables: list[str],
+                         output_table: str, edges: list[ColumnLineageEdge]) -> dict[str, Any]:
         """Construct a standard OpenLineage RunEvent with columnLineage facets."""
         run_id = str(uuid.uuid4())
         event_time = datetime.now(timezone.utc).isoformat()
 
         # Build columnLineage facet fields
-        fields_facet: Dict[str, Any] = {}
+        fields_facet: dict[str, Any] = {}
         for edge in edges:
             if edge.target_table == output_table:
                 if edge.target_column not in fields_facet:
@@ -38,7 +39,7 @@ class OpenLineageEmitter:
                     "field": edge.source_column
                 })
 
-        event: Dict[str, Any] = {
+        event: dict[str, Any] = {
             "eventType": "COMPLETE",
             "eventTime": event_time,
             "run": {
@@ -75,8 +76,8 @@ class OpenLineageEmitter:
         }
         return event
 
-    def export_all_models_to_openlineage(self, edges_by_table: Dict[str, List[ColumnLineageEdge]],
-                                         output_file: Optional[Path] = None) -> Path:
+    def export_all_models_to_openlineage(self, edges_by_table: dict[str, list[ColumnLineageEdge]],
+                                         output_file: Path | None = None) -> Path:
         """Export all model lineage events to a JSON file."""
         target_path = output_file or (DATA_DIR / "openlineage_events.json")
         target_path.parent.mkdir(parents=True, exist_ok=True)
