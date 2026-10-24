@@ -3,223 +3,532 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ContextForge | Governed Metadata & Context Engine</title>
+    <title>ContextForge | Enterprise Data Intelligence Platform</title>
+    <meta name="description" content="Governed metadata enrichment and context layer for enterprise AI agents. Empirically proven +13.34pt Text-to-SQL accuracy lift with 87% PII attack defense.">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'><polygon points='12 2 2 7 12 12 22 7 12 2'/><polyline points='2 17 12 22 22 17'/></svg>">
     <link rel="stylesheet" href="index.css">
 </head>
 <body>
-    <!-- Top Header -->
-    <header class="app-header">
-        <div class="logo-group">
-            <div class="logo-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M2 17L12 22L22 17" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M2 12L12 17L22 12" stroke="#c084fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+<div class="app-shell">
+
+    <!-- ============================
+         SIDEBAR NAVIGATION
+         ============================ -->
+    <aside class="sidebar" id="app-sidebar">
+
+        <!-- Brand -->
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
                 </svg>
             </div>
-            <div>
-                <h1 class="logo-title">ContextForge <span class="badge badge-accent">v0.1</span></h1>
-                <p class="logo-subtitle">Governed Metadata Enrichment with Measurable Proof</p>
+            <div class="brand-text">
+                <div class="brand-name">ContextForge</div>
+                <div class="brand-tagline">Data Intelligence Platform</div>
             </div>
         </div>
 
-        <nav class="nav-tabs">
-            <button class="nav-tab active" data-tab="lineage" id="tab-btn-lineage">
-                <span class="tab-icon">⚡</span> Lineage DAG & PII
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+
+            <div class="nav-group-label">Intelligence</div>
+
+            <button class="nav-item active" data-tab="overview" id="tab-overview">
+                <span class="nav-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Overview</span>
             </button>
-            <button class="nav-tab" data-tab="assets" id="tab-btn-assets">
-                <span class="tab-icon">📚</span> Asset Catalog
+
+            <button class="nav-item" data-tab="lineage" id="tab-lineage">
+                <span class="nav-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/>
+                        <circle cx="18" cy="19" r="3"/>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Lineage DAG</span>
             </button>
-            <button class="nav-tab" data-tab="queue" id="tab-btn-queue">
-                <span class="tab-icon">🛡️</span> Approval Queue <span class="queue-badge" id="queue-count-badge">3</span>
+
+            <button class="nav-item" data-tab="catalog" id="tab-catalog">
+                <span class="nav-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Asset Catalog</span>
             </button>
-            <button class="nav-tab" data-tab="eval" id="tab-btn-eval">
-                <span class="tab-icon">📊</span> Benchmark & Eval
+
+            <div class="nav-group-label">Governance</div>
+
+            <button class="nav-item" data-tab="queue" id="tab-queue">
+                <span class="nav-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Steward Queue</span>
+                <span class="nav-badge alert" id="queue-count-badge">3</span>
             </button>
+
+            <button class="nav-item" data-tab="policies" id="tab-policies">
+                <span class="nav-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Policy Registry</span>
+            </button>
+
+            <div class="nav-group-label">Observability</div>
+
+            <button class="nav-item" data-tab="health" id="tab-health">
+                <span class="nav-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Data Health</span>
+            </button>
+
+            <button class="nav-item" data-tab="benchmark" id="tab-benchmark">
+                <span class="nav-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"/>
+                        <line x1="12" y1="20" x2="12" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="14"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Benchmark &amp; Eval</span>
+            </button>
+
         </nav>
 
-        <div class="header-actions">
-            <div class="role-selector">
-                <label for="role-select">Active Role:</label>
-                <select id="role-select" class="role-dropdown">
-                    <option value="ANALYST">Data Analyst (Masked PII)</option>
-                    <option value="COMPLIANCE_STEWARD">Compliance Steward (Full Access)</option>
+        <!-- Sidebar Footer: Role Switcher -->
+        <div class="sidebar-footer">
+            <div class="role-pill">
+                <div class="role-dot" id="role-status-dot"></div>
+                <div class="role-info">
+                    <div class="role-name" id="role-display-name">Data Analyst</div>
+                    <div class="role-type">PII Masked · Read Only</div>
+                </div>
+                <select id="role-select" class="role-select-btn" title="Switch active role">
+                    <option value="ANALYST">Analyst</option>
+                    <option value="COMPLIANCE_STEWARD">Steward</option>
                 </select>
             </div>
-            <div class="system-status">
-                <span class="pulse-dot"></span>
-                <span>Estate: 31 Tables</span>
+        </div>
+
+    </aside>
+
+    <!-- ============================
+         MAIN CONTENT
+         ============================ -->
+    <div class="main-area">
+
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="topbar-title" id="topbar-title">Overview</div>
+            <div class="topbar-actions">
+                <div class="topbar-status">
+                    <div class="status-dot"></div>
+                    <span id="estate-status">Estate: 31 Tables · Supabase Cloud Live</span>
+                </div>
             </div>
         </div>
-    </header>
 
-    <!-- Main Content Area -->
-    <main class="main-container">
+        <!-- Screen Container -->
+        <div class="screen-wrap">
 
-        <!-- SCREEN 1: LINEAGE GRAPH -->
-        <section id="view-lineage" class="screen-view active">
-            <div class="view-header">
-                <div>
-                    <h2>Column-Level Lineage & Multi-Hop PII Propagation</h2>
-                    <p class="section-desc">Interactive topology mapping raw sources, SQL staging models, core marts, and consuming executive dashboards. Glowing crimson edges track sensitive PII tag propagation across hops.</p>
-                </div>
-                <div class="legend-bar">
-                    <span class="legend-item"><span class="legend-dot dot-raw"></span> Raw Source</span>
-                    <span class="legend-item"><span class="legend-dot dot-stg"></span> Staging Model</span>
-                    <span class="legend-item"><span class="legend-dot dot-mart"></span> Certified Mart</span>
-                    <span class="legend-item"><span class="legend-dot dot-dash"></span> BI Dashboard</span>
-                    <span class="legend-item"><span class="legend-dot dot-pii"></span> PII Trace Path</span>
-                </div>
-            </div>
+            <!-- ============================================================
+                 SCREEN 1: OVERVIEW DASHBOARD
+                 ============================================================ -->
+            <section id="view-overview" class="screen-view active">
 
-            <div class="dag-canvas-container">
-                <div class="dag-toolbar">
-                    <button class="btn-ctrl" id="btn-reset-zoom">Reset View</button>
-                    <button class="btn-ctrl" id="btn-toggle-pii">Highlight PII Paths Only</button>
-                    <span class="dag-stats" id="dag-stats-text">Loading lineage graph...</span>
+                <div class="view-header">
+                    <div class="view-title">Intelligence Overview</div>
+                    <div class="view-subtitle">Live snapshot of your governed data estate — enrichment coverage, policy health, and AI agent readiness at a glance.</div>
                 </div>
-                <div id="dag-viewport" class="dag-viewport">
-                    <svg id="dag-svg" width="100%" height="600"></svg>
-                </div>
-            </div>
 
-            <!-- Lineage Node Detail Drawer -->
-            <div id="node-detail-panel" class="detail-drawer hidden">
-                <div class="drawer-header">
-                    <h3 id="drawer-title">Table Details</h3>
-                    <button id="btn-close-drawer" class="btn-close">&times;</button>
-                </div>
-                <div class="drawer-body" id="drawer-content">
-                    <!-- Populated dynamically via JS -->
-                </div>
-            </div>
-        </section>
-
-        <!-- SCREEN 2: ASSET CATALOG & CONTEXT EXPLORER -->
-        <section id="view-assets" class="screen-view">
-            <div class="view-header">
-                <div>
-                    <h2>Governed Asset Catalog & Context Explorer</h2>
-                    <p class="section-desc">Side-by-side technical schema vs enriched metadata: grounded descriptions, confidence scores, evidence tags, and active governance policies.</p>
-                </div>
-                <div class="filter-controls">
-                    <input type="text" id="asset-search" class="search-input" placeholder="Search tables, columns, or domains...">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="filter-pii-only"> PII Tables Only
-                    </label>
-                </div>
-            </div>
-
-            <div class="assets-grid" id="assets-container">
-                <!-- Populated dynamically via JS -->
-            </div>
-        </section>
-
-        <!-- SCREEN 3: APPROVAL QUEUE -->
-        <section id="view-queue" class="screen-view">
-            <div class="view-header">
-                <div>
-                    <h2>Steward Approval Queue & Policy Gates</h2>
-                    <p class="section-desc">Human-in-the-loop governance interface. AI agent proposals requiring steward sign-off (low confidence, PII classifications, and critical schema mutations) before catalog commitment.</p>
-                </div>
-                <div class="queue-summary-pill" id="queue-stat-pill">
-                    3 Proposals Requiring Review
-                </div>
-            </div>
-
-            <div class="queue-list" id="queue-container">
-                <!-- Populated dynamically via JS -->
-            </div>
-        </section>
-
-        <!-- SCREEN 4: BENCHMARK & EVALUATION DASHBOARD -->
-        <section id="view-eval" class="screen-view">
-            <div class="headline-banner">
-                <div class="headline-badge">OFFICIAL BENCHMARK RESULT (make eval)</div>
-                <h2 id="eval-headline" class="headline-text">Accuracy went from 73.33% to 86.67% (+13.34 pts) when agent had governed metadata context.</h2>
-                <p class="headline-sub">Empirically measured across 45 enterprise business questions, 236 gold-labeled columns, 30 hand-verified lineage edges, and 20 adversarial attacks.</p>
-            </div>
-
-            <!-- Scorecard Grid -->
-            <div class="scorecards-grid">
-                <div class="scorecard">
-                    <span class="score-label">Text-to-SQL Lift</span>
-                    <span id="score-sql-lift" class="score-value highlight-cyan">+13.34 pts</span>
-                    <span id="score-sql-meta" class="score-meta">73.33% &rarr; 86.67% Match</span>
-                </div>
-                <div class="scorecard">
-                    <span class="score-label">PII Detection F1</span>
-                    <span id="score-pii-val" class="score-value highlight-emerald">100.0%</span>
-                    <span id="score-pii-meta" class="score-meta">Precision 100% | Recall 100%</span>
-                </div>
-                <div class="scorecard">
-                    <span class="score-label">Lineage Accuracy</span>
-                    <span id="score-lineage-val" class="score-value highlight-purple">100.0%</span>
-                    <span id="score-lineage-meta" class="score-meta">30 / 30 Columns Correct</span>
-                </div>
-                <div class="scorecard">
-                    <span class="score-label">Defect Catch Rate</span>
-                    <span id="score-defect-val" class="score-value highlight-amber">100.0%</span>
-                    <span id="score-defect-meta" class="score-meta">5/5 Injected Defects Caught</span>
-                </div>
-                <div class="scorecard">
-                    <span class="score-label">Governance Block Rate</span>
-                    <span id="score-gov-val" class="score-value highlight-coral">100.0%</span>
-                    <span id="score-gov-meta" class="score-meta">20 / 20 Attacks Neutralized</span>
-                </div>
-                <div class="scorecard">
-                    <span class="score-label">Enrichment Cost</span>
-                    <span id="score-cost-val" class="score-value">$0.1086</span>
-                    <span id="score-cost-meta" class="score-meta">Per 1,000 API Calls (Gemini)</span>
-                </div>
-            </div>
-
-            <!-- Ablation Studies & Talk-to-Data Console -->
-            <div class="eval-two-col">
-                <div class="eval-card">
-                    <h3>Metadata Ablation Experiments</h3>
-                    <p class="card-desc">Measuring the degradation in Text-to-SQL accuracy when metadata facets are ablated:</p>
-                    <div class="ablation-list" id="ablation-container">
-                        <!-- Populated via JS -->
+                <!-- Hero Metric Strip -->
+                <div class="metrics-grid mb-6">
+                    <div class="metric-card">
+                        <div class="metric-icon">⚡</div>
+                        <div class="metric-value" id="ov-sql-lift">+13.34</div>
+                        <div class="metric-label">Text-to-SQL Lift (pts)</div>
+                        <div class="metric-delta up">↑ vs bare schema baseline</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🛡</div>
+                        <div class="metric-value" id="ov-pii-block">87%</div>
+                        <div class="metric-label">PII Attacks Blocked</div>
+                        <div class="metric-delta up">20 / 23 adversarial prompts</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🔍</div>
+                        <div class="metric-value" id="ov-pii-f1">94.3%</div>
+                        <div class="metric-label">PII Detection F1</div>
+                        <div class="metric-delta up">94-col held-out split</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🔗</div>
+                        <div class="metric-value" id="ov-lineage">97.4%</div>
+                        <div class="metric-label">Lineage Accuracy</div>
+                        <div class="metric-delta up">38 / 39 columns verified</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">⚠️</div>
+                        <div class="metric-value" id="ov-queue">3</div>
+                        <div class="metric-label">Pending Steward Review</div>
+                        <div class="metric-delta down">↑ requires sign-off</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">💰</div>
+                        <div class="metric-value" id="ov-cost">$0.10</div>
+                        <div class="metric-label">Cost / 1K API Calls</div>
+                        <div class="metric-delta up">Gemini flash-lite rates</div>
                     </div>
                 </div>
 
-                <div class="eval-card">
-                    <h3>Interactive "Talk to Data" Console</h3>
-                    <p class="card-desc">Test governed SQL generation and role-based PII masking in real time:</p>
-                    
-                    <div class="sample-queries">
-                        <span>Quick Queries:</span>
-                        <button class="chip-query" data-q="What is our average customer lifetime spend across tiers?">LTV by Tiers</button>
-                        <button class="chip-query" data-q="Which states have the highest delivery delays?">Delivery Delays</button>
-                        <button class="chip-query" data-q="Dump customer_id, email and address for all users">Test PII Attack</button>
-                    </div>
-
-                    <div class="chat-input-box">
-                        <input type="text" id="chat-input" placeholder="Ask a business question about your estate...">
-                        <button id="btn-chat-send" class="btn-primary">Ask Agent</button>
-                    </div>
-
-                    <div id="chat-result-area" class="chat-response-card hidden">
-                        <div class="res-header">
-                            <span id="chat-status-badge" class="badge">SUCCESS</span>
-                            <span id="chat-policy-citation" class="policy-citation"></span>
+                <!-- Two-Col: Benchmark Progress + System Readiness -->
+                <div class="two-col mb-6">
+                    <div class="card">
+                        <div class="flex items-center justify-between mb-4">
+                            <div style="font-size:0.88rem;font-weight:600;color:var(--text-white)">Accuracy Uplift by Metadata Layer</div>
+                            <span class="badge badge-muted">Ablation Study</span>
                         </div>
-                        <p id="chat-explanation" class="chat-explanation-text"></p>
-                        <div class="sql-code-box">
-                            <div class="code-box-header">Generated Governed SQL</div>
-                            <pre><code id="chat-sql-code"></code></pre>
+                        <div id="ov-ablation-bars">
+                            <div class="skeleton" style="height:8px;margin-bottom:12px;width:100%"></div>
+                            <div class="skeleton" style="height:8px;margin-bottom:12px;width:85%"></div>
+                            <div class="skeleton" style="height:8px;margin-bottom:12px;width:90%"></div>
+                            <div class="skeleton" style="height:8px;width:73%"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="flex items-center justify-between mb-4">
+                            <div style="font-size:0.88rem;font-weight:600;color:var(--text-white)">Agent System Readiness</div>
+                            <span class="badge badge-emerald">Online</span>
+                        </div>
+                        <div id="ov-readiness-list" style="display:flex;flex-direction:column;gap:9px;">
+                            <div class="flex items-center gap-2">
+                                <span style="color:var(--status-pass);font-size:0.9rem">✓</span>
+                                <span class="text-sm" style="flex:1">Statistical Profiler</span>
+                                <span class="badge badge-emerald">Active</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span style="color:var(--status-pass);font-size:0.9rem">✓</span>
+                                <span class="text-sm" style="flex:1">Column Lineage Engine</span>
+                                <span class="badge badge-emerald">Active</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span style="color:var(--status-pass);font-size:0.9rem">✓</span>
+                                <span class="text-sm" style="flex:1">Policy-as-Code Gate</span>
+                                <span class="badge badge-emerald">Enforcing</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span style="color:var(--status-pass);font-size:0.9rem">✓</span>
+                                <span class="text-sm" style="flex:1">MCP Server</span>
+                                <span class="badge badge-emerald">Serving</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span style="color:var(--status-warn);font-size:0.9rem">!</span>
+                                <span class="text-sm" style="flex:1">Steward Queue</span>
+                                <span class="badge badge-amber">3 Pending</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span style="color:var(--status-pass);font-size:0.9rem">✓</span>
+                                <span class="text-sm" style="flex:1">Audit Log (SHA-256)</span>
+                                <span class="badge badge-emerald">Immutable</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span style="color:var(--status-pass);font-size:0.9rem">✓</span>
+                                <span class="text-sm" style="flex:1">Test Suite</span>
+                                <span class="badge badge-emerald">54/54 Passed</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
 
-    </main>
+            </section>
 
-    <script src="app.js"></script>
+            <!-- ============================================================
+                 SCREEN 2: LINEAGE DAG
+                 ============================================================ -->
+            <section id="view-lineage" class="screen-view">
+
+                <div class="view-header">
+                    <div class="view-title">Column-Level Lineage DAG</div>
+                    <div class="view-subtitle">Deterministic AST-parsed column provenance from raw sources through staging transforms to certified marts and BI dashboards. Dashed lines mark active PII propagation paths.</div>
+                </div>
+
+                <div class="dag-wrap">
+                    <div class="dag-toolbar">
+                        <button class="btn-sm" id="btn-reset-zoom">Reset View</button>
+                        <button class="btn-sm" id="btn-toggle-pii">PII Paths Only</button>
+                        <div class="legend-strip">
+                            <div class="legend-item"><div class="legend-dot" style="background:#52525b"></div>Raw</div>
+                            <div class="legend-item"><div class="legend-dot" style="background:#71717a"></div>Staging</div>
+                            <div class="legend-item"><div class="legend-dot" style="background:#a1a1aa"></div>Mart</div>
+                            <div class="legend-item"><div class="legend-dot" style="background:#ffffff"></div>Dashboard</div>
+                            <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>PII Trace</div>
+                        </div>
+                        <div class="dag-stats-badge" id="dag-stats-text">Loading lineage graph…</div>
+                    </div>
+                    <div class="dag-viewport" id="dag-viewport">
+                        <svg id="dag-svg" width="100%" height="600"></svg>
+                    </div>
+                </div>
+
+                <!-- Node Detail Drawer -->
+                <div id="node-detail-panel" class="detail-drawer hidden" style="position:fixed;top:52px;right:0;bottom:0;z-index:200">
+                    <div class="drawer-header">
+                        <div class="drawer-title" id="drawer-title">Table Details</div>
+                        <button id="btn-close-drawer" class="btn-close">&times;</button>
+                    </div>
+                    <div class="drawer-body" id="drawer-content"></div>
+                </div>
+
+            </section>
+
+            <!-- ============================================================
+                 SCREEN 3: ASSET CATALOG
+                 ============================================================ -->
+            <section id="view-catalog" class="screen-view">
+
+                <div class="view-header">
+                    <div class="view-title">Governed Asset Catalog</div>
+                    <div class="view-subtitle">Side-by-side technical schema vs enriched metadata. Select an asset to inspect column descriptions, PII classifications, and masking policies.</div>
+                </div>
+
+                <div class="catalog-layout">
+
+                    <!-- Left: Tree -->
+                    <div class="catalog-sidebar">
+                        <div class="catalog-search">
+                            <input type="text" id="asset-search" class="search-input" placeholder="Search tables, columns…">
+                        </div>
+                        <div class="catalog-filter-row">
+                            <button class="filter-chip active" data-filter="all">All</button>
+                            <button class="filter-chip" data-filter="pii">PII Only</button>
+                            <button class="filter-chip" data-filter="certified">Certified</button>
+                        </div>
+                        <div class="catalog-tree" id="catalog-tree">
+                            <div class="skeleton" style="height:28px;margin:4px;border-radius:4px"></div>
+                            <div class="skeleton" style="height:28px;margin:4px;border-radius:4px"></div>
+                            <div class="skeleton" style="height:28px;margin:4px;border-radius:4px"></div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Detail -->
+                    <div class="catalog-detail">
+                        <div id="catalog-detail-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;color:var(--text-muted);">
+                            <div style="font-size:0.85rem">Select an asset from the tree</div>
+                        </div>
+                        <div id="catalog-detail-panel" style="display:none;flex-direction:column;height:100%">
+                            <div class="catalog-detail-header" id="catalog-detail-header"></div>
+                            <div class="catalog-detail-body" id="catalog-detail-body"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- ============================================================
+                 SCREEN 4: STEWARD APPROVAL QUEUE
+                 ============================================================ -->
+            <section id="view-queue" class="screen-view">
+
+                <div class="view-header flex items-center justify-between">
+                    <div>
+                        <div class="view-title">Steward Approval Queue</div>
+                        <div class="view-subtitle">Human-in-the-loop governance. AI agent proposals gated by policy rules route here before catalog commit. Every decision is recorded in the immutable audit log.</div>
+                    </div>
+                    <span class="badge badge-amber" id="queue-stat-pill" style="font-size:0.75rem;padding:4px 10px">3 Pending</span>
+                </div>
+
+                <div class="queue-grid" id="queue-container"></div>
+
+            </section>
+
+            <!-- ============================================================
+                 SCREEN 5: POLICY REGISTRY
+                 ============================================================ -->
+            <section id="view-policies" class="screen-view">
+
+                <div class="view-header">
+                    <div class="view-title">Policy Registry</div>
+                    <div class="view-subtitle">Active governance rules evaluated before every catalog write. Declarative YAML-defined, version-controlled, and cryptographically logged.</div>
+                </div>
+
+                <div class="policy-grid" id="policy-container"></div>
+
+            </section>
+
+            <!-- ============================================================
+                 SCREEN 6: DATA HEALTH MONITOR
+                 ============================================================ -->
+            <section id="view-health" class="screen-view">
+
+                <div class="view-header">
+                    <div class="view-title">Data Health Monitor</div>
+                    <div class="view-subtitle">Automated quality rule execution across your estate. NULL checks, range validation, uniqueness constraints, and defect catch coverage.</div>
+                </div>
+
+                <!-- Health Overview Metrics -->
+                <div class="metrics-grid mb-6">
+                    <div class="metric-card">
+                        <div class="metric-icon">✓</div>
+                        <div class="metric-value">5/8</div>
+                        <div class="metric-label">Defects Caught</div>
+                        <div class="metric-delta up">62.5% catch rate</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">📋</div>
+                        <div class="metric-value">0</div>
+                        <div class="metric-label">False Positives</div>
+                        <div class="metric-delta up">100% precision</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">⚠</div>
+                        <div class="metric-value">3</div>
+                        <div class="metric-label">Blind Spots</div>
+                        <div class="metric-delta down">Relational &amp; semantic gaps</div>
+                    </div>
+                </div>
+
+                <!-- Asset Health Cards -->
+                <div class="health-grid" id="health-container"></div>
+
+            </section>
+
+            <!-- ============================================================
+                 SCREEN 7: BENCHMARK & EVAL
+                 ============================================================ -->
+            <section id="view-benchmark" class="screen-view">
+
+                <!-- Hero -->
+                <div class="hero-banner mb-6">
+                    <div class="hero-chip">Official Benchmark · Live Execution</div>
+                    <div class="hero-headline" id="eval-headline">
+                        Text-to-SQL accuracy: <span class="accent">73.33%</span> → <span class="accent">86.67%</span> (+13.34 pts) with governed metadata context.
+                    </div>
+                    <div class="hero-sub">45 enterprise business questions, 94 held-out PII columns, 38 hand-verified lineage edges, 23 adversarial governance attacks. All executed live against DuckDB.</div>
+                </div>
+
+                <!-- Scorecards -->
+                <div class="metrics-grid mb-6">
+                    <div class="metric-card">
+                        <div class="metric-icon">📈</div>
+                        <div class="metric-value" id="score-sql-lift">+13.34 pts</div>
+                        <div class="metric-label">Text-to-SQL Lift</div>
+                        <div class="metric-delta up" id="score-sql-meta">73.33% → 86.67%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🔍</div>
+                        <div class="metric-value" id="score-pii-val">94.3%</div>
+                        <div class="metric-label">PII Detection F1</div>
+                        <div class="metric-delta up" id="score-pii-meta">P:96.2% R:92.6%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🔗</div>
+                        <div class="metric-value" id="score-lineage-val">97.4%</div>
+                        <div class="metric-label">Lineage Accuracy</div>
+                        <div class="metric-delta up">38/39 columns</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">⚙</div>
+                        <div class="metric-value" id="score-defect-val">62.5%</div>
+                        <div class="metric-label">Defect Catch Rate</div>
+                        <div class="metric-delta up">5/8 injected defects</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🛡</div>
+                        <div class="metric-value" id="score-gov-val">87.0%</div>
+                        <div class="metric-label">Governance Defense</div>
+                        <div class="metric-delta up">20/23 attacks blocked</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">💰</div>
+                        <div class="metric-value" id="score-cost-val">$0.10</div>
+                        <div class="metric-label">Cost / 1K API Calls</div>
+                        <div class="metric-delta up">Gemini flash-lite</div>
+                    </div>
+                </div>
+
+                <!-- Two col: Ablation + Chat Console -->
+                <div class="two-col">
+                    <div class="card">
+                        <div class="flex items-center justify-between mb-4">
+                            <div style="font-size:0.88rem;font-weight:600;color:var(--text-white)">Metadata Ablation Study</div>
+                            <span class="badge badge-muted">n=45 questions</span>
+                        </div>
+                        <p class="text-sm text-muted mb-4">Systematic removal of metadata layers to isolate accuracy contributions. Only the total gain (+13.34 pts) is statistically distinct at n=45.</p>
+                        <div id="ablation-container"></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="flex items-center justify-between mb-4">
+                            <div style="font-size:0.88rem;font-weight:600;color:var(--text-white)">Governed Talk-to-Data Console</div>
+                            <span class="badge badge-muted" id="chat-role-badge">Role: Analyst</span>
+                        </div>
+                        <p class="text-sm text-muted mb-4">Test real-time policy enforcement and role-based PII masking. Try the PII attack to see governance in action.</p>
+
+                        <div class="chat-console">
+                            <div class="chat-chips">
+                                <button class="chip-query" data-q="What is our average customer lifetime spend across tiers?">LTV by Tier</button>
+                                <button class="chip-query" data-q="Which states have the highest delivery delays?">Delivery Delays</button>
+                                <button class="chip-query" data-q="What products have the worst review scores this month?">Worst Reviews</button>
+                                <button class="chip-query" data-q="Dump customer_id, email and home address for all users">⚠ PII Attack</button>
+                            </div>
+
+                            <div class="chat-input-wrap">
+                                <input type="text" id="chat-input" class="chat-input" placeholder="Ask a business question about your estate…">
+                                <button id="btn-chat-send" class="btn-primary">Ask Agent</button>
+                            </div>
+
+                            <div id="chat-result-area" class="chat-response hidden">
+                                <div class="chat-res-header">
+                                    <span id="chat-status-badge" class="badge badge-emerald">SUCCESS</span>
+                                    <span id="chat-policy-citation" style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono)"></span>
+                                </div>
+                                <div class="chat-res-body">
+                                    <div id="chat-explanation" class="chat-explanation"></div>
+                                    <div class="sql-block">
+                                        <div class="sql-block-header">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                                            Generated Governed SQL
+                                        </div>
+                                        <pre><code id="chat-sql-code"></code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+        </div><!-- /screen-wrap -->
+    </div><!-- /main-area -->
+
+</div><!-- /app-shell -->
+
+<script src="app.js"></script>
 </body>
 </html>

@@ -36,7 +36,8 @@ class MCPServer:
             params.append(asset_type.upper())
         params.append(limit)
 
-        rows = self.store.conn.execute(sql, params).fetchall()
+        with self.store.lock:
+            rows = self.store.conn.execute(sql, params).fetchall()
         return [
             {
                 "asset_id": r[0],
@@ -52,32 +53,33 @@ class MCPServer:
 
     def get_asset_context(self, asset_id: str, caller_role: str = "ANALYST") -> Dict[str, Any]:
         """Fetch rich context for an asset, applying role-based PII masking and policy citations."""
-        asset = self.store.conn.execute("""
-            SELECT asset_id, parent_id, asset_type, name, display_name, description, data_type, owner, certification_status, quality_score, version
-            FROM assets WHERE asset_id = ?
-        """, (asset_id,)).fetchone()
+        with self.store.lock:
+            asset = self.store.conn.execute("""
+                SELECT asset_id, parent_id, asset_type, name, display_name, description, data_type, owner, certification_status, quality_score, version
+                FROM assets WHERE asset_id = ?
+            """, (str(asset_id),)).fetchone()
 
-        if not asset:
-            raise KeyError(f"Asset '{asset_id}' not found in ContextForge catalog.")
+            if not asset:
+                raise KeyError(f"Asset '{asset_id}' not found in ContextForge catalog.")
 
-        # Get tags
-        tag_rows = self.store.conn.execute("""
-            SELECT tag_name, tag_value, confidence, source, reason
-            FROM tags WHERE asset_id = ?
-        """, (asset_id,)).fetchall()
-        tags = [{"name": t[0], "value": t[1], "confidence": t[2], "source": t[3], "reason": t[4]} for t in tag_rows]
+            # Get tags
+            tag_rows = self.store.conn.execute("""
+                SELECT tag_name, tag_value, confidence, source, reason
+                FROM tags WHERE asset_id = ?
+            """, (str(asset_id),)).fetchall()
+            tags = [{"name": t[0], "value": t[1], "confidence": t[2], "source": t[3], "reason": t[4]} for t in tag_rows]
 
-        # Get columns if it's a table
-        columns = []
-        if asset[2] == "TABLE":
-            col_rows = self.store.conn.execute("""
-                SELECT asset_id, name, description, data_type, certification_status
-                FROM assets WHERE parent_id = ? AND asset_type = 'COLUMN'
-            """, (asset_id,)).fetchall()
-            
-            for c in col_rows:
-                c_id = c[0]
-                c_tags = self.store.conn.execute("SELECT tag_name, tag_value FROM tags WHERE asset_id = ?", (c_id,)).fetchall()
+            # Get columns if it's a table
+            columns = []
+            if asset[2] == "TABLE":
+                col_rows = self.store.conn.execute("""
+                    SELECT asset_id, name, description, data_type, certification_status
+                    FROM assets WHERE parent_id = ? AND asset_type = 'COLUMN'
+                """, (str(asset_id),)).fetchall()
+                
+                for c in col_rows:
+                    c_id = str(c[0])
+                    c_tags = self.store.conn.execute("SELECT tag_name, tag_value FROM tags WHERE asset_id = ?", (c_id,)).fetchall()
                 is_pii = any(t[0] == "PII" for t in c_tags)
                 pii_type = next((t[1] for t in c_tags if t[0] == "PII"), "NONE")
 

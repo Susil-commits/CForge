@@ -9,12 +9,14 @@ from typing import List, Dict, Any, Optional
 import json
 import uuid
 import duckdb
+import threading
 from cforge.config import METADATA_DB_PATH, ESTATE_DB_PATH, GOLD_LABELS_PATH
 from cforge.catalog.models import AssetType, CertificationStatus, TagSource
 
 
 class MetadataStore:
     def __init__(self, db_path: Optional[Any] = None, auto_populate: bool = True):
+        self.lock = threading.RLock()
         self.db_path = Path(db_path) if db_path else METADATA_DB_PATH
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.conn = duckdb.connect(str(self.db_path))
