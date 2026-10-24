@@ -7,12 +7,18 @@
 *Agents enrich a real data estate, policies gate what they can write, humans approve the risky stuff, and an empirical benchmark measures AI accuracy gains.*
 
 [![CI Pipeline](https://github.com/Susil-commits/CForge/actions/workflows/ci.yml/badge.svg)](https://github.com/Susil-commits/CForge/actions)
-[![Tests Passing](https://img.shields.io/badge/tests-54%2F54%20passed-success)](tests/)
+[![Tests Passing](https://img.shields.io/badge/tests-60%2F60%20passed-success)](tests/)
 [![Accuracy Uplift](https://img.shields.io/badge/Text--to--SQL%20Lift-%2B13.34%20pts-blueviolet)](results/benchmark.md)
 [![PII Governance](https://img.shields.io/badge/Governance-Attacks%20blocked%2087.0%25%20%7C%20False%20refusals%2013.0%25-brightgreen)](src/cforge/governance/policies.yaml)
 [![Datasets](https://img.shields.io/badge/Data%20Estate-Real%20public%20data%20%2B%20synthetic%20adversarial%20columns-orange)](data/raw/)
-[![LLM Support](https://img.shields.io/badge/LLM-Gemini%20(benchmarked)%3B%20Claude%20client%20implemented%2C%20not%20benchmarked-purple)](src/cforge/llm/)
+[![Cloud Backend](https://img.shields.io/badge/Backend-Supabase%20PostgreSQL%20Live-emerald)](https://supabase.com)
 [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey)](LICENSE)
+
+<br/>
+
+![ContextForge Product Tour](docs/contextforge_overview.gif)
+
+<br/>
 
 [**Executive Overview**](#executive-overview-problem--solution) • [**Benchmark Results**](#benchmark-results) • [**Architecture**](#system-architecture) • [**Core Modules**](#core-modules) • [**User Interface**](#user-interface) • [**Quickstart**](#quickstart)
 
