@@ -12,14 +12,11 @@
 [![PII Governance](https://img.shields.io/badge/Governance-Attacks%20blocked%2087.0%25%20%7C%20False%20refusals%2013.0%25-brightgreen)](src/cforge/governance/policies.yaml)
 [![Datasets](https://img.shields.io/badge/Data%20Estate-Real%20public%20data%20%2B%20synthetic%20adversarial%20columns-orange)](data/raw/)
 [![Cloud Backend](https://img.shields.io/badge/Backend-Supabase%20PostgreSQL%20Live-emerald)](https://supabase.com)
-[![Commercial Video](https://img.shields.io/badge/Commercial%20Video-HD%20720p%20(20s)-informational)](docs/contextforge_commercial.mp4)
 [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey)](LICENSE)
 
 <br/>
 
 ![ContextForge Product Tour](docs/contextforge_overview.gif)
-
-<p align="center"><sub>🎥 <b><a href="docs/contextforge_commercial.mp4">Watch the 20-Second Commercial Ad (1280x720 MP4)</a></b></sub></p>
 
 <br/>
 
@@ -65,9 +62,9 @@ ContextForge is a metadata enrichment and policy governance layer that sits betw
 
 ```mermaid
 flowchart LR
-    A[Enterprise Data Estate<br/>DuckDB (Postgres init SQL provided) · Lakehouse] --> B[ContextForge Intelligence Layer<br/>• Statistical Profiling<br/>• AST Column Lineage<br/>• Policy-as-Code Gate]
-    B --> C[Model Context Protocol (MCP)<br/>Role-Based Masking & Dynamic Schema]
-    C --> D[Enterprise AI Agents<br/>Claude · ChatGPT · Cursor · BI]
+    A["Enterprise Data Estate<br/>DuckDB · Supabase PostgreSQL · Lakehouse"] --> B["ContextForge Intelligence Layer<br/>• Statistical Profiling<br/>• AST Column Lineage<br/>• Policy-as-Code Gate"]
+    B --> C["Model Context Protocol (MCP)<br/>Role-Based Masking & Dynamic Schema"]
+    C --> D["Enterprise AI Agents<br/>Claude · ChatGPT · Cursor · BI"]
 ```
 
 * **Grounded Statistical Enrichment**: Instead of hallucinating descriptions from column names alone, specialized agents combine non-LLM statistical profiling (cardinality, null rates, value distributions) with structured Pydantic JSON schemas and explicit confidence scores.
@@ -133,7 +130,7 @@ flowchart TB
     end
 
     subgraph S2 ["2. Metadata Lakehouse & Lineage"]
-        Store[("Metadata Catalog Store<br/>DuckDB (Postgres init SQL provided)")]
+        Store[("Metadata Catalog Store<br/>DuckDB · Supabase PostgreSQL")]
         Parser["AST Column Lineage Engine<br/>(sqlglot · OpenLineage Standard)"]
         Lakehouse["Parquet Lakehouse Export<br/>(Nightly Snapshots · SQL Queryable)"]
         Transform --> Parser
