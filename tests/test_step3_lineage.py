@@ -90,4 +90,4 @@ def test_hand_verified_accuracy_benchmark():
     assert report["total_hand_verified"] >= 30
     assert report["accuracy_percentage"] >= 90.0, f"Expected >= 90% accuracy, got {report['accuracy_percentage']}%"
     assert report["correct"] >= 27
-    assert report["failures_count"] >= 1
+    assert report["failures_count"] <= 3

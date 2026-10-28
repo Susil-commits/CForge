@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-24 17:09:33 UTC",
+  "timestamp": "2026-10-28 05:57:30 UTC",
   "headline": "73.3% -> 86.7% on 45 execution-checked business questions (+13.34 pts), single run, one model.",
   "metrics": {
     "text_to_sql_lift": "+13.34 pts",
@@ -69,16 +69,12 @@
           {
             "table": "fed_orders",
             "column": "_col_0"
-          },
-          {
-            "table": "fed_orders",
-            "column": "carrier_code"
           }
         ],
         "reason": "Subquery alias boundary or unparsed projection expression."
       }
     ],
-    "total_parsed_edges": 203
+    "total_parsed_edges": 152
   },
   "defect": {
     "total_injected_defects": 8,

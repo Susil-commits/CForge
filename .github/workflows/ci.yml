@@ -105,7 +105,8 @@ jobs:
 
       - name: Validate Benchmark Artifacts
         run: |
-          test -f results/benchmark_report.md || { echo "::error::Missing benchmark_report.md"; exit 1; }
+          test -f results/benchmark.md || { echo "::error::Missing benchmark.md"; exit 1; }
+          test -f results/benchmark.json || { echo "::error::Missing benchmark.json"; exit 1; }
           echo "[OK] Evaluation benchmark artifacts generated and verified."
 
   # ========================================================
