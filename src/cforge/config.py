@@ -24,3 +24,15 @@ POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
 POSTGRES_DB = os.getenv("POSTGRES_DB", "cforge")
 POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgres")
+
+# Security, CORS & Governance Authorization
+raw_origins = os.getenv("CFORGE_ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000,http://localhost:3000,http://127.0.0.1:3000")
+if raw_origins.strip() == "*":
+    ALLOWED_ORIGINS = ["*"]
+else:
+    ALLOWED_ORIGINS = [o.strip() for o in raw_origins.split(",") if o.strip()]
+
+STEWARD_ACCESS_TOKEN = os.getenv("STEWARD_ACCESS_TOKEN", "steward-demo-secure")
+RATE_LIMIT_CHAT_PER_MIN = int(os.getenv("RATE_LIMIT_CHAT_PER_MIN", "30"))
+ENABLE_DUCKDB_EXTERNAL_ACCESS = os.getenv("ENABLE_DUCKDB_EXTERNAL_ACCESS", "false").lower() in ("true", "1")
+

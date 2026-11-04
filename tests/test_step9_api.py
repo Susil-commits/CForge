@@ -90,3 +90,68 @@ def test_api_chat_policy_refusal_and_success(client):
     assert res_biz.status_code == 200
     assert res_biz.json()["status"] == "SUCCESS"
     assert res_biz.json()["sql_generated"] is not None
+
+
+def test_api_audit_trail_and_chain_integrity(client):
+    res = client.get("/api/governance/audit-trail")
+    assert res.status_code == 200
+    data = res.json()
+    assert "chain_length" in data
+    assert data["integrity_verified"] is True
+    assert data["genesis_root"] is not None
+    assert len(data["records"]) > 0
+
+
+def test_api_steward_role_auth_gate(client):
+    from cforge.config import STEWARD_ACCESS_TOKEN
+
+    # 1. Unauthenticated COMPLIANCE_STEWARD role request (downgraded to ANALYST)
+    res_unauth = client.post("/api/chat", json={
+        "question": "Give me raw customer_id and phone numbers",
+        "caller_role": "COMPLIANCE_STEWARD"
+    })
+    assert res_unauth.status_code == 200
+    # Must be refused because unauthorized steward is safely downgraded to ANALYST
+    assert res_unauth.json()["status"] == "REFUSED_BY_POLICY"
+    assert "auth_warning" in res_unauth.json()
+
+    # 2. Authenticated COMPLIANCE_STEWARD request with valid token
+    res_auth = client.post("/api/chat", json={
+        "question": "Give me raw customer_id and phone numbers",
+        "caller_role": "COMPLIANCE_STEWARD",
+        "steward_token": STEWARD_ACCESS_TOKEN
+    })
+    assert res_auth.status_code == 200
+    # With valid token, request is not refused under POL-002 role restriction
+    assert res_auth.json()["status"] != "REFUSED_BY_POLICY"
+
+
+def test_api_proposal_approval_mutates_catalog(client):
+    from cforge.api.app import approval_queue, store
+
+    test_col = "cforge.public.stg_products.product_category_name"
+    prop = approval_queue.submit_proposal(
+        asset_id=test_col,
+        change_type="ADD_TAG",
+        proposed_by="Agent_Classifier",
+        payload={"is_pii": False, "tag_name": "DOMAIN", "tag_value": "ECOMMERCE_CATALOG", "confidence": 0.99}
+    )
+
+    review_res = client.post(f"/api/approval-queue/{prop.proposal_id}/review", json={
+        "steward_name": "Senior_Data_Steward",
+        "decision": "APPROVE",
+        "notes": "Verified by steward in catalog mutation test"
+    })
+    assert review_res.status_code == 200
+    assert review_res.json()["proposal"]["status"] == "APPROVED"
+
+    # Verify catalog actually received the tag!
+    with store.lock:
+        tag = store.conn.execute(
+            "SELECT tag_name, tag_value FROM tags WHERE asset_id = ? AND tag_name = 'DOMAIN'",
+            (test_col,)
+        ).fetchone()
+        assert tag is not None
+        assert tag[0] == "DOMAIN"
+        assert tag[1] == "ECOMMERCE_CATALOG"
+

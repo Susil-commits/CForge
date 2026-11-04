@@ -1,0 +1,274 @@
+[
+  {
+    "record_id": 0,
+    "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "curr_hash": "33e22e0cb3be4688bd241c7651570d8c0849bbf31aaa88c05f08a8e555175739",
+    "timestamp": "2026-11-04T05:54:11.254611+00:00",
+    "actor": "SYSTEM_BOOTSTRAP",
+    "asset_id": "cforge.root",
+    "action": "GENESIS",
+    "policy_ids_evaluated": [],
+    "before_state": null,
+    "after_state": {
+      "status": "INITIALIZED"
+    },
+    "diff": {
+      "genesis": true
+    }
+  },
+  {
+    "record_id": 1,
+    "prev_hash": "33e22e0cb3be4688bd241c7651570d8c0849bbf31aaa88c05f08a8e555175739",
+    "curr_hash": "47fa333388245e27afa6e556b582fce3878639e71e0fbb428924b0b3ac192ec6",
+    "timestamp": "2026-11-04T05:54:33.423797+00:00",
+    "actor": "Test_Steward",
+    "asset_id": "cforge.public.dim_customers.primary_zip",
+    "action": "PROPOSAL_APPROVED",
+    "policy_ids_evaluated": [],
+    "before_state": {
+      "status": "PENDING"
+    },
+    "after_state": {
+      "status": "APPROVED",
+      "payload": {
+        "is_pii": true,
+        "pii_type": "POSTAL_CODE",
+        "confidence": 0.95,
+        "description": "Postal code prefix"
+      }
+    },
+    "diff": {
+      "status": {
+        "before": "PENDING",
+        "after": "APPROVED"
+      },
+      "payload": {
+        "before": null,
+        "after": {
+          "is_pii": true,
+          "pii_type": "POSTAL_CODE",
+          "confidence": 0.95,
+          "description": "Postal code prefix"
+        }
+      }
+    }
+  },
+  {
+    "record_id": 2,
+    "prev_hash": "47fa333388245e27afa6e556b582fce3878639e71e0fbb428924b0b3ac192ec6",
+    "curr_hash": "8cfc493a6fab12505816c83aba551e1df67a2251e538bb23705fcb218a94ad6c",
+    "timestamp": "2026-11-04T06:02:50.778063+00:00",
+    "actor": "Test_Steward",
+    "asset_id": "cforge.public.stg_reviews.review_comment",
+    "action": "PROPOSAL_APPROVED",
+    "policy_ids_evaluated": [],
+    "before_state": {
+      "status": "PENDING"
+    },
+    "after_state": {
+      "status": "APPROVED",
+      "payload": {
+        "is_pii": true,
+        "pii_type": "CONFIDENTIAL_NOTES",
+        "confidence": 0.91,
+        "description": "Customer comment"
+      }
+    },
+    "diff": {
+      "status": {
+        "before": "PENDING",
+        "after": "APPROVED"
+      },
+      "payload": {
+        "before": null,
+        "after": {
+          "is_pii": true,
+          "pii_type": "CONFIDENTIAL_NOTES",
+          "confidence": 0.91,
+          "description": "Customer comment"
+        }
+      }
+    }
+  },
+  {
+    "record_id": 3,
+    "prev_hash": "8cfc493a6fab12505816c83aba551e1df67a2251e538bb23705fcb218a94ad6c",
+    "curr_hash": "0303a12af4edb231bf9750b716a0f12af5c822f839d9188182deb50658ca9893",
+    "timestamp": "2026-11-04T06:03:07.119540+00:00",
+    "actor": "POLICY_ENGINE_AUTO",
+    "asset_id": "cforge.public.stg_products.product_category_name",
+    "action": "PROPOSAL_AUTO_APPROVED",
+    "policy_ids_evaluated": [],
+    "before_state": {
+      "status": "PENDING"
+    },
+    "after_state": {
+      "status": "AUTO_APPROVED",
+      "payload": {
+        "is_pii": false,
+        "tag_name": "DOMAIN",
+        "tag_value": "ECOMMERCE_CATALOG",
+        "confidence": 0.99
+      }
+    },
+    "diff": {
+      "status": {
+        "before": "PENDING",
+        "after": "AUTO_APPROVED"
+      },
+      "payload": {
+        "before": null,
+        "after": {
+          "is_pii": false,
+          "tag_name": "DOMAIN",
+          "tag_value": "ECOMMERCE_CATALOG",
+          "confidence": 0.99
+        }
+      }
+    }
+  },
+  {
+    "record_id": 4,
+    "prev_hash": "0303a12af4edb231bf9750b716a0f12af5c822f839d9188182deb50658ca9893",
+    "curr_hash": "ee533d458c2a6e8ebe9c9cff53874a8da6924f1a7f1e5d31da7048a26d1405e5",
+    "timestamp": "2026-11-04T06:03:07.124859+00:00",
+    "actor": "Senior_Data_Steward",
+    "asset_id": "cforge.public.stg_products.product_category_name",
+    "action": "PROPOSAL_APPROVED",
+    "policy_ids_evaluated": [],
+    "before_state": {
+      "status": "PENDING"
+    },
+    "after_state": {
+      "status": "APPROVED",
+      "payload": {
+        "is_pii": false,
+        "tag_name": "DOMAIN",
+        "tag_value": "ECOMMERCE_CATALOG",
+        "confidence": 0.99
+      }
+    },
+    "diff": {
+      "status": {
+        "before": "PENDING",
+        "after": "APPROVED"
+      },
+      "payload": {
+        "before": null,
+        "after": {
+          "is_pii": false,
+          "tag_name": "DOMAIN",
+          "tag_value": "ECOMMERCE_CATALOG",
+          "confidence": 0.99
+        }
+      }
+    }
+  },
+  {
+    "record_id": 5,
+    "prev_hash": "ee533d458c2a6e8ebe9c9cff53874a8da6924f1a7f1e5d31da7048a26d1405e5",
+    "curr_hash": "bc4f38e4729d350ec58d38301c394b78cd3058fe0794084f255ff775b3210b1f",
+    "timestamp": "2026-11-04T06:04:36.715358+00:00",
+    "actor": "Test_Steward",
+    "asset_id": "cforge.public.fct_orders.is_delayed_delivery",
+    "action": "PROPOSAL_APPROVED",
+    "policy_ids_evaluated": [],
+    "before_state": {
+      "status": "PENDING"
+    },
+    "after_state": {
+      "status": "APPROVED",
+      "payload": {
+        "description": "Derived delivery flag indicating if delivery exceeded SLA.",
+        "confidence": 0.76
+      }
+    },
+    "diff": {
+      "status": {
+        "before": "PENDING",
+        "after": "APPROVED"
+      },
+      "payload": {
+        "before": null,
+        "after": {
+          "description": "Derived delivery flag indicating if delivery exceeded SLA.",
+          "confidence": 0.76
+        }
+      }
+    }
+  },
+  {
+    "record_id": 6,
+    "prev_hash": "bc4f38e4729d350ec58d38301c394b78cd3058fe0794084f255ff775b3210b1f",
+    "curr_hash": "446082888399b8b01f9bc18324aab136ac0a0edb5c6a869727bbbac15bf238eb",
+    "timestamp": "2026-11-04T06:04:39.782336+00:00",
+    "actor": "POLICY_ENGINE_AUTO",
+    "asset_id": "cforge.public.stg_products.product_category_name",
+    "action": "PROPOSAL_AUTO_APPROVED",
+    "policy_ids_evaluated": [],
+    "before_state": {
+      "status": "PENDING"
+    },
+    "after_state": {
+      "status": "AUTO_APPROVED",
+      "payload": {
+        "is_pii": false,
+        "tag_name": "DOMAIN",
+        "tag_value": "ECOMMERCE_CATALOG",
+        "confidence": 0.99
+      }
+    },
+    "diff": {
+      "status": {
+        "before": "PENDING",
+        "after": "AUTO_APPROVED"
+      },
+      "payload": {
+        "before": null,
+        "after": {
+          "is_pii": false,
+          "tag_name": "DOMAIN",
+          "tag_value": "ECOMMERCE_CATALOG",
+          "confidence": 0.99
+        }
+      }
+    }
+  },
+  {
+    "record_id": 7,
+    "prev_hash": "446082888399b8b01f9bc18324aab136ac0a0edb5c6a869727bbbac15bf238eb",
+    "curr_hash": "aff1086300eb417342c34389e321198b3699d665ecee744e45b79299182493ce",
+    "timestamp": "2026-11-04T06:04:39.788429+00:00",
+    "actor": "Senior_Data_Steward",
+    "asset_id": "cforge.public.stg_products.product_category_name",
+    "action": "PROPOSAL_APPROVED",
+    "policy_ids_evaluated": [],
+    "before_state": {
+      "status": "PENDING"
+    },
+    "after_state": {
+      "status": "APPROVED",
+      "payload": {
+        "is_pii": false,
+        "tag_name": "DOMAIN",
+        "tag_value": "ECOMMERCE_CATALOG",
+        "confidence": 0.99
+      }
+    },
+    "diff": {
+      "status": {
+        "before": "PENDING",
+        "after": "APPROVED"
+      },
+      "payload": {
+        "before": null,
+        "after": {
+          "is_pii": false,
+          "tag_name": "DOMAIN",
+          "tag_value": "ECOMMERCE_CATALOG",
+          "confidence": 0.99
+        }
+      }
+    }
+  }
+]

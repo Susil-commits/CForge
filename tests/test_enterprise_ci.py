@@ -65,6 +65,7 @@ def test_openapi_schema_contract(api_client):
         "/api/assets",
         "/api/lineage",
         "/api/approval-queue",
+        "/api/governance/audit-trail",
         "/api/eval/benchmark",
         "/api/chat"
     ]

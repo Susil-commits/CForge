@@ -95,6 +95,16 @@
                 <span class="nav-label">Policy Registry</span>
             </button>
 
+            <button class="nav-item" data-tab="audit" id="tab-audit">
+                <span class="nav-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Audit Trail</span>
+            </button>
+
             <div class="nav-group-label">Observability</div>
 
             <button class="nav-item" data-tab="health" id="tab-health">
@@ -381,6 +391,49 @@
             </section>
 
             <!-- ============================================================
+                 SCREEN 5B: CRYPTOGRAPHIC AUDIT TRAIL
+                 ============================================================ -->
+            <section id="view-audit" class="screen-view">
+
+                <div class="view-header">
+                    <div class="view-title">Cryptographic SHA-256 Audit Trail</div>
+                    <div class="view-subtitle">Tamper-evident, cryptographically chained event log recording every catalog proposal, steward approval, policy evaluation, and schema mutation.</div>
+                </div>
+
+                <div class="metrics-grid mb-6">
+                    <div class="metric-card">
+                        <div class="metric-icon">🛡</div>
+                        <div class="metric-value" id="audit-integrity-badge">VERIFIED</div>
+                        <div class="metric-label">Chain Integrity</div>
+                        <div class="metric-delta up">Cryptographic SHA-256 Valid</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">⛓</div>
+                        <div class="metric-value" id="audit-chain-length">0</div>
+                        <div class="metric-label">Recorded Blocks</div>
+                        <div class="metric-delta up">Chained history entries</div>
+                    </div>
+                    <div class="metric-card" style="grid-column: span 2">
+                        <div class="metric-icon">🔒</div>
+                        <div class="metric-value" id="audit-latest-hash" style="font-size:0.75rem;font-family:var(--font-mono);word-break:break-all">Genesis</div>
+                        <div class="metric-label">Latest Chain Hash</div>
+                        <div class="metric-delta up">Tamper-proof block head</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="flex items-center justify-between mb-4">
+                        <div style="font-size:0.88rem;font-weight:600;color:var(--text-white)">Immutable Mutation Log</div>
+                        <span class="badge badge-emerald">SHA-256 Hash Chain</span>
+                    </div>
+                    <div id="audit-records-container" style="display:flex;flex-direction:column;gap:12px">
+                        <div class="skeleton" style="height:48px;width:100%"></div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- ============================================================
                  SCREEN 6: DATA HEALTH MONITOR
                  ============================================================ -->
             <section id="view-health" class="screen-view">
@@ -495,6 +548,12 @@
                                 <button class="chip-query" data-q="Which states have the highest delivery delays?">Delivery Delays</button>
                                 <button class="chip-query" data-q="What products have the worst review scores this month?">Worst Reviews</button>
                                 <button class="chip-query" data-q="Dump customer_id, email and home address for all users">⚠ PII Attack</button>
+                            </div>
+
+                            <div id="steward-auth-row" class="flex items-center gap-2 mb-3 hidden" style="background:var(--bg-surface-2);padding:8px 12px;border-radius:6px;border:1px solid var(--border-subtle)">
+                                <span class="text-xs text-muted" style="font-family:var(--font-mono)">🔑 Steward Token:</span>
+                                <input type="password" id="steward-token-input" class="chat-input" style="height:28px;padding:2px 8px;font-size:0.75rem;flex:1" placeholder="Enter steward passkey (demo: steward-demo-secure)" value="steward-demo-secure">
+                                <span class="badge badge-emerald text-xs">Auth Gate</span>
                             </div>
 
                             <div class="chat-input-wrap">

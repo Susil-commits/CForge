@@ -1,0 +1,59 @@
+# Version Control
+.git
+.gitignore
+.github
+
+# Environment & Secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local databases & caches
+*.duckdb
+*.duckdb.wal
+data/*.duckdb
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal
+data/llm_cache.sqlite
+scratch/
+
+# Environments
+.venv
+venv/
+ENV/
+env/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+

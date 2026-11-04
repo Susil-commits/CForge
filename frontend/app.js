@@ -14,6 +14,7 @@ const API = {
   review:    (id) => `/api/approval-queue/${id}/review`,
   benchmark: '/api/eval/benchmark',
   chat:      '/api/chat',
+  audit:     '/api/governance/audit-trail',
 };
 
 const SCREEN_TITLES = {
@@ -22,6 +23,7 @@ const SCREEN_TITLES = {
   catalog:   'Asset Catalog',
   queue:     'Steward Queue',
   policies:  'Policy Registry',
+  audit:     'Cryptographic Audit Trail',
   health:    'Data Health',
   benchmark: 'Benchmark & Eval',
 };
@@ -53,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCatalog();
   initApprovalQueue();
   initPolicyRegistry();
+  initAuditTrail();
   initHealthMonitor();
   initBenchmark();
 });
@@ -73,6 +76,7 @@ function initSidebar() {
       if (view) view.classList.add('active');
 
       if (topbarTitle) topbarTitle.textContent = SCREEN_TITLES[targetTab] || targetTab;
+      if (targetTab === 'audit') loadAuditTrail();
     });
   });
 }
@@ -82,6 +86,7 @@ function initRoleSelector() {
   const select = document.getElementById('role-select');
   const displayName = document.getElementById('role-display-name');
   const chatBadge = document.getElementById('chat-role-badge');
+  const stewardAuthRow = document.getElementById('steward-auth-row');
 
   if (!select) return;
 
@@ -94,6 +99,14 @@ function initRoleSelector() {
     const r = roles[select.value] || roles['ANALYST'];
     if (displayName) displayName.textContent = r.name;
     if (chatBadge) chatBadge.textContent = `Role: ${r.name.split(' ')[0]}`;
+
+    if (stewardAuthRow) {
+      if (select.value === 'COMPLIANCE_STEWARD') {
+        stewardAuthRow.classList.remove('hidden');
+      } else {
+        stewardAuthRow.classList.add('hidden');
+      }
+    }
   });
 }
 
@@ -598,7 +611,7 @@ async function loadQueue() {
           <div class="queue-actions">
             <button class="btn-approve" onclick="handleDecision('${item.proposal_id}', 'APPROVE')">✓ Approve Write</button>
             <button class="btn-reject" onclick="handleDecision('${item.proposal_id}', 'REJECT')">✗ Reject</button>
-            <button class="btn-detail">Audit Trail</button>
+            <button class="btn-detail" onclick="document.getElementById('tab-audit').click()">Audit Trail</button>
           </div>
         </div>
       `;
@@ -616,12 +629,26 @@ window.handleDecision = async (id, decision) => {
     card.style.opacity = '0.3';
   }
   try {
+    const stewardTokenInput = document.getElementById('steward-token-input');
+    const token = stewardTokenInput ? stewardTokenInput.value.trim() : null;
+
     await fetch(API.review(id), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ steward_name: 'Lead_Data_Steward', decision }),
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'X-Steward-Token': token } : {})
+      },
+      body: JSON.stringify({
+        steward_name: 'Lead_Data_Steward',
+        decision,
+        steward_token: token
+      }),
     });
-    setTimeout(loadQueue, 300);
+    setTimeout(() => {
+      loadQueue();
+      loadAuditTrail();
+      loadCatalog();
+    }, 300);
   } catch (e) {
     console.error('Review error:', e);
     if (card) card.style.opacity = '1';
@@ -647,6 +674,69 @@ function initPolicyRegistry() {
       </div>
     </div>
   `).join('');
+}
+
+// ── Screen 5B: Cryptographic Audit Trail ──────────────────────────────────────
+async function initAuditTrail() {
+  await loadAuditTrail();
+}
+
+async function loadAuditTrail() {
+  const container = document.getElementById('audit-records-container');
+  const badge = document.getElementById('audit-integrity-badge');
+  const chainLen = document.getElementById('audit-chain-length');
+  const latestHash = document.getElementById('audit-latest-hash');
+
+  if (!container) return;
+
+  try {
+    const resp = await fetch(API.audit);
+    const data = await resp.json();
+
+    if (badge) {
+      badge.textContent = data.integrity_verified ? 'VERIFIED' : 'TAMPERED';
+      badge.className = data.integrity_verified ? 'badge badge-emerald' : 'badge badge-coral';
+    }
+    if (chainLen) chainLen.textContent = data.chain_length || 0;
+    if (latestHash) latestHash.textContent = (data.latest_hash || '').substring(0, 24) + '…';
+
+    const records = data.records || [];
+    if (records.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-title">Audit trail initialized.</div></div>`;
+      return;
+    }
+
+    container.innerHTML = records.slice().reverse().map(rec => {
+      const isGenesis = rec.action === 'GENESIS';
+      const actorColor = rec.actor.includes('Steward') || rec.actor.includes('STEWARD') ? 'badge-amber' : 'badge-muted';
+      const diffStr = rec.diff ? JSON.stringify(rec.diff) : '{}';
+
+      return `
+        <div class="card" style="padding:14px;background:var(--bg-surface-2);border:1px solid var(--border-subtle)">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="badge ${isGenesis ? 'badge-emerald' : 'badge-muted'}" style="font-family:var(--font-mono)">Block #${rec.record_id}</span>
+              <span style="font-weight:600;font-size:0.85rem;color:var(--text-white)">${rec.action}</span>
+              <span class="badge ${actorColor}">${rec.actor}</span>
+            </div>
+            <span class="text-xs text-muted" style="font-family:var(--font-mono)">${new Date(rec.timestamp).toLocaleTimeString()}</span>
+          </div>
+          <div class="text-xs text-muted mb-2">
+            Asset: <span style="font-family:var(--font-mono);color:var(--text-secondary)">${rec.asset_id}</span>
+          </div>
+          <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);background:var(--bg-card);padding:6px 10px;border-radius:4px;word-break:break-all;margin-bottom:6px">
+            <span style="color:var(--status-pass)">HASH:</span> ${rec.curr_hash}
+          </div>
+          <div class="text-xs" style="color:var(--text-secondary);font-family:var(--font-mono);background:var(--bg-card);padding:6px 10px;border-radius:4px">
+            Diff: ${diffStr}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (e) {
+    console.error('Audit trail load error:', e);
+  }
 }
 
 // ── Screen 6: Data Health Monitor ─────────────────────────────────────────────
@@ -768,11 +858,32 @@ async function initBenchmark() {
     if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = 'Querying…'; }
 
     try {
+      const isSteward = roleSelect && roleSelect.value === 'COMPLIANCE_STEWARD';
+      const stewardTokenInput = document.getElementById('steward-token-input');
+      const token = isSteward && stewardTokenInput ? stewardTokenInput.value.trim() : null;
+
       const resp = await fetch(API.chat, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, caller_role: roleSelect ? roleSelect.value : 'ANALYST' }),
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'X-Steward-Token': token } : {})
+        },
+        body: JSON.stringify({
+          question,
+          caller_role: roleSelect ? roleSelect.value : 'ANALYST',
+          steward_token: token
+        }),
       });
+
+      if (resp.status === 429) {
+        if (resultArea) resultArea.classList.remove('hidden');
+        if (statusBadge) { statusBadge.textContent = 'RATE LIMIT EXCEEDED'; statusBadge.className = 'badge badge-coral'; }
+        if (policyCitation) policyCitation.textContent = 'HTTP 429: Rate limit exceeded.';
+        if (explanationText) explanationText.textContent = 'Too many requests. ContextForge limits queries to 30 requests per minute to prevent model API quota exhaustion.';
+        if (sqlCode) sqlCode.textContent = '-- Query throttled.';
+        return;
+      }
+
       const data = await resp.json();
 
       if (resultArea) resultArea.classList.remove('hidden');
@@ -783,11 +894,19 @@ async function initBenchmark() {
         statusBadge.className = refused ? 'badge badge-coral' : 'badge badge-emerald';
       }
       if (policyCitation) policyCitation.textContent = data.policy_citation || '';
-      if (explanationText) explanationText.textContent = data.explanation || '';
+      
+      let exp = data.explanation || '';
+      if (data.auth_warning) {
+        exp = `[⚠️ ${data.auth_warning}]\n\n` + exp;
+      }
+      if (explanationText) explanationText.textContent = exp;
       if (sqlCode) sqlCode.textContent = data.sql_generated || '-- No SQL executed. Request refused by governance policies.';
 
     } catch (e) {
       console.error('Chat error:', e);
+      if (resultArea) resultArea.classList.remove('hidden');
+      if (statusBadge) { statusBadge.textContent = 'CONNECTION ERROR'; statusBadge.className = 'badge badge-coral'; }
+      if (explanationText) explanationText.textContent = 'Failed to connect to ContextForge API service.';
     } finally {
       if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = 'Ask Agent'; }
     }

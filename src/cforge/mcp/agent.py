@@ -6,7 +6,7 @@ from typing import Any
 import duckdb
 from pydantic import BaseModel, Field
 
-from cforge.config import ESTATE_DB_PATH
+from cforge.config import ENABLE_DUCKDB_EXTERNAL_ACCESS, ESTATE_DB_PATH
 from cforge.llm.client import LLMClient
 from cforge.mcp.server import MCPServer
 
@@ -147,11 +147,15 @@ class TalkToDataAgent:
                 user_prompt=user_prompt
             )
             candidate_sql = clean_sql_output(resp.text)
-            # Verify executable against DuckDB
-            conn = duckdb.connect(self.estate_path, read_only=True)
-            conn.execute(candidate_sql)
-            sql = candidate_sql
-            explanation = f"Generated SQL via LLM ({self.client.model}) grounded with {len(seen_assets)} catalog assets discovered via MCP."
+            # Verify executable against DuckDB with external access disabled for sandboxing
+            duckdb_cfg = {"enable_external_access": "false"} if not ENABLE_DUCKDB_EXTERNAL_ACCESS else {}
+            conn = duckdb.connect(self.estate_path, read_only=True, config=duckdb_cfg)
+            try:
+                conn.execute(candidate_sql)
+                sql = candidate_sql
+                explanation = f"Generated SQL via LLM ({self.client.model}) grounded with {len(seen_assets)} catalog assets discovered via MCP."
+            finally:
+                conn.close()
         except Exception:
             # Resilient fallback if LLM offline or generated SQL had syntax failure
             sql = None
@@ -189,11 +193,15 @@ class TalkToDataAgent:
                 explanation = "Queried core fact table 'fct_orders' for high-level order fulfillment status."
 
         # Step 5: Execute query and format result
-        conn = duckdb.connect(self.estate_path, read_only=True)
-        cursor = conn.execute(sql)
-        cols = [desc[0] for desc in cursor.description]
-        rows = cursor.fetchall()
-        dict_rows = [dict(zip(cols, r)) for r in rows]
+        duckdb_cfg = {"enable_external_access": "false"} if not ENABLE_DUCKDB_EXTERNAL_ACCESS else {}
+        conn = duckdb.connect(self.estate_path, read_only=True, config=duckdb_cfg)
+        try:
+            cursor = conn.execute(sql)
+            cols = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            dict_rows = [dict(zip(cols, r)) for r in rows]
+        finally:
+            conn.close()
 
         return AgentResponse(
             question=question,

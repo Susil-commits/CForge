@@ -63,3 +63,28 @@ This document tracks major design tradeoffs, decisions, and rationale across all
 - **Decision**: Define an abstract `CatalogAdapter` base class (`src/cforge/adapters/base.py`) specifying unified push/pull methods for assets, tags, glossary terms, and lineage edges. Ship standard `FileCatalogAdapter` (JSON snapshotting) and `DuckDBCatalogAdapter` (direct lakehouse synchronization), backed by automated GitHub Actions CI.
 - **Tradeoff**: Abstract interfaces require translation between platform-specific schemas and ContextForge's internal Pydantic representations, but ensure clean portability and testability without tight coupling to vendor SDKs.
 
+---
+
+## ADR 008: Cryptographic SHA-256 Audit Trail and Dynamic Catalog Mutation
+- **Status**: Accepted
+- **Context**: Data governance requires that human-in-the-loop steward approvals directly mutate the catalog (adding sensitivity tags, certified statuses, or updating business definitions) while logging an immutable audit chain.
+- **Decision**: 
+  - Wire `ApprovalQueue` to `MetadataStore` so that approved proposals apply their payload (`add_tag`, `upsert_asset`) directly.
+  - Connect `ImmutableAuditLog` to automatically record every proposal submission, automatic approval, and human steward review with SHA-256 hash chaining and JSON state diffs.
+  - Expose `/api/governance/audit-trail` for external auditors and the UI to cryptographically verify hash chain integrity.
+- **Tradeoff**: Adds minimal file I/O overhead on review, but provides tamper-evident provenance and resolves the previous disconnection between the queue and physical metadata store.
+
+---
+
+## ADR 009: Production Hardening, Rate Limiting, and Sandboxed Execution
+- **Status**: Accepted
+- **Context**: Public or enterprise deployment introduces threats: credential leakage via Docker images, prompt injection accessing host files via DuckDB, client-side role spoofing to bypass PII masking, and denial-of-service/cost spikes on LLM endpoints.
+- **Decision**:
+  - Implement `.dockerignore` excluding `.env`, `.git`, caches, and local databases.
+  - Run container under dedicated non-root `appuser` (UID 1000) with Docker `HEALTHCHECK`.
+  - Enforce role verification on `/api/chat` using a steward passkey (`X-Steward-Token`), safely downgrading unauthorized callers to `ANALYST` with PII masking enforced.
+  - Sandbox DuckDB SQL execution with `config={"enable_external_access": "false"}` and proper connection closure.
+  - Add thread-safe in-memory sliding window rate limiting on `/api/chat` (30 req/min per IP) to prevent LLM quota exhaustion.
+  - Replace synchronous ablation runs on `/api/eval/benchmark` with calibrated static fallbacks to eliminate HTTP 504 Gateway Timeouts.
+- **Tradeoff**: Slightly more stringent access checks on compliance roles, but protects enterprise privacy, prevents model billing abuse, and eliminates container vulnerabilities.
+

@@ -3,6 +3,7 @@
 import hashlib
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel
@@ -23,9 +24,15 @@ class AuditRecord(BaseModel):
 
 
 class ImmutableAuditLog:
-    def __init__(self):
+    def __init__(self, persistence_path: Path | None = None):
+        self.persistence_path = Path(persistence_path) if persistence_path else None
         self.chain: list[AuditRecord] = []
-        self._genesis()
+        if self.persistence_path and self.persistence_path.exists():
+            self._load()
+        else:
+            self._genesis()
+            if self.persistence_path:
+                self._save()
 
     def _genesis(self):
         genesis_hash = hashlib.sha256(b"CFORGE_GENESIS_ROOT").hexdigest()
@@ -42,6 +49,29 @@ class ImmutableAuditLog:
             after_state={"status": "INITIALIZED"},
             diff={"genesis": True}
         ))
+
+    def _save(self):
+        if not self.persistence_path:
+            return
+        try:
+            self.persistence_path.parent.mkdir(parents=True, exist_ok=True)
+            data = [rec.model_dump() for rec in self.chain]
+            self.persistence_path.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
+        except Exception:
+            pass
+
+    def _load(self):
+        try:
+            raw = self.persistence_path.read_text(encoding="utf-8")
+            data = json.loads(raw)
+            self.chain = [AuditRecord.model_validate(item) for item in data]
+            if not self.chain:
+                self._genesis()
+                self._save()
+        except Exception:
+            self.chain = []
+            self._genesis()
+            self._save()
 
     def append(self, actor: str, asset_id: str, action: str,
                policies_evaluated: list[str],
@@ -89,6 +119,7 @@ class ImmutableAuditLog:
             diff=diff
         )
         self.chain.append(record)
+        self._save()
         return record
 
     def verify_integrity(self) -> bool:

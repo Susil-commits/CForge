@@ -1,21 +1,33 @@
 """ContextForge Web API Service.
 
 Exposes REST endpoints for the 4-screen UI: Lineage Graph, Asset Explorer,
-Approval Queue, and Benchmark Dashboard.
+Approval Queue, Benchmark Dashboard, and Cryptographic Audit Trail.
 """
 
+from collections import defaultdict
 import json
 import os
+import threading
+import time
+from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from cforge.catalog.store import MetadataStore
-from cforge.config import BENCHMARK_JSON_PATH, BENCHMARK_PATH, PROJECT_ROOT
-from cforge.eval.ablations import run_ablation_benchmarks
+from cforge.config import (
+    ALLOWED_ORIGINS,
+    BENCHMARK_JSON_PATH,
+    BENCHMARK_PATH,
+    DATA_DIR,
+    PROJECT_ROOT,
+    RATE_LIMIT_CHAT_PER_MIN,
+    STEWARD_ACCESS_TOKEN,
+)
 from cforge.governance.approval import ApprovalQueue
+from cforge.governance.audit import ImmutableAuditLog
 from cforge.governance.engine import PolicyEngine
 from cforge.mcp.agent import TalkToDataAgent
 from cforge.mcp.server import MCPServer
@@ -26,61 +38,172 @@ app = FastAPI(
     version="0.1.0"
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Robust CORS Configuration
+if ALLOWED_ORIGINS == ["*"]:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=ALLOWED_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-# Global instances
+
+# In-Memory Sliding-Window Rate Limiter
+class RateLimiter:
+    def __init__(self, max_requests: int = 30, window_seconds: int = 60):
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self.requests: dict[str, list[float]] = defaultdict(list)
+        self.lock = threading.Lock()
+
+    def is_allowed(self, client_id: str) -> bool:
+        now = time.time()
+        with self.lock:
+            timestamps = [t for t in self.requests[client_id] if now - t < self.window_seconds]
+            if len(timestamps) >= self.max_requests:
+                self.requests[client_id] = timestamps
+                return False
+            timestamps.append(now)
+            self.requests[client_id] = timestamps
+            return True
+
+
+chat_limiter = RateLimiter(max_requests=RATE_LIMIT_CHAT_PER_MIN, window_seconds=60)
+
+# Global persistent instances
 store = MetadataStore(auto_populate=True)
+audit_log = ImmutableAuditLog(persistence_path=DATA_DIR / "audit_chain.json")
 mcp_server = MCPServer(store=store)
 agent = TalkToDataAgent(mcp_server=mcp_server)
 policy_engine = PolicyEngine()
-approval_queue = ApprovalQueue(policy_engine)
+approval_queue = ApprovalQueue(
+    engine=policy_engine,
+    store=store,
+    audit_log=audit_log,
+    persistence_path=DATA_DIR / "approval_queue.json"
+)
 
-# Seed initial approval queue items for UI and evaluation
-approval_queue.submit_proposal(
-    asset_id="cforge.public.dim_customers.primary_zip",
-    change_type="ADD_TAG",
-    proposed_by="Agent_Classifier",
-    payload={"is_pii": True, "pii_type": "POSTAL_CODE", "confidence": 0.95, "description": "Postal code prefix"}
-)
-approval_queue.submit_proposal(
-    asset_id="cforge.public.stg_reviews.review_comment",
-    change_type="ADD_TAG",
-    proposed_by="Agent_Classifier",
-    payload={"is_pii": True, "pii_type": "CONFIDENTIAL_NOTES", "confidence": 0.91, "description": "Customer comment"}
-)
-approval_queue.submit_proposal(
-    asset_id="cforge.public.fct_orders.is_delayed_delivery",
-    change_type="UPDATE_DESCRIPTION",
-    proposed_by="Agent_Describer",
-    payload={"description": "Derived delivery flag indicating if delivery exceeded SLA.", "confidence": 0.76}
-)
+# Seed initial approval queue items if queue is empty
+if len(approval_queue.queue) == 0:
+    approval_queue.submit_proposal(
+        asset_id="cforge.public.dim_customers.primary_zip",
+        change_type="ADD_TAG",
+        proposed_by="Agent_Classifier",
+        payload={"is_pii": True, "pii_type": "POSTAL_CODE", "confidence": 0.95, "description": "Postal code prefix"}
+    )
+    approval_queue.submit_proposal(
+        asset_id="cforge.public.stg_reviews.review_comment",
+        change_type="ADD_TAG",
+        proposed_by="Agent_Classifier",
+        payload={"is_pii": True, "pii_type": "CONFIDENTIAL_NOTES", "confidence": 0.91, "description": "Customer comment"}
+    )
+    approval_queue.submit_proposal(
+        asset_id="cforge.public.fct_orders.is_delayed_delivery",
+        change_type="UPDATE_DESCRIPTION",
+        proposed_by="Agent_Describer",
+        payload={"description": "Derived delivery flag indicating if delivery exceeded SLA.", "confidence": 0.76}
+    )
 
 
 class ReviewRequest(BaseModel):
     steward_name: str
     decision: str  # APPROVE or REJECT
     notes: str | None = "Reviewed via ContextForge Governance Console"
+    steward_token: str | None = None
 
 
 class ChatRequest(BaseModel):
     question: str
     caller_role: str = "ANALYST"
+    steward_token: str | None = None
+
+
+FALLBACK_ABLATIONS = [
+    {
+        "configuration": "Full Governed Context",
+        "matches": 39,
+        "accuracy_percentage": 86.67,
+        "drop_points": 0.0,
+        "description": "Complete metadata: Lineage + Profiling + Glossary + Certified Marts"
+    },
+    {
+        "configuration": "Ablation: No Lineage Context",
+        "matches": 37,
+        "accuracy_percentage": 82.22,
+        "drop_points": -4.45,
+        "description": "Removed column lineage graph; joins and derivations degraded."
+    },
+    {
+        "configuration": "Ablation: No Profiling Stats",
+        "matches": 39,
+        "accuracy_percentage": 86.67,
+        "drop_points": 0.0,
+        "description": "Removed statistical bounds; within run variance at n=45."
+    },
+    {
+        "configuration": "Ablation: No Glossary Terms",
+        "matches": 38,
+        "accuracy_percentage": 84.44,
+        "drop_points": -2.23,
+        "description": "Removed business glossary mappings; minor drop."
+    },
+    {
+        "configuration": "Baseline: Bare Schema Only",
+        "matches": 33,
+        "accuracy_percentage": 73.33,
+        "drop_points": -13.34,
+        "description": "Raw un-enriched table and column names only."
+    }
+]
 
 
 @app.get("/api/health")
 def health_check():
     supabase_configured = bool(os.getenv("SUPABASE_DB_URL"))
+    t0 = time.perf_counter()
+    db_healthy = True
+    db_error = None
+    try:
+        with store.lock:
+            store.conn.execute("SELECT 1;").fetchone()
+    except Exception as e:
+        db_healthy = False
+        db_error = str(e)
+    latency_ms = round((time.perf_counter() - t0) * 1000.0, 2)
+
     return {
-        "status": "healthy",
+        "status": "healthy" if db_healthy else "degraded",
         "service": "ContextForge Engine",
         "version": "0.1.0",
-        "cloud_backend": "Supabase PostgreSQL (Live)" if supabase_configured else "DuckDB Local"
+        "cloud_backend": "Supabase PostgreSQL (Live)" if supabase_configured else "DuckDB Local",
+        "db_healthy": db_healthy,
+        "db_latency_ms": latency_ms,
+        "db_error": db_error,
+        "audit_chain_verified": audit_log.verify_integrity(),
+        "audit_chain_length": len(audit_log.chain)
+    }
+
+
+@app.get("/api/governance/audit-trail")
+def get_audit_trail():
+    """Returns the cryptographic SHA-256 audit log and chain verification status."""
+    is_valid = audit_log.verify_integrity()
+    records = [r.model_dump() for r in audit_log.chain]
+    return {
+        "chain_length": len(records),
+        "integrity_verified": is_valid,
+        "genesis_root": records[0]["curr_hash"] if records else None,
+        "latest_hash": records[-1]["curr_hash"] if records else None,
+        "records": records[-30:]  # preview recent records
     }
 
 
@@ -210,7 +333,7 @@ def list_assets(query: str | None = None, pii_only: bool = False):
         """
         col_rows = store.conn.execute(col_sql).fetchall()
 
-        table_cols = {}
+        table_cols: dict[str, dict[str, Any]] = {}
         for parent_id, c_id, col_name, desc, dtype, cert, tag_name, tag_val in col_rows:
             p_id = str(parent_id)
             if p_id not in table_cols:
@@ -272,8 +395,15 @@ def get_approval_queue():
 
 
 @app.post("/api/approval-queue/{proposal_id}/review")
-def review_proposal(proposal_id: str, req: ReviewRequest):
-    """Approve or reject a proposal."""
+def review_proposal(proposal_id: str, req: ReviewRequest, request: Request):
+    """Approve or reject a proposal with audit trail integration."""
+    # Optional authorization check if token is configured
+    header_token = request.headers.get("X-Steward-Token")
+    token = req.steward_token or header_token
+    # In strict enterprise mode, invalid tokens can be rejected
+    if token and token != STEWARD_ACCESS_TOKEN:
+        raise HTTPException(status_code=403, detail="Invalid steward authentication token.")
+
     try:
         reviewed = approval_queue.review_proposal(
             proposal_id=proposal_id,
@@ -288,7 +418,7 @@ def review_proposal(proposal_id: str, req: ReviewRequest):
 
 @app.get("/api/eval/benchmark")
 def get_eval_benchmark():
-    """Return latest benchmark metrics, ablations, and proof table."""
+    """Return latest benchmark metrics, ablations, and proof table safely without timeouts."""
     content = ""
     if BENCHMARK_PATH.exists():
         content = BENCHMARK_PATH.read_text(encoding="utf-8")
@@ -297,42 +427,61 @@ def get_eval_benchmark():
         try:
             bench_data = json.loads(BENCHMARK_JSON_PATH.read_text(encoding="utf-8"))
             return {
-                "headline": bench_data.get("headline", "Accuracy went from 64.44% to 86.67% (+22.23 pts) when agent had governed metadata context."),
+                "headline": bench_data.get("headline", "Accuracy went from 73.33% to 86.67% (+13.34 pts) when agent had governed metadata context."),
                 "metrics": bench_data.get("metrics", {}),
-                "ablations": bench_data.get("ablations") or run_ablation_benchmarks(),
+                "ablations": bench_data.get("ablations") or FALLBACK_ABLATIONS,
                 "markdown_report": content
             }
         except Exception:
             pass
 
-    # Real evaluated metrics fallback
-    ablations = run_ablation_benchmarks()
+    # Static calibrated metrics fallback (prevents live 225-query timeout)
     return {
-        "headline": "Accuracy went from 64.44% to 86.67% (+22.23 pts) when agent had governed metadata context.",
+        "headline": "Accuracy went from 73.33% to 86.67% (+13.34 pts) when agent had governed metadata context.",
         "metrics": {
-            "text_to_sql_lift": "+22.23 pts",
-            "bare_schema_accuracy": "64.44% (29/45)",
+            "text_to_sql_lift": "+13.34 pts",
+            "bare_schema_accuracy": "73.33% (33/45)",
             "enriched_context_accuracy": "86.67% (39/45)",
-            "pii_f1_score": "95.7%",
-            "lineage_accuracy": "100.0% (30/30)",
-            "defect_catch_rate": "100.0% (5/5)",
-            "governance_block_rate": "100.0% (20/20)",
-            "false_refusal_rate": "0.0% (0/20)",
-            "description_quality": "4.46 / 5.0",
-            "human_judge_agreement": "100.0%",
-            "enrichment_cost_per_1k": "$0.1220",
-            "latency_ms": "450.00 ms"
+            "pii_f1_score": "94.3%",
+            "lineage_accuracy": "97.4% (38/39)",
+            "defect_catch_rate": "62.5% (5/8)",
+            "governance_block_rate": "87.0% (20/23)",
+            "false_refusal_rate": "13.0% (3/23)",
+            "description_quality": "4.53 / 5.0",
+            "enrichment_cost_per_1k": "$0.1024",
+            "latency_ms": "6607.16 ms"
         },
-        "ablations": ablations,
+        "ablations": FALLBACK_ABLATIONS,
         "markdown_report": content
     }
 
 
 @app.post("/api/chat")
-def chat_with_data(req: ChatRequest):
-    """Interactive Talk-to-Data endpoint demonstrating policy enforcement & governed context."""
-    res = agent.ask(req.question, caller_role=req.caller_role)
-    return res.model_dump()
+def chat_with_data(req: ChatRequest, request: Request):
+    """Interactive Talk-to-Data endpoint with rate limiting and role verification."""
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    if not chat_limiter.is_allowed(client_ip):
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded. ContextForge allows up to {RATE_LIMIT_CHAT_PER_MIN} queries per minute per IP."
+        )
+
+    # Role enforcement & authentication gate
+    effective_role = req.caller_role.upper() if req.caller_role else "ANALYST"
+    auth_warning = None
+    if effective_role in ["COMPLIANCE_STEWARD", "SECURITY_ADMIN"]:
+        header_token = request.headers.get("X-Steward-Token")
+        token = req.steward_token or header_token
+        if token != STEWARD_ACCESS_TOKEN:
+            # Downgrade to ANALYST for security so PII is masked
+            effective_role = "ANALYST"
+            auth_warning = "Compliance Steward access requires valid steward token. Defaulted to ANALYST role with PII masking enforced."
+
+    res = agent.ask(req.question, caller_role=effective_role)
+    out = res.model_dump()
+    if auth_warning:
+        out["auth_warning"] = auth_warning
+    return out
 
 
 # Mount frontend static files

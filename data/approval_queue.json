@@ -1,0 +1,131 @@
+{
+  "4c9c582e-faff-4d78-9b2c-09ac572cae39": {
+    "proposal_id": "4c9c582e-faff-4d78-9b2c-09ac572cae39",
+    "asset_id": "cforge.public.dim_customers.primary_zip",
+    "change_type": "ADD_TAG",
+    "proposed_by": "Agent_Classifier",
+    "payload": {
+      "is_pii": true,
+      "pii_type": "POSTAL_CODE",
+      "confidence": 0.95,
+      "description": "Postal code prefix"
+    },
+    "status": "APPROVED",
+    "evaluation": {
+      "passed": true,
+      "can_write": false,
+      "requires_approval": true,
+      "approval_reasons": [
+        "Asset contains PII; steward sign-off required before active write."
+      ],
+      "violations": [],
+      "policies_checked_count": 15
+    },
+    "reviewed_by": "Test_Steward",
+    "reviewed_at": "2026-11-04T05:54:33.417941Z",
+    "review_notes": "Approved in unit test",
+    "created_at": "2026-11-04T05:54:11.273385Z"
+  },
+  "d291a130-09e7-4dfa-9c19-4ba540219068": {
+    "proposal_id": "d291a130-09e7-4dfa-9c19-4ba540219068",
+    "asset_id": "cforge.public.stg_reviews.review_comment",
+    "change_type": "ADD_TAG",
+    "proposed_by": "Agent_Classifier",
+    "payload": {
+      "is_pii": true,
+      "pii_type": "CONFIDENTIAL_NOTES",
+      "confidence": 0.91,
+      "description": "Customer comment"
+    },
+    "status": "APPROVED",
+    "evaluation": {
+      "passed": true,
+      "can_write": false,
+      "requires_approval": true,
+      "approval_reasons": [
+        "Asset contains PII; steward sign-off required before active write."
+      ],
+      "violations": [],
+      "policies_checked_count": 15
+    },
+    "reviewed_by": "Test_Steward",
+    "reviewed_at": "2026-11-04T06:02:50.773700Z",
+    "review_notes": "Approved in unit test",
+    "created_at": "2026-11-04T05:54:11.275138Z"
+  },
+  "0840a7d7-2ed0-4375-a9cb-a3cf775e278b": {
+    "proposal_id": "0840a7d7-2ed0-4375-a9cb-a3cf775e278b",
+    "asset_id": "cforge.public.fct_orders.is_delayed_delivery",
+    "change_type": "UPDATE_DESCRIPTION",
+    "proposed_by": "Agent_Describer",
+    "payload": {
+      "description": "Derived delivery flag indicating if delivery exceeded SLA.",
+      "confidence": 0.76
+    },
+    "status": "APPROVED",
+    "evaluation": {
+      "passed": true,
+      "can_write": false,
+      "requires_approval": true,
+      "approval_reasons": [
+        "Agent confidence (0.76) below policy threshold (0.8)."
+      ],
+      "violations": [],
+      "policies_checked_count": 15
+    },
+    "reviewed_by": "Test_Steward",
+    "reviewed_at": "2026-11-04T06:04:36.707890Z",
+    "review_notes": "Approved in unit test",
+    "created_at": "2026-11-04T05:54:11.275740Z"
+  },
+  "c7e97d56-acab-4bc5-9d77-c85a831ad6b6": {
+    "proposal_id": "c7e97d56-acab-4bc5-9d77-c85a831ad6b6",
+    "asset_id": "cforge.public.stg_products.product_category_name",
+    "change_type": "ADD_TAG",
+    "proposed_by": "Agent_Classifier",
+    "payload": {
+      "is_pii": false,
+      "tag_name": "DOMAIN",
+      "tag_value": "ECOMMERCE_CATALOG",
+      "confidence": 0.99
+    },
+    "status": "APPROVED",
+    "evaluation": {
+      "passed": true,
+      "can_write": true,
+      "requires_approval": false,
+      "approval_reasons": [],
+      "violations": [],
+      "policies_checked_count": 15
+    },
+    "reviewed_by": "Senior_Data_Steward",
+    "reviewed_at": "2026-11-04T06:03:07.122858Z",
+    "review_notes": "Verified by steward in catalog mutation test",
+    "created_at": "2026-11-04T06:03:07.117131Z"
+  },
+  "5d5c1941-e495-4642-be2b-7d282f455f9a": {
+    "proposal_id": "5d5c1941-e495-4642-be2b-7d282f455f9a",
+    "asset_id": "cforge.public.stg_products.product_category_name",
+    "change_type": "ADD_TAG",
+    "proposed_by": "Agent_Classifier",
+    "payload": {
+      "is_pii": false,
+      "tag_name": "DOMAIN",
+      "tag_value": "ECOMMERCE_CATALOG",
+      "confidence": 0.99
+    },
+    "status": "APPROVED",
+    "evaluation": {
+      "passed": true,
+      "can_write": true,
+      "requires_approval": false,
+      "approval_reasons": [],
+      "violations": [],
+      "policies_checked_count": 15
+    },
+    "reviewed_by": "Senior_Data_Steward",
+    "reviewed_at": "2026-11-04T06:04:39.786126Z",
+    "review_notes": "Verified by steward in catalog mutation test",
+    "created_at": "2026-11-04T06:04:39.779256Z"
+  }
+}
