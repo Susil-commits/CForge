@@ -532,7 +532,19 @@ function showAssetDetail(asset) {
   if (body) {
     const cols = asset.columns || [];
     body.innerHTML = `
-      <div class="section-divider" style="margin-bottom:12px;font-size:0.68rem;text-transform:uppercase;color:var(--text-muted);font-weight:600">Column Schema &amp; Governed Context</div>
+      <div class="flex items-center justify-between mb-3">
+        <div class="section-divider" style="font-size:0.68rem;text-transform:uppercase;color:var(--text-muted);font-weight:600">Column Schema &amp; Governed Context</div>
+        <button class="btn-detail" id="btn-inspect-mcp" style="font-size:0.7rem;padding:3px 8px;cursor:pointer" onclick="toggleMcpPayload('${asset.asset_id}')">⚡ Inspect MCP Context JSON</button>
+      </div>
+
+      <div id="mcp-payload-container" class="card mb-3 hidden" style="padding:10px;background:var(--bg-surface-2);border:1px solid var(--border-subtle)">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs text-muted" style="font-family:var(--font-mono)">Model Context Protocol (MCP) Output for LLM</span>
+          <span class="badge badge-emerald text-xs">Role Governed</span>
+        </div>
+        <pre id="mcp-payload-pre" style="font-size:0.7rem;font-family:var(--font-mono);color:var(--text-secondary);max-height:180px;overflow-y:auto;white-space:pre-wrap"></pre>
+      </div>
+
       <table class="col-table">
         <thead>
           <tr>
@@ -558,6 +570,29 @@ function showAssetDetail(asset) {
     `;
   }
 }
+
+window.toggleMcpPayload = async (assetId) => {
+  const container = document.getElementById('mcp-payload-container');
+  const pre = document.getElementById('mcp-payload-pre');
+  if (!container || !pre) return;
+
+  if (!container.classList.contains('hidden')) {
+    container.classList.add('hidden');
+    return;
+  }
+
+  container.classList.remove('hidden');
+  pre.textContent = 'Fetching live MCP context payload…';
+  try {
+    const roleSelect = document.getElementById('role-select');
+    const role = roleSelect ? roleSelect.value : 'ANALYST';
+    const resp = await fetch(`/api/assets/${encodeURIComponent(assetId)}/context?role=${role}`);
+    const data = await resp.json();
+    pre.textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    pre.textContent = 'Failed to load MCP context payload: ' + e;
+  }
+};
 
 // ── Screen 4: Approval Queue ──────────────────────────────────────────────────
 async function initApprovalQueue() {
@@ -901,6 +936,57 @@ async function initBenchmark() {
       }
       if (explanationText) explanationText.textContent = exp;
       if (sqlCode) sqlCode.textContent = data.sql_generated || '-- No SQL executed. Request refused by governance policies.';
+
+      // Render Live MCP Tool Calling Trace
+      const toolsContainer = document.getElementById('chat-tools-trace');
+      if (toolsContainer) {
+        if (data.tools_called && data.tools_called.length > 0) {
+          toolsContainer.innerHTML = data.tools_called.map(t =>
+            `<span class="badge badge-muted" style="border:1px solid var(--border-default);padding:2px 6px">⚡ MCP: ${t}</span>`
+          ).join('');
+        } else {
+          toolsContainer.innerHTML = '';
+        }
+      }
+
+      // Render Assembled Context Payload
+      const accordion = document.getElementById('chat-context-accordion');
+      const payloadPre = document.getElementById('chat-context-payload');
+      const tokensBadge = document.getElementById('chat-tokens-badge');
+      if (accordion && payloadPre) {
+        if (data.context_payload) {
+          accordion.classList.remove('hidden');
+          payloadPre.textContent = data.context_payload;
+          if (tokensBadge) tokensBadge.textContent = `${data.tokens_used || Math.round(data.context_payload.length / 4)} tokens`;
+        } else {
+          accordion.classList.add('hidden');
+        }
+      }
+
+      // Render Live Data Results from DuckDB
+      const tableWrap = document.getElementById('chat-data-table-wrap');
+      const tableContainer = document.getElementById('chat-data-table-container');
+      if (tableWrap && tableContainer) {
+        if (data.data_result && data.data_result.length > 0) {
+          tableWrap.classList.remove('hidden');
+          const headers = Object.keys(data.data_result[0]);
+          tableContainer.innerHTML = `
+            <table class="col-table" style="font-size:0.75rem;margin-top:6px">
+              <thead>
+                <tr>${headers.map(h => `<th style="padding:6px 10px">${h}</th>`).join('')}</tr>
+              </thead>
+              <tbody>
+                ${data.data_result.slice(0, 10).map(row => `
+                  <tr>${headers.map(h => `<td style="padding:6px 10px;font-family:var(--font-mono)">${row[h] !== null ? row[h] : '<span class="text-muted">NULL</span>'}</td>`).join('')}</tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `;
+        } else {
+          tableWrap.classList.add('hidden');
+          tableContainer.innerHTML = '';
+        }
+      }
 
     } catch (e) {
       console.error('Chat error:', e);

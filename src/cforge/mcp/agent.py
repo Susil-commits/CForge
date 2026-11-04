@@ -20,6 +20,8 @@ class AgentResponse(BaseModel):
     data_result: list[dict[str, Any]] | None = None
     explanation: str
     tools_called: list[str] = Field(default_factory=list)
+    context_payload: str | None = None
+    tokens_used: int | None = None
 
 
 def clean_sql_output(raw_text: str) -> str:
@@ -211,5 +213,7 @@ class TalkToDataAgent:
             sql_generated=sql.strip(),
             data_result=dict_rows,
             explanation=explanation,
-            tools_called=tools_called
+            tools_called=tools_called,
+            context_payload=schema_context_str,
+            tokens_used=len(schema_context_str) // 4
         )

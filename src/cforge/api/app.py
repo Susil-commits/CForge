@@ -384,6 +384,15 @@ def list_assets(query: str | None = None, pii_only: bool = False):
         return {"total": len(assets), "assets": assets}
 
 
+@app.get("/api/assets/{asset_id:path}/context")
+def get_asset_context_endpoint(asset_id: str, role: str = "ANALYST"):
+    """Fetch exact governed MCP context payload for an asset."""
+    try:
+        return mcp_server.get_asset_context(asset_id, caller_role=role)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"Asset '{asset_id}' not found.")
+
+
 @app.get("/api/approval-queue")
 def get_approval_queue():
     """List all proposals in the steward approval queue."""
