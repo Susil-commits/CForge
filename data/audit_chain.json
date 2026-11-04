@@ -381,5 +381,116 @@
         }
       }
     }
+  },
+  {
+    "record_id": 11,
+    "prev_hash": "1ef98857b757628461794c60aa8b898330acdf734f64bca409d69e1e84dc543d",
+    "curr_hash": "86d97bacf45d7eda9c3a63342bdaa791074838e10bf5a11529a6e4dc4bee04d7",
+    "timestamp": "2026-11-04T07:03:27.365277+00:00",
+    "actor": "Test_Steward",
+    "asset_id": "cforge.public.dim_customers.primary_zip",
+    "action": "PROPOSAL_APPROVED",
+    "policy_ids_evaluated": [],
+    "before_state": {
+      "status": "PENDING"
+    },
+    "after_state": {
+      "status": "APPROVED",
+      "payload": {
+        "is_pii": true,
+        "pii_type": "POSTAL_CODE",
+        "confidence": 0.95,
+        "description": "Postal code prefix"
+      }
+    },
+    "diff": {
+      "status": {
+        "before": "PENDING",
+        "after": "APPROVED"
+      },
+      "payload": {
+        "before": null,
+        "after": {
+          "is_pii": true,
+          "pii_type": "POSTAL_CODE",
+          "confidence": 0.95,
+          "description": "Postal code prefix"
+        }
+      }
+    }
+  },
+  {
+    "record_id": 12,
+    "prev_hash": "86d97bacf45d7eda9c3a63342bdaa791074838e10bf5a11529a6e4dc4bee04d7",
+    "curr_hash": "af14cc25d175bc317f70e6117560c7a6f15fa527d5f7585bf78b49881b923468",
+    "timestamp": "2026-11-04T07:03:27.716750+00:00",
+    "actor": "POLICY_ENGINE_AUTO",
+    "asset_id": "cforge.public.stg_products.product_category_name",
+    "action": "PROPOSAL_AUTO_APPROVED",
+    "policy_ids_evaluated": [],
+    "before_state": {
+      "status": "PENDING"
+    },
+    "after_state": {
+      "status": "AUTO_APPROVED",
+      "payload": {
+        "is_pii": false,
+        "tag_name": "DOMAIN",
+        "tag_value": "ECOMMERCE_CATALOG",
+        "confidence": 0.99
+      }
+    },
+    "diff": {
+      "status": {
+        "before": "PENDING",
+        "after": "AUTO_APPROVED"
+      },
+      "payload": {
+        "before": null,
+        "after": {
+          "is_pii": false,
+          "tag_name": "DOMAIN",
+          "tag_value": "ECOMMERCE_CATALOG",
+          "confidence": 0.99
+        }
+      }
+    }
+  },
+  {
+    "record_id": 13,
+    "prev_hash": "af14cc25d175bc317f70e6117560c7a6f15fa527d5f7585bf78b49881b923468",
+    "curr_hash": "f8a8b1b26a8a84a996b002f16e60213c7abc7924bdaf12842a7764a5fbc0bbd5",
+    "timestamp": "2026-11-04T07:03:27.729246+00:00",
+    "actor": "Senior_Data_Steward",
+    "asset_id": "cforge.public.stg_products.product_category_name",
+    "action": "PROPOSAL_APPROVED",
+    "policy_ids_evaluated": [],
+    "before_state": {
+      "status": "PENDING"
+    },
+    "after_state": {
+      "status": "APPROVED",
+      "payload": {
+        "is_pii": false,
+        "tag_name": "DOMAIN",
+        "tag_value": "ECOMMERCE_CATALOG",
+        "confidence": 0.99
+      }
+    },
+    "diff": {
+      "status": {
+        "before": "PENDING",
+        "after": "APPROVED"
+      },
+      "payload": {
+        "before": null,
+        "after": {
+          "is_pii": false,
+          "tag_name": "DOMAIN",
+          "tag_value": "ECOMMERCE_CATALOG",
+          "confidence": 0.99
+        }
+      }
+    }
   }
 ]

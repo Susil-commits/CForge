@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-04 06:56:09 UTC",
+  "timestamp": "2026-11-04 07:03:20 UTC",
   "headline": "73.3% -> 86.7% on 45 execution-checked business questions (+13.34 pts), single run, one model.",
   "metrics": {
     "text_to_sql_lift": "+13.34 pts",
@@ -63,12 +63,12 @@
         ],
         "parsed_actual": [
           {
-            "table": "fed_orders",
-            "column": "_col_0"
-          },
-          {
             "table": "raw_nw_orders",
             "column": "ship_via"
+          },
+          {
+            "table": "fed_orders",
+            "column": "_col_0"
           }
         ],
         "reason": "Subquery alias boundary or unparsed projection expression."
