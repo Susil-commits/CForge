@@ -44,7 +44,7 @@ class MCPServer:
                 "display_name": r[3],
                 "description": r[4],
                 "certification_status": r[5],
-                "owner": r[6]
+                "owner": r[6],
             }
             for r in rows
         ]
@@ -52,32 +52,43 @@ class MCPServer:
     def get_asset_context(self, asset_id: str, caller_role: str = "ANALYST") -> dict[str, Any]:
         """Fetch rich context for an asset, applying role-based PII masking and policy citations."""
         with self.store.lock:
-            asset = self.store.conn.execute("""
+            asset = self.store.conn.execute(
+                """
                 SELECT asset_id, parent_id, asset_type, name, display_name, description, data_type, owner, certification_status, quality_score, version
                 FROM assets WHERE asset_id = ?
-            """, (str(asset_id),)).fetchone()
+            """,
+                (str(asset_id),),
+            ).fetchone()
 
             if not asset:
                 raise KeyError(f"Asset '{asset_id}' not found in ContextForge catalog.")
 
             # Get tags
-            tag_rows = self.store.conn.execute("""
+            tag_rows = self.store.conn.execute(
+                """
                 SELECT tag_name, tag_value, confidence, source, reason
                 FROM tags WHERE asset_id = ?
-            """, (str(asset_id),)).fetchall()
+            """,
+                (str(asset_id),),
+            ).fetchall()
             tags = [{"name": t[0], "value": t[1], "confidence": t[2], "source": t[3], "reason": t[4]} for t in tag_rows]
 
             # Get columns if it's a table
             columns = []
             if asset[2] == "TABLE":
-                col_rows = self.store.conn.execute("""
+                col_rows = self.store.conn.execute(
+                    """
                     SELECT asset_id, name, description, data_type, certification_status
                     FROM assets WHERE parent_id = ? AND asset_type = 'COLUMN'
-                """, (str(asset_id),)).fetchall()
-                
+                """,
+                    (str(asset_id),),
+                ).fetchall()
+
                 for c in col_rows:
                     c_id = str(c[0])
-                    c_tags = self.store.conn.execute("SELECT tag_name, tag_value FROM tags WHERE asset_id = ?", (c_id,)).fetchall()
+                    c_tags = self.store.conn.execute(
+                        "SELECT tag_name, tag_value FROM tags WHERE asset_id = ?", (c_id,)
+                    ).fetchall()
                     is_pii = any(t[0] == "PII" for t in c_tags)
                     pii_type = next((t[1] for t in c_tags if t[0] == "PII"), "NONE")
 
@@ -88,16 +99,18 @@ class MCPServer:
                         is_masked = True
                         masking_policy = "POL-002 & POL-006: PII restricted from unauthorized role access."
 
-                    columns.append({
-                        "column_asset_id": c_id,
-                        "column_name": c[1],
-                        "description": c[2],
-                        "data_type": c[3],
-                        "is_pii": is_pii,
-                        "pii_type": pii_type,
-                        "is_masked": is_masked,
-                        "masking_policy": masking_policy
-                    })
+                    columns.append(
+                        {
+                            "column_asset_id": c_id,
+                            "column_name": c[1],
+                            "description": c[2],
+                            "data_type": c[3],
+                            "is_pii": is_pii,
+                            "pii_type": pii_type,
+                            "is_masked": is_masked,
+                            "masking_policy": masking_policy,
+                        }
+                    )
 
         return {
             "asset_id": asset[0],
@@ -113,7 +126,7 @@ class MCPServer:
             "version": asset[10],
             "tags": tags,
             "columns": columns,
-            "caller_role": caller_role
+            "caller_role": caller_role,
         }
 
     def get_lineage(self, asset_id: str, direction: str = "BOTH", max_depth: int = 5) -> dict[str, Any]:
@@ -130,7 +143,7 @@ class MCPServer:
             "upstream_count": len(upstream),
             "downstream_count": len(downstream),
             "upstream_lineage": upstream,
-            "downstream_lineage": downstream
+            "downstream_lineage": downstream,
         }
 
     def get_policies(self, policy_id: str | None = None) -> list[dict[str, Any]]:
@@ -142,12 +155,14 @@ class MCPServer:
     def get_quality(self, table_name: str) -> dict[str, Any]:
         """Fetch quality score and validation state for an asset."""
         table_asset = f"cforge.public.{table_name}"
-        res = self.store.conn.execute("SELECT quality_score, certification_status FROM assets WHERE asset_id = ?", (table_asset,)).fetchone()
+        res = self.store.conn.execute(
+            "SELECT quality_score, certification_status FROM assets WHERE asset_id = ?", (table_asset,)
+        ).fetchone()
         if not res:
             return {"table_name": table_name, "quality_score": 1.0, "status": "UNKNOWN"}
         return {
             "table_name": table_name,
             "asset_id": table_asset,
             "quality_score": res[0],
-            "certification_status": res[1]
+            "certification_status": res[1],
         }

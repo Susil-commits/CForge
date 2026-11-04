@@ -11,10 +11,15 @@ from sqlglot.lineage import lineage
 
 
 class ColumnLineageEdge:
-    def __init__(self, source_table: str, source_column: str,
-                 target_table: str, target_column: str,
-                 transformation_type: str = "DIRECT_COPY",
-                 expression: str | None = None):
+    def __init__(
+        self,
+        source_table: str,
+        source_column: str,
+        target_table: str,
+        target_column: str,
+        transformation_type: str = "DIRECT_COPY",
+        expression: str | None = None,
+    ):
         self.source_table = source_table
         self.source_column = source_column
         self.target_table = target_table
@@ -31,7 +36,7 @@ class ColumnLineageEdge:
             "target_table": self.target_table,
             "target_column": self.target_column,
             "transformation_type": self.transformation_type,
-            "expression": self.expression
+            "expression": self.expression,
         }
 
     def __repr__(self) -> str:
@@ -42,19 +47,30 @@ class LineageParser:
     def __init__(self, dialect: str = "duckdb"):
         self.dialect = dialect
 
-    def _resolve_column_through_ctes(self, col_name: str, table_ref: str, ctes: dict[str, exp.CTE], table_aliases: dict[str, str]) -> list[tuple[str, str]]:
+    def _resolve_column_through_ctes(
+        self, col_name: str, table_ref: str, ctes: dict[str, exp.CTE], table_aliases: dict[str, str]
+    ) -> list[tuple[str, str]]:
         """Recursively trace a column reference through Common Table Expressions (CTEs) to find underlying physical tables."""
         if table_ref in ctes:
             cte = ctes[table_ref]
             selects = list(cte.this.find_all(exp.Select))
             sources = []
             for cte_select in selects:
-                cte_aliases = {t.alias_or_name: t.name for t in cte_select.find_all(exp.Table) if t.name and t.alias_or_name}
+                cte_aliases = {
+                    t.alias_or_name: t.name for t in cte_select.find_all(exp.Table) if t.name and t.alias_or_name
+                }
                 for cte_expr in cte_select.expressions:
-                    if cte_expr.alias_or_name == col_name or (isinstance(cte_expr, exp.Column) and cte_expr.name == col_name):
+                    if cte_expr.alias_or_name == col_name or (
+                        isinstance(cte_expr, exp.Column) and cte_expr.name == col_name
+                    ):
                         for inner_col in cte_expr.find_all(exp.Column):
-                            inner_tbl = cte_aliases.get(inner_col.table, inner_col.table or (list(cte_aliases.values())[0] if cte_aliases else "source"))
-                            sources.extend(self._resolve_column_through_ctes(inner_col.name, inner_tbl, ctes, table_aliases))
+                            inner_tbl = cte_aliases.get(
+                                inner_col.table,
+                                inner_col.table or (list(cte_aliases.values())[0] if cte_aliases else "source"),
+                            )
+                            sources.extend(
+                                self._resolve_column_through_ctes(inner_col.name, inner_tbl, ctes, table_aliases)
+                            )
             if sources:
                 return sources
         real_tbl = table_aliases.get(table_ref, table_ref)
@@ -151,14 +167,16 @@ class LineageParser:
                         final_sources.add((r_tbl, r_col))
 
             for s_tbl, s_col in final_sources:
-                edges.append(ColumnLineageEdge(
-                    source_table=s_tbl,
-                    source_column=s_col,
-                    target_table=target_table_name,
-                    target_column=col_alias,
-                    transformation_type=tx_type,
-                    expression=expr.sql()
-                ))
+                edges.append(
+                    ColumnLineageEdge(
+                        source_table=s_tbl,
+                        source_column=s_col,
+                        target_table=target_table_name,
+                        target_column=col_alias,
+                        transformation_type=tx_type,
+                        expression=expr.sql(),
+                    )
+                )
 
         return edges
 

@@ -23,7 +23,7 @@ def sample_asset():
         display_name="Adapter Test Table",
         description="Testing catalog adapter portability",
         certification_status=CertificationStatus.CERTIFIED,
-        owner="Architecture Guild"
+        owner="Architecture Guild",
     )
 
 
@@ -35,7 +35,7 @@ def sample_tag():
         tag_name="PII",
         tag_value="CUSTOMER_ID",
         confidence=0.98,
-        source="AGENT"
+        source="AGENT",
     )
 
 
@@ -45,7 +45,7 @@ def sample_glossary():
         term_id="glossary.adapter_term",
         term_name="Adapter Term",
         definition="Standardized term definition for adapter testing.",
-        domain="Core Architecture"
+        domain="Core Architecture",
     )
 
 
@@ -55,7 +55,7 @@ def sample_edge():
         edge_id="edge_adapter_1",
         source_asset_id="cforge.test.table_a",
         target_asset_id="cforge.test.table_b",
-        transformation_type="ETL_SYNC"
+        transformation_type="ETL_SYNC",
     )
 
 

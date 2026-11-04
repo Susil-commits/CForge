@@ -37,7 +37,7 @@ class PolicyEngine:
     def _load_policies(self) -> list[dict[str, Any]]:
         if not self.policies_path.exists():
             return []
-        with open(self.policies_path, "r", encoding="utf-8") as f:
+        with open(self.policies_path, encoding="utf-8") as f:
             data = yaml.safe_load(f)
             return data.get("policies", [])
 
@@ -72,13 +72,15 @@ class PolicyEngine:
                     for s in sample_values:
                         s_str = str(s).strip()
                         if len(s_str) >= 4 and s_str.lower() in description.lower():
-                            violations.append(PolicyViolation(
-                                policy_id=p_id,
-                                policy_name=p_name,
-                                severity="CRITICAL",
-                                message=f"Description contains raw sample value '{s_str}'.",
-                                blocked=True
-                            ))
+                            violations.append(
+                                PolicyViolation(
+                                    policy_id=p_id,
+                                    policy_name=p_name,
+                                    severity="CRITICAL",
+                                    message=f"Description contains raw sample value '{s_str}'.",
+                                    blocked=True,
+                                )
+                            )
                             blocked = True
 
             # POL-002: pii_requires_steward_approval
@@ -98,91 +100,105 @@ class PolicyEngine:
             elif p_name == "certification_quality_gate":
                 min_q = pol.get("min_quality_score", 0.85)
                 if certification_status == "CERTIFIED" and quality_score < min_q:
-                    violations.append(PolicyViolation(
-                        policy_id=p_id,
-                        policy_name=p_name,
-                        severity="HIGH",
-                        message=f"Certification requires quality score >= {min_q}, current is {quality_score}.",
-                        blocked=True
-                    ))
+                    violations.append(
+                        PolicyViolation(
+                            policy_id=p_id,
+                            policy_name=p_name,
+                            severity="HIGH",
+                            message=f"Certification requires quality score >= {min_q}, current is {quality_score}.",
+                            blocked=True,
+                        )
+                    )
                     blocked = True
 
             # POL-005: certification_owner_mandatory
             elif p_name == "certification_owner_mandatory":
                 if certification_status == "CERTIFIED" and (not owner or owner.strip() == ""):
-                    violations.append(PolicyViolation(
-                        policy_id=p_id,
-                        policy_name=p_name,
-                        severity="HIGH",
-                        message="Asset cannot be CERTIFIED without a designated owner.",
-                        blocked=True
-                    ))
+                    violations.append(
+                        PolicyViolation(
+                            policy_id=p_id,
+                            policy_name=p_name,
+                            severity="HIGH",
+                            message="Asset cannot be CERTIFIED without a designated owner.",
+                            blocked=True,
+                        )
+                    )
                     blocked = True
 
             # POL-006: restricted_pii_no_public_access
             elif p_name == "restricted_pii_no_public_access":
                 if is_pii and sensitivity == "PUBLIC":
-                    violations.append(PolicyViolation(
-                        policy_id=p_id,
-                        policy_name=p_name,
-                        severity="CRITICAL",
-                        message="PII tagged columns cannot be marked as PUBLIC sensitivity.",
-                        blocked=True
-                    ))
+                    violations.append(
+                        PolicyViolation(
+                            policy_id=p_id,
+                            policy_name=p_name,
+                            severity="CRITICAL",
+                            message="PII tagged columns cannot be marked as PUBLIC sensitivity.",
+                            blocked=True,
+                        )
+                    )
                     blocked = True
 
             # POL-009: prohibit_empty_descriptions
             elif p_name == "prohibit_empty_descriptions":
                 if "description" in proposal and len(proposal["description"].strip()) == 0:
-                    violations.append(PolicyViolation(
-                        policy_id=p_id,
-                        policy_name=p_name,
-                        severity="MEDIUM",
-                        message="Description cannot be empty whitespace.",
-                        blocked=True
-                    ))
+                    violations.append(
+                        PolicyViolation(
+                            policy_id=p_id,
+                            policy_name=p_name,
+                            severity="MEDIUM",
+                            message="Description cannot be empty whitespace.",
+                            blocked=True,
+                        )
+                    )
                     blocked = True
 
             # POL-010: enforce_valid_pii_types
             elif p_name == "enforce_valid_pii_types":
                 allowed = pol.get("allowed_types", [])
                 if is_pii and pii_type not in allowed:
-                    violations.append(PolicyViolation(
-                        policy_id=p_id,
-                        policy_name=p_name,
-                        severity="HIGH",
-                        message=f"PII type '{pii_type}' not in allowed taxonomy: {allowed}.",
-                        blocked=True
-                    ))
+                    violations.append(
+                        PolicyViolation(
+                            policy_id=p_id,
+                            policy_name=p_name,
+                            severity="HIGH",
+                            message=f"PII type '{pii_type}' not in allowed taxonomy: {allowed}.",
+                            blocked=True,
+                        )
+                    )
                     blocked = True
 
             # POL-011: high_null_rate_certification_block
             elif p_name == "high_null_rate_certification_block":
                 max_null = pol.get("max_null_rate", 95.0)
                 if certification_status == "CERTIFIED" and null_rate > max_null:
-                    violations.append(PolicyViolation(
-                        policy_id=p_id,
-                        policy_name=p_name,
-                        severity="HIGH",
-                        message=f"Null rate ({null_rate}%) exceeds threshold ({max_null}%) for certified asset.",
-                        blocked=True
-                    ))
+                    violations.append(
+                        PolicyViolation(
+                            policy_id=p_id,
+                            policy_name=p_name,
+                            severity="HIGH",
+                            message=f"Null rate ({null_rate}%) exceeds threshold ({max_null}%) for certified asset.",
+                            blocked=True,
+                        )
+                    )
                     blocked = True
 
             # POL-014: quality_rule_coverage_for_marts
             elif p_name == "quality_rule_coverage_for_marts":
                 if is_mart and not has_quality_rules:
-                    violations.append(PolicyViolation(
-                        policy_id=p_id,
-                        policy_name=p_name,
-                        severity="MEDIUM",
-                        message="Production analytics mart must have at least one quality validation rule.",
-                        blocked=True
-                    ))
+                    violations.append(
+                        PolicyViolation(
+                            policy_id=p_id,
+                            policy_name=p_name,
+                            severity="MEDIUM",
+                            message="Production analytics mart must have at least one quality validation rule.",
+                            blocked=True,
+                        )
+                    )
                     blocked = True
 
         can_write = not blocked and not requires_approval
-        passed = (len(violations) == 0)
+        passed = len(violations) == 0
 
         return PolicyEvaluationResult(
             passed=passed,
@@ -190,5 +206,5 @@ class PolicyEngine:
             requires_approval=requires_approval,
             approval_reasons=approval_reasons,
             violations=violations,
-            policies_checked_count=len(self.policies)
+            policies_checked_count=len(self.policies),
         )

@@ -26,7 +26,7 @@ def evaluate_lineage_accuracy() -> dict[str, Any]:
         parsed_map[key].append(edge)
 
     # Load hand-verified ground truth
-    with open(HAND_VERIFIED_LINEAGE_PATH, "r", encoding="utf-8") as f:
+    with open(HAND_VERIFIED_LINEAGE_PATH, encoding="utf-8") as f:
         ground_truth = json.load(f)
 
     correct_count = 0
@@ -63,13 +63,15 @@ def evaluate_lineage_accuracy() -> dict[str, Any]:
         if all_expected_found and len(edges) > 0:
             correct_count += 1
         else:
-            failures.append({
-                "target": target_key,
-                "expected": expected_sources,
-                "missing_expected": missing_sources,
-                "parsed_actual": [{"table": e.source_table, "column": e.source_column} for e in edges],
-                "reason": "Subquery alias boundary or unparsed projection expression."
-            })
+            failures.append(
+                {
+                    "target": target_key,
+                    "expected": expected_sources,
+                    "missing_expected": missing_sources,
+                    "parsed_actual": [{"table": e.source_table, "column": e.source_column} for e in edges],
+                    "reason": "Subquery alias boundary or unparsed projection expression.",
+                }
+            )
 
     total = len(ground_truth)
     accuracy_pct = round((correct_count / total) * 100, 2)
@@ -80,13 +82,15 @@ def evaluate_lineage_accuracy() -> dict[str, Any]:
         "failures_count": len(failures),
         "accuracy_percentage": accuracy_pct,
         "failures": failures,
-        "total_parsed_edges": len(parsed_edges)
+        "total_parsed_edges": len(parsed_edges),
     }
 
 
 if __name__ == "__main__":
     report = evaluate_lineage_accuracy()
-    print(f"Strict Lineage Accuracy: {report['correct']}/{report['total_hand_verified']} ({report['accuracy_percentage']}%)")
+    print(
+        f"Strict Lineage Accuracy: {report['correct']}/{report['total_hand_verified']} ({report['accuracy_percentage']}%)"
+    )
     print(f"Total Parsed Edges: {report['total_parsed_edges']}")
     if report["failures"]:
         print(f"\nDocumented Parser Failures ({len(report['failures'])}):")

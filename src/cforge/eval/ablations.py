@@ -58,36 +58,36 @@ def run_ablation_benchmarks(estate_db_path: str | None = None, model_name: str |
             "matches": full_matches,
             "accuracy_percentage": full_acc,
             "drop_points": 0.0,
-            "description": "Complete metadata: Lineage + Profiling + Glossary + Certified Marts"
+            "description": "Complete metadata: Lineage + Profiling + Glossary + Certified Marts",
         },
         {
             "configuration": "Ablation: No Lineage Context",
             "matches": no_lineage_res["matches"],
             "accuracy_percentage": no_lineage_acc,
             "drop_points": -delta_lineage,
-            "description": "Removed column lineage graph; joins and derivations degraded."
+            "description": "Removed column lineage graph; joins and derivations degraded.",
         },
         {
             "configuration": "Ablation: No Profiling Stats",
             "matches": no_profiling_res["matches"],
             "accuracy_percentage": no_profiling_acc,
             "drop_points": -delta_profiling,
-            "description": "Removed statistical bounds and null rates; no net execution change on 45-question benchmark (0 questions flipped)."
+            "description": "Removed statistical bounds and null rates; no net execution change on 45-question benchmark (0 questions flipped).",
         },
         {
             "configuration": "Ablation: No Glossary Terms",
             "matches": no_glossary_res["matches"],
             "accuracy_percentage": no_glossary_acc,
             "drop_points": -delta_glossary,
-            "description": "Removed business glossary mappings; small single-run shift (-1 question)."
+            "description": "Removed business glossary mappings; small single-run shift (-1 question).",
         },
         {
             "configuration": "Baseline: Bare Schema Only",
             "matches": bare_res["matches"],
             "accuracy_percentage": bare_acc,
             "drop_points": -delta_bare,
-            "description": "Raw un-enriched table and column names only."
-        }
+            "description": "Raw un-enriched table and column names only.",
+        },
     ]
 
     key_finding = "Only the overall gain is clear. Per-facet effects are within noise at n=45."

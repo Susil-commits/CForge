@@ -22,19 +22,21 @@ class DuckDBCatalogAdapter(BaseCatalogAdapter):
         """).fetchall()
         assets = []
         for r in rows:
-            assets.append(Asset(
-                asset_id=r[0],
-                parent_id=r[1],
-                asset_type=r[2],
-                name=r[3],
-                display_name=r[4],
-                description=r[5],
-                data_type=r[6],
-                owner=r[7],
-                certification_status=r[8],
-                quality_score=r[9],
-                version=r[10]
-            ))
+            assets.append(
+                Asset(
+                    asset_id=r[0],
+                    parent_id=r[1],
+                    asset_type=r[2],
+                    name=r[3],
+                    display_name=r[4],
+                    description=r[5],
+                    data_type=r[6],
+                    owner=r[7],
+                    certification_status=r[8],
+                    quality_score=r[9],
+                    version=r[10],
+                )
+            )
         return assets
 
     def push_assets(self, assets: list[Asset]) -> bool:
@@ -49,15 +51,11 @@ class DuckDBCatalogAdapter(BaseCatalogAdapter):
         """).fetchall()
         tags = []
         for r in rows:
-            tags.append(Tag(
-                tag_id=r[0],
-                asset_id=r[1],
-                tag_name=r[2],
-                tag_value=r[3],
-                confidence=r[4],
-                source=r[5],
-                reason=r[6]
-            ))
+            tags.append(
+                Tag(
+                    tag_id=r[0], asset_id=r[1], tag_name=r[2], tag_value=r[3], confidence=r[4], source=r[5], reason=r[6]
+                )
+            )
         return tags
 
     def push_tags(self, tags: list[Tag]) -> bool:
@@ -67,8 +65,8 @@ class DuckDBCatalogAdapter(BaseCatalogAdapter):
                 tag_name=t.tag_name,
                 tag_value=t.tag_value,
                 confidence=t.confidence,
-                source=t.source.value if hasattr(t.source, 'value') else str(t.source),
-                reason=t.reason
+                source=t.source.value if hasattr(t.source, "value") else str(t.source),
+                reason=t.reason,
             )
         return True
 
@@ -80,10 +78,13 @@ class DuckDBCatalogAdapter(BaseCatalogAdapter):
 
     def push_glossary(self, terms: list[GlossaryTerm]) -> bool:
         for g in terms:
-            self.store.conn.execute("""
+            self.store.conn.execute(
+                """
                 INSERT OR REPLACE INTO glossary_terms (term_id, term_name, definition, domain)
                 VALUES (?, ?, ?, ?)
-            """, (g.term_id, g.term_name, g.definition, g.domain))
+            """,
+                (g.term_id, g.term_name, g.definition, g.domain),
+            )
         return True
 
     def pull_lineage(self) -> list[LineageEdge]:
@@ -97,7 +98,7 @@ class DuckDBCatalogAdapter(BaseCatalogAdapter):
                 source_asset_id=r[1],
                 target_asset_id=r[2],
                 transformation_type=r[3],
-                transformation_logic=r[4]
+                transformation_logic=r[4],
             )
             for r in rows
         ]
@@ -108,6 +109,6 @@ class DuckDBCatalogAdapter(BaseCatalogAdapter):
                 source_asset_id=e.source_asset_id,
                 target_asset_id=e.target_asset_id,
                 transformation_type=e.transformation_type,
-                transformation_logic=e.transformation_logic
+                transformation_logic=e.transformation_logic,
             )
         return True

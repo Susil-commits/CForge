@@ -73,7 +73,7 @@ def extract_json_from_text(text: str) -> dict[str, Any]:
     fence_match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
     if fence_match:
         text = fence_match.group(1).strip()
-    
+
     if not (text.startswith("{") and text.endswith("}")):
         start = text.find("{")
         end = text.rfind("}")
@@ -111,7 +111,7 @@ class LLMClient:
         val = os.getenv(var_name)
         if val:
             return val
-        
+
         # Check .env files
         env_files = [PROJECT_ROOT / ".env", Path.home() / ".env"]
         for env_path in env_files:
@@ -137,12 +137,10 @@ class LLMClient:
                 )
             from google import genai
             from google.genai import types
+
             self._gemini_client = genai.Client(
                 api_key=key,
-                http_options=types.HttpOptions(
-                    retry_options=types.HttpRetryOptions(attempts=1),
-                    timeout=15000
-                )
+                http_options=types.HttpOptions(retry_options=types.HttpRetryOptions(attempts=1), timeout=15000),
             )
         return self._gemini_client
 
@@ -154,6 +152,7 @@ class LLMClient:
                     "ANTHROPIC_API_KEY is not set. Please set ANTHROPIC_API_KEY in your .env file."
                 )
             import anthropic
+
             self._anthropic_client = anthropic.Anthropic(api_key=key)
         return self._anthropic_client
 
@@ -165,11 +164,7 @@ class LLMClient:
         return round(input_cost + output_cost, 6)
 
     def generate_structured(
-        self,
-        system_prompt: str,
-        user_prompt: str,
-        response_model: type[T],
-        model: str | None = None
+        self, system_prompt: str, user_prompt: str, response_model: type[T], model: str | None = None
     ) -> StructuredLLMResponse[T]:
         """Generate structured data strictly validated against a Pydantic schema."""
         target_model = model or self.model
@@ -189,7 +184,7 @@ class LLMClient:
                     latency_ms=cached.latency_ms,
                     cost_usd=cached.cost_usd,
                     cached=True,
-                    model=cached.model
+                    model=cached.model,
                 )
             except ValidationError:
                 pass
@@ -198,7 +193,14 @@ class LLMClient:
         t0 = time.perf_counter()
 
         try:
-            if target_model.startswith("gemini") or "gemini" in target_model or (not self._get_key("ANTHROPIC_API_KEY") and (self._get_key("GEMINI_API_KEY") or self._get_key("GOOGLE_API_KEY"))):
+            if (
+                target_model.startswith("gemini")
+                or "gemini" in target_model
+                or (
+                    not self._get_key("ANTHROPIC_API_KEY")
+                    and (self._get_key("GEMINI_API_KEY") or self._get_key("GOOGLE_API_KEY"))
+                )
+            ):
                 gemini_client = self._get_gemini_client()
                 from google.genai import types
 
@@ -213,8 +215,8 @@ class LLMClient:
                                 system_instruction=system_prompt,
                                 response_mime_type="application/json",
                                 response_schema=response_model,
-                                temperature=0.0
-                            )
+                                temperature=0.0,
+                            ),
                         )
                         break
                     except Exception as exc:
@@ -224,8 +226,12 @@ class LLMClient:
                             raise
                 latency_ms = (time.perf_counter() - t0) * 1000.0
                 raw_text = response.text
-                input_tokens = response.usage_metadata.prompt_token_count if response.usage_metadata else len(user_prompt) // 4
-                output_tokens = response.usage_metadata.candidates_token_count if response.usage_metadata else len(raw_text) // 4
+                input_tokens = (
+                    response.usage_metadata.prompt_token_count if response.usage_metadata else len(user_prompt) // 4
+                )
+                output_tokens = (
+                    response.usage_metadata.candidates_token_count if response.usage_metadata else len(raw_text) // 4
+                )
 
             else:
                 client = self._get_anthropic_client()
@@ -241,7 +247,7 @@ class LLMClient:
                     max_tokens=4096,
                     temperature=0.0,
                     system=system_instruction,
-                    messages=[{"role": "user", "content": user_prompt}]
+                    messages=[{"role": "user", "content": user_prompt}],
                 )
                 latency_ms = (time.perf_counter() - t0) * 1000.0
                 raw_text = response.content[0].text
@@ -263,7 +269,7 @@ class LLMClient:
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
                 latency_ms=latency_ms,
-                cost_usd=cost_usd
+                cost_usd=cost_usd,
             )
 
             return StructuredLLMResponse(
@@ -274,17 +280,12 @@ class LLMClient:
                 latency_ms=latency_ms,
                 cost_usd=cost_usd,
                 cached=False,
-                model=target_model
+                model=target_model,
             )
         except Exception:
             raise
 
-    def generate_text(
-        self,
-        system_prompt: str,
-        user_prompt: str,
-        model: str | None = None
-    ) -> TextLLMResponse:
+    def generate_text(self, system_prompt: str, user_prompt: str, model: str | None = None) -> TextLLMResponse:
         """Generate text/SQL response with real token and cost accounting."""
         target_model = model or self.model
         cache_key = LLMDiskCache.compute_key(target_model, system_prompt, user_prompt, None)
@@ -298,13 +299,20 @@ class LLMClient:
                 latency_ms=cached.latency_ms,
                 cost_usd=cached.cost_usd,
                 cached=True,
-                model=cached.model
+                model=cached.model,
             )
 
         t0 = time.perf_counter()
 
         try:
-            if target_model.startswith("gemini") or "gemini" in target_model or (not self._get_key("ANTHROPIC_API_KEY") and (self._get_key("GEMINI_API_KEY") or self._get_key("GOOGLE_API_KEY"))):
+            if (
+                target_model.startswith("gemini")
+                or "gemini" in target_model
+                or (
+                    not self._get_key("ANTHROPIC_API_KEY")
+                    and (self._get_key("GEMINI_API_KEY") or self._get_key("GOOGLE_API_KEY"))
+                )
+            ):
                 gemini_client = self._get_gemini_client()
                 from google.genai import types
 
@@ -315,10 +323,7 @@ class LLMClient:
                         response = gemini_client.models.generate_content(
                             model=target_model,
                             contents=user_prompt,
-                            config=types.GenerateContentConfig(
-                                system_instruction=system_prompt,
-                                temperature=0.0
-                            )
+                            config=types.GenerateContentConfig(system_instruction=system_prompt, temperature=0.0),
                         )
                         break
                     except Exception as exc:
@@ -328,8 +333,12 @@ class LLMClient:
                             raise
                 latency_ms = (time.perf_counter() - t0) * 1000.0
                 raw_text = response.text
-                input_tokens = response.usage_metadata.prompt_token_count if response.usage_metadata else len(user_prompt) // 4
-                output_tokens = response.usage_metadata.candidates_token_count if response.usage_metadata else len(raw_text) // 4
+                input_tokens = (
+                    response.usage_metadata.prompt_token_count if response.usage_metadata else len(user_prompt) // 4
+                )
+                output_tokens = (
+                    response.usage_metadata.candidates_token_count if response.usage_metadata else len(raw_text) // 4
+                )
 
             else:
                 client = self._get_anthropic_client()
@@ -338,7 +347,7 @@ class LLMClient:
                     max_tokens=2048,
                     temperature=0.0,
                     system=system_prompt,
-                    messages=[{"role": "user", "content": user_prompt}]
+                    messages=[{"role": "user", "content": user_prompt}],
                 )
                 latency_ms = (time.perf_counter() - t0) * 1000.0
                 raw_text = response.content[0].text
@@ -357,7 +366,7 @@ class LLMClient:
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
                 latency_ms=latency_ms,
-                cost_usd=cost_usd
+                cost_usd=cost_usd,
             )
 
             return TextLLMResponse(
@@ -367,7 +376,7 @@ class LLMClient:
                 latency_ms=latency_ms,
                 cost_usd=cost_usd,
                 cached=False,
-                model=target_model
+                model=target_model,
             )
         except Exception:
             raise

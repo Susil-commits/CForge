@@ -19,18 +19,46 @@ class GlossaryMappingResult(BaseModel):
 
 
 KNOWN_TERMS = {
-    "customer_unique_id": ("Customer Master ID", "Customer Domain", "Permanent identifier representing the actual individual person across repeated purchases."),
-    "customer_id": ("Customer Identifier", "Customer Domain", "Unique key assigned per order to identify purchasing customer."),
-    "order_id": ("Order Identifier", "Fulfillment Domain", "Primary transactional key identifying a customer purchase event."),
+    "customer_unique_id": (
+        "Customer Master ID",
+        "Customer Domain",
+        "Permanent identifier representing the actual individual person across repeated purchases.",
+    ),
+    "customer_id": (
+        "Customer Identifier",
+        "Customer Domain",
+        "Unique key assigned per order to identify purchasing customer.",
+    ),
+    "order_id": (
+        "Order Identifier",
+        "Fulfillment Domain",
+        "Primary transactional key identifying a customer purchase event.",
+    ),
     "price": ("Item Price", "Commerce Domain", "Base merchandise selling price in BRL excluding freight."),
     "item_price": ("Item Price", "Commerce Domain", "Base merchandise selling price in BRL excluding freight."),
-    "freight_value": ("Freight Charge", "Logistics Domain", "Shipping logistics freight charge billed for transporting the item."),
-    "review_score": ("Customer CSAT Score", "Customer Experience", "Satisfaction rating on a scale from 1 (terrible) to 5 (excellent)."),
-    "payment_value": ("Payment Monetary Amount", "Finance Domain", "Total monetary amount charged on this specific payment transaction."),
+    "freight_value": (
+        "Freight Charge",
+        "Logistics Domain",
+        "Shipping logistics freight charge billed for transporting the item.",
+    ),
+    "review_score": (
+        "Customer CSAT Score",
+        "Customer Experience",
+        "Satisfaction rating on a scale from 1 (terrible) to 5 (excellent).",
+    ),
+    "payment_value": (
+        "Payment Monetary Amount",
+        "Finance Domain",
+        "Total monetary amount charged on this specific payment transaction.",
+    ),
     "grand_total_brl": ("Order Grand Total", "Finance Domain", "Total invoice amount (merchandise + freight) in BRL."),
-    "total_lifetime_spend_brl": ("Customer Lifetime Spend", "Customer Analytics", "Cumulative monetary gross spend across all orders."),
+    "total_lifetime_spend_brl": (
+        "Customer Lifetime Spend",
+        "Customer Analytics",
+        "Cumulative monetary gross spend across all orders.",
+    ),
     "state_code": ("State Code", "Geography Domain", "Two-letter state federative unit abbreviation."),
-    "zip_code_prefix": ("Postal Code", "Geography Domain", "Five-digit postal routing prefix code.")
+    "zip_code_prefix": ("Postal Code", "Geography Domain", "Five-digit postal routing prefix code."),
 }
 
 
@@ -49,12 +77,7 @@ class HeuristicGlossaryMapperAgent:
             name, domain, defn = KNOWN_TERMS[col]
             evidence.append(f"Direct match found in approved Enterprise Business Glossary for '{col}'.")
             return GlossaryMappingResult(
-                term_name=name,
-                domain=domain,
-                definition=defn,
-                is_new_term=False,
-                confidence=0.98,
-                evidence=evidence
+                term_name=name, domain=domain, definition=defn, is_new_term=False, confidence=0.98, evidence=evidence
             )
 
         clean_name = " ".join(w.capitalize() for w in col.split("_"))
@@ -77,7 +100,7 @@ class HeuristicGlossaryMapperAgent:
             definition=f"Standard business attribute representing {clean_name.lower()} within {profile.table_name}.",
             is_new_term=True,
             confidence=0.88,
-            evidence=evidence
+            evidence=evidence,
         )
 
 
@@ -116,9 +139,7 @@ Min: {profile.min_value}, Max: {profile.max_value}, Avg: {profile.avg_value}
 Map this column to an approved glossary term or propose a canonical standardized term adhering to the schema.
 """
         response = self.client.generate_structured(
-            system_prompt=self.SYSTEM_PROMPT,
-            user_prompt=user_prompt,
-            response_model=GlossaryMappingResult
+            system_prompt=self.SYSTEM_PROMPT, user_prompt=user_prompt, response_model=GlossaryMappingResult
         )
         return response.parsed
 
@@ -135,7 +156,7 @@ class GlossaryMapperAgent:
     def map_term(self, profile: ColumnProfile) -> GlossaryMappingResult:
         if self.mode == "heuristic":
             return self.heuristic_agent.map_term(profile)
-        
+
         if self.mode == "llm":
             return self.llm_agent.map_term(profile)
 

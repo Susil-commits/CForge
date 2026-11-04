@@ -69,7 +69,7 @@ def test_reconciler_catches_pii_sample_leakage():
         distinct_count=1000,
         cardinality_ratio=1.0,
         is_unique=True,
-        sample_values=["06b8999e2fba1a1fbc88172c00ba8bc7", "18955e83d337fd6b2def6b18a428ac77"]
+        sample_values=["06b8999e2fba1a1fbc88172c00ba8bc7", "18955e83d337fd6b2def6b18a428ac77"],
     )
 
     # Simulate describer accidentally leaking the sample value in its text
@@ -77,7 +77,7 @@ def test_reconciler_catches_pii_sample_leakage():
         description="Customer account identified by sample key 06b8999e2fba1a1fbc88172c00ba8bc7 in the database.",
         confidence=0.95,
         evidence=["Leaked sample"],
-        reasoning="Test"
+        reasoning="Test",
     )
     clf = ClassificationResult(
         is_pii=True,
@@ -85,7 +85,7 @@ def test_reconciler_catches_pii_sample_leakage():
         sensitivity_level="RESTRICTED",
         confidence=0.98,
         evidence=["Customer token"],
-        regulatory_domains=["GDPR"]
+        regulatory_domains=["GDPR"],
     )
     gloss = GlossaryMappingResult(
         term_name="Customer Identifier",
@@ -93,7 +93,7 @@ def test_reconciler_catches_pii_sample_leakage():
         definition="Unique customer ID",
         is_new_term=False,
         confidence=0.95,
-        evidence=["Test"]
+        evidence=["Test"],
     )
     qual = QualityProposalResult(column_name="customer_id", suggested_rules=[], confidence=0.9, evidence=[])
 

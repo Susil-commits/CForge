@@ -28,9 +28,9 @@ HARD_CASE_PROFILES: dict[tuple, ColumnProfile] = {
         sample_values=[
             "Gate code #4412, call resident at +55 11 98822-1100",
             "Leave at back door, contact 555-0199 on arrival",
-            "Building concierge drop-off"
+            "Building concierge drop-off",
         ],
-        neighbor_columns=["order_id", "customer_id", "order_date"]
+        neighbor_columns=["order_id", "customer_id", "order_date"],
     ),
     ("raw_nw_orders", "postal_routing_hub_code"): ColumnProfile(
         table_name="raw_nw_orders",
@@ -43,7 +43,7 @@ HARD_CASE_PROFILES: dict[tuple, ColumnProfile] = {
         cardinality_ratio=0.016,
         is_unique=False,
         sample_values=["HUB-SUL-9801", "HUB-NOR-4210", "HUB-EST-1104"],
-        neighbor_columns=["order_id", "ship_via", "freight"]
+        neighbor_columns=["order_id", "ship_via", "freight"],
     ),
     ("raw_nw_customers", "customer_support_transcript"): ColumnProfile(
         table_name="raw_nw_customers",
@@ -57,9 +57,9 @@ HARD_CASE_PROFILES: dict[tuple, ColumnProfile] = {
         is_unique=False,
         sample_values=[
             "User requested address update to 42 Wallaby Way",
-            "Agent verified account via taxpayer identifier 982-11-4029"
+            "Agent verified account via taxpayer identifier 982-11-4029",
         ],
-        neighbor_columns=["customer_id", "company_name"]
+        neighbor_columns=["customer_id", "company_name"],
     ),
     ("raw_nw_customers", "client_device_fingerprint_uuid"): ColumnProfile(
         table_name="raw_nw_customers",
@@ -71,11 +71,8 @@ HARD_CASE_PROFILES: dict[tuple, ColumnProfile] = {
         distinct_count=91,
         cardinality_ratio=1.0,
         is_unique=True,
-        sample_values=[
-            "a3bb189e-8bf9-3888-9912-abcdef012345",
-            "71029cba-1234-4567-89ab-cdef01234567"
-        ],
-        neighbor_columns=["customer_id", "country"]
+        sample_values=["a3bb189e-8bf9-3888-9912-abcdef012345", "71029cba-1234-4567-89ab-cdef01234567"],
+        neighbor_columns=["customer_id", "country"],
     ),
 }
 
@@ -93,18 +90,18 @@ def compute_metrics(tp: int, fp: int, fn: int, tn: int) -> dict[str, Any]:
         "precision": precision,
         "recall": recall,
         "f1_score": f1,
-        "total_evaluated": tp + fp + fn + tn
+        "total_evaluated": tp + fp + fn + tn,
     }
 
 
 def evaluate_pii_classification(split: str | None = "held_out", agent_mode: str = "heuristic") -> dict[str, Any]:
     """Evaluate PII classification performance.
-    
+
     Args:
         split: 'held_out' (default, independent unseen split), 'calibration', or 'all'.
         agent_mode: 'heuristic' (fast deterministic pattern agent), 'auto', or 'llm'.
     """
-    with open(GOLD_LABELS_PATH, "r", encoding="utf-8") as f:
+    with open(GOLD_LABELS_PATH, encoding="utf-8") as f:
         reader = csv.DictReader(f)
         gold_rows = list(reader)
 
@@ -123,7 +120,7 @@ def evaluate_pii_classification(split: str | None = "held_out", agent_mode: str 
     for row in target_rows:
         tbl = row["table_name"]
         col = row["column_name"]
-        gold_is_pii = (row["is_pii"].strip().lower() == "true")
+        gold_is_pii = row["is_pii"].strip().lower() == "true"
 
         try:
             profile = profiler.profile_column(tbl, col)
@@ -169,5 +166,5 @@ def evaluate_pii_classification(split: str | None = "held_out", agent_mode: str 
         "total_evaluated_columns": primary_metrics["total_evaluated"],
         "evaluated_split": split,
         "heuristic_baseline": heuristic_metrics,
-        "delta_vs_heuristic_f1": round(primary_metrics["f1_score"] - heuristic_metrics["f1_score"], 4)
+        "delta_vs_heuristic_f1": round(primary_metrics["f1_score"] - heuristic_metrics["f1_score"], 4),
     }

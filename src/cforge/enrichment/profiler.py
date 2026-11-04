@@ -48,11 +48,13 @@ class EstateProfiler:
     def profile_column(self, table_name: str, column_name: str) -> ColumnProfile:
         """Compute statistical profile for a single column."""
         conn = duckdb.connect(self.db_path, read_only=True)
-        
+
         # Get table schema & neighbors
         cols_info = conn.execute(f"DESCRIBE {table_name}").fetchall()
         norm_target = re.sub(r"[^a-zA-Z0-9]", "", column_name).lower()
-        actual_col = next((c[0] for c in cols_info if re.sub(r"[^a-zA-Z0-9]", "", c[0]).lower() == norm_target), column_name)
+        actual_col = next(
+            (c[0] for c in cols_info if re.sub(r"[^a-zA-Z0-9]", "", c[0]).lower() == norm_target), column_name
+        )
         neighbors = [c[0] for c in cols_info if c[0] != actual_col]
         data_type = next((c[1] for c in cols_info if c[0] == actual_col), "UNKNOWN")
 
@@ -91,7 +93,7 @@ class EstateProfiler:
         t_upper = data_type.upper()
         if any(n in t_upper for n in ["INT", "DOUBLE", "FLOAT", "DECIMAL", "NUMERIC"]):
             try:
-                avg_res = conn.execute(f"SELECT AVG(\"{actual_col}\") FROM {table_name}").fetchone()[0]
+                avg_res = conn.execute(f'SELECT AVG("{actual_col}") FROM {table_name}').fetchone()[0]
                 avg_val = round(float(avg_res), 2) if avg_res is not None else None
             except Exception:
                 pass
@@ -127,7 +129,7 @@ class EstateProfiler:
             avg_value=avg_val,
             sample_values=samples,
             detected_patterns=detected_patterns,
-            neighbor_columns=neighbors
+            neighbor_columns=neighbors,
         )
 
     def profile_table(self, table_name: str) -> dict[str, ColumnProfile]:

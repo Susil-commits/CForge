@@ -13,7 +13,9 @@ import duckdb
 from cforge.config import DATA_DIR, ESTATE_DB_PATH, RAW_DATA_DIR
 
 OLIST_BASE_URL = "https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets/"
-NORTHWIND_BASE_URL = "https://raw.githubusercontent.com/graphql-compose/graphql-compose-examples/master/examples/northwind/data/csv/"
+NORTHWIND_BASE_URL = (
+    "https://raw.githubusercontent.com/graphql-compose/graphql-compose-examples/master/examples/northwind/data/csv/"
+)
 
 OLIST_FILES = {
     "raw_olist_customers": "olist_customers_dataset.csv",
@@ -86,7 +88,7 @@ def init_duckdb_estate(db_path: Path | None = None, force_recreate: bool = False
     """Initialize DuckDB database with raw tables and execute all transformation models."""
     target_path = db_path or ESTATE_DB_PATH
     target_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     if force_recreate and target_path.exists():
         target_path.unlink()
 
@@ -136,11 +138,11 @@ def export_postgres_init_sql(output_sql_path: Path | None = None) -> Path:
     """Generate init_postgres.sql for docker-compose based on DuckDB estate tables."""
     target = output_sql_path or (DATA_DIR / "init_postgres.sql")
     target.parent.mkdir(parents=True, exist_ok=True)
-    
+
     # We can create schema and copy statements or insert scripts for docker-compose
     conn = duckdb.connect(str(ESTATE_DB_PATH))
     tables = conn.execute("SHOW TABLES").fetchall()
-    
+
     sql_statements = [
         "-- ContextForge Real Estate PostgreSQL Initialization Script",
         "-- Auto-generated for Docker Compose deployment",
@@ -165,7 +167,7 @@ def export_postgres_init_sql(output_sql_path: Path | None = None) -> Path:
             elif "BOOL" in t_upper:
                 pg_type = "BOOLEAN"
             col_defs.append(f"    {col_name} {pg_type}")
-        
+
         create_tbl = f"CREATE TABLE IF NOT EXISTS public.{t_name} (\n" + ",\n".join(col_defs) + "\n);"
         sql_statements.append(create_tbl)
 

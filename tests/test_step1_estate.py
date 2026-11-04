@@ -9,13 +9,13 @@ from cforge.estate.loader import export_postgres_init_sql, init_duckdb_estate
 def test_gold_labels_exists_and_meets_quota():
     """Verify data/gold_labels.csv is present and contains >= 150 columns."""
     assert GOLD_LABELS_PATH.exists(), f"Missing {GOLD_LABELS_PATH}"
-    
-    with open(GOLD_LABELS_PATH, "r", encoding="utf-8") as f:
+
+    with open(GOLD_LABELS_PATH, encoding="utf-8") as f:
         reader = csv.DictReader(f)
         rows = list(reader)
 
     assert len(rows) >= 150, f"Expected >= 150 columns, found {len(rows)}"
-    
+
     required_fields = {
         "table_name",
         "column_name",
@@ -23,10 +23,10 @@ def test_gold_labels_exists_and_meets_quota():
         "is_pii",
         "pii_type",
         "true_business_description",
-        "glossary_term"
+        "glossary_term",
     }
     assert set(reader.fieldnames or []).issuperset(required_fields)
-    
+
     # Ensure some columns are PII and some are not
     pii_count = sum(1 for r in rows if r["is_pii"].lower() == "true")
     non_pii_count = sum(1 for r in rows if r["is_pii"].lower() == "false")
@@ -38,7 +38,7 @@ def test_duckdb_estate_materialization():
     """Verify DuckDB estate loads raw public datasets and builds transformation models."""
     conn = init_duckdb_estate()
     tables = [t[0] for t in conn.execute("SHOW TABLES").fetchall()]
-    
+
     # Check essential raw tables exist
     expected_raw = [
         "raw_olist_customers",
@@ -47,7 +47,7 @@ def test_duckdb_estate_materialization():
         "raw_olist_products",
         "raw_nw_customers",
         "raw_nw_orders",
-        "raw_nw_products"
+        "raw_nw_products",
     ]
     for raw_tbl in expected_raw:
         assert raw_tbl in tables, f"Expected {raw_tbl} in estate"
@@ -66,7 +66,7 @@ def test_duckdb_estate_materialization():
         "fct_orders",
         "fct_order_payments",
         "customer_ltv",
-        "mart_geo_performance"
+        "mart_geo_performance",
     ]
     for model in expected_models:
         assert model in tables, f"Expected {model} in estate"

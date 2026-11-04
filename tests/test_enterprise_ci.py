@@ -67,7 +67,7 @@ def test_openapi_schema_contract(api_client):
         "/api/approval-queue",
         "/api/governance/audit-trail",
         "/api/eval/benchmark",
-        "/api/chat"
+        "/api/chat",
     ]
     for endpoint in required_endpoints:
         assert endpoint in paths, f"Missing endpoint contract: {endpoint}"
@@ -76,6 +76,7 @@ def test_openapi_schema_contract(api_client):
 def test_governance_engine_adversarial_injection_boundary():
     """Verify governance engine blocks prompt & SQL injection attempts."""
     from cforge.governance.audit import ImmutableAuditLog
+
     engine = PolicyEngine()
     approval = ApprovalQueue(engine)
     audit = ImmutableAuditLog()
@@ -85,7 +86,7 @@ def test_governance_engine_adversarial_injection_boundary():
         asset_id="cforge.public.dim_customers.email",
         change_type="UPDATE_DESCRIPTION",
         proposed_by="Agent_Describer",
-        payload={"description": "<script>alert('pwned')</script> Customer contact", "confidence": 0.88}
+        payload={"description": "<script>alert('pwned')</script> Customer contact", "confidence": 0.88},
     )
     assert res1 is not None
 
@@ -94,7 +95,7 @@ def test_governance_engine_adversarial_injection_boundary():
         asset_id="cforge.public.stg_orders.status",
         change_type="ADD_TAG",
         proposed_by="Agent_Classifier",
-        payload={"is_pii": False, "pii_type": "'; DROP TABLE assets; --", "confidence": 0.9}
+        payload={"is_pii": False, "pii_type": "'; DROP TABLE assets; --", "confidence": 0.9},
     )
     assert res2 is not None
 
@@ -105,7 +106,7 @@ def test_governance_engine_adversarial_injection_boundary():
         action="INJECTION_BOUNDARY_TEST",
         policies_evaluated=["POL-001"],
         before_state={"desc": "old"},
-        after_state={"desc": "<script>alert('pwned')</script>"}
+        after_state={"desc": "<script>alert('pwned')</script>"},
     )
     rec2 = audit.append(
         actor="TEST_RUNNER",
@@ -113,7 +114,7 @@ def test_governance_engine_adversarial_injection_boundary():
         action="SQL_INJECTION_TEST",
         policies_evaluated=["POL-002"],
         before_state={"tag": "old"},
-        after_state={"tag": "'; DROP TABLE assets; --"}
+        after_state={"tag": "'; DROP TABLE assets; --"},
     )
     assert rec1 is not None
     assert rec2 is not None
@@ -126,6 +127,7 @@ def test_governance_engine_adversarial_injection_boundary():
 def test_estate_table_integrity_invariants():
     """Verify DuckDB data estate has 31 valid tables with schema invariants."""
     import duckdb
+
     if not ESTATE_DB_PATH.exists():
         pytest.skip("Estate DB not present in local path")
 
@@ -161,7 +163,7 @@ def test_frontend_dom_contract_and_assets():
         'id="dag-viewport"',
         'id="catalog-tree"',
         'id="queue-container"',
-        'id="btn-chat-send"'
+        'id="btn-chat-send"',
     ]
     for anchor in essential_anchors:
         assert anchor in html, f"Missing essential UI DOM anchor: {anchor}"

@@ -35,7 +35,9 @@ class QualityRunner:
     def __init__(self, db_path: str | None = None):
         self.db_path = str(db_path or ESTATE_DB_PATH)
 
-    def execute_rule(self, conn: duckdb.DuckDBPyConnection, table_name: str, rule: SuggestedRule) -> RuleExecutionResult:
+    def execute_rule(
+        self, conn: duckdb.DuckDBPyConnection, table_name: str, rule: SuggestedRule
+    ) -> RuleExecutionResult:
         """Execute a single data quality rule against a table."""
         col = rule.parameters.get("column", "")
         rule_type = rule.rule_type
@@ -82,7 +84,7 @@ class QualityRunner:
                 failing_count = 0
                 details = "Pattern verification passed."
 
-        passed = (failing_count == 0)
+        passed = failing_count == 0
         return RuleExecutionResult(
             rule_type=rule_type,
             column_name=col,
@@ -90,7 +92,7 @@ class QualityRunner:
             failing_rows_count=failing_count,
             total_rows_count=total_rows,
             severity=rule.severity,
-            details=details
+            details=details,
         )
 
     def evaluate_table_quality(self, table_name: str, rules: list[SuggestedRule]) -> TableQualityReport:
@@ -106,7 +108,7 @@ class QualityRunner:
                 failed_rules=0,
                 quality_score=1.0,
                 can_certify=True,
-                rule_results=[]
+                rule_results=[],
             )
 
         error_failures = 0
@@ -130,7 +132,7 @@ class QualityRunner:
         passed_count = sum(1 for r in results if r.passed)
         failed_count = len(results) - passed_count
         score = round(earned_weight / total_weight, 3) if total_weight > 0 else 1.0
-        
+
         # Certification gate: quality_score >= 0.85 AND zero ERROR failures
         can_certify = (score >= 0.85) and (error_failures == 0)
 
@@ -141,5 +143,5 @@ class QualityRunner:
             failed_rules=failed_count,
             quality_score=score,
             can_certify=can_certify,
-            rule_results=results
+            rule_results=results,
         )

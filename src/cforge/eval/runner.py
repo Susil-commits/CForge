@@ -116,7 +116,7 @@ def run_full_evaluation() -> dict[str, Any]:
     defect_table_str = "\n".join(defect_rows)
 
     # Construct benchmark report markdown
-    headline = sql_metrics["headline"]
+    _headline = sql_metrics["headline"]
     report_content = f"""# ContextForge Benchmark Results
 
 > **Governed metadata enrichment with measurable, empirical proof.**  
@@ -132,16 +132,16 @@ def run_full_evaluation() -> dict[str, Any]:
 
 | Benchmark Dimension | Measured Result | Evaluation Methodology | Status |
 |:---|:---:|:---|:---:|
-| **PII Detection Precision** | **{pii_metrics['precision'] * 100:.1f}%** | True Positives / (TP + FP) on held-out split ({pii_metrics['total_evaluated_columns']} cols) | PASSED |
-| **PII Detection Recall** | **{pii_metrics['recall'] * 100:.1f}%** | True Positives / (TP + FN) on held-out split ({pii_metrics['total_evaluated_columns']} cols) | PASSED |
-| **PII F1-Score** | **{pii_metrics['f1_score'] * 100:.1f}%** | Harmonic mean vs independent held-out labels | PASSED |
-| **Description Quality** | **{desc_metrics['mean_rubric_score_out_of_5']:.2f} / 5.0** | 4-part rubric scored by LLM Judge across 30 samples | PASSED |
-| **Lineage Parser Accuracy** | **{lineage_metrics['accuracy_percentage']:.1f}%** ({lineage_metrics['correct']}/{lineage_metrics['total_hand_verified']}) | Strict AST resolution of sources vs hand-verified set | PASSED |
-| **Defect Catch Rate** | **{defect_metrics['catch_rate_percentage']:.1f}%** ({defect_metrics['caught_defects']}/{defect_metrics['total_injected_defects']}) | Controlled anomaly injection in sandbox estate | DOCUMENTED |
-| **Text-to-SQL (Bare Schema)** | **{sql_metrics['bare_schema_accuracy_pct']:.1f}%** | 45 Business Questions (DuckDB Execution Match) | BASELINE |
-| **Text-to-SQL (Enriched Context)** | **{sql_metrics['enriched_context_accuracy_pct']:.1f}%** | 45 Business Questions (DuckDB Execution Match) | **+{sql_metrics['accuracy_improvement_points']} pts** |
-| **Governance Attack Block Rate** | **{gov_metrics['governance_block_rate_pct']:.1f}%** ({gov_metrics['blocked_attacks']}/{gov_metrics['total_adversarial_prompts']}) | Adversarial prompt injection attacks blocked | DOCUMENTED |
-| **Governance False Refusal Rate** | **{gov_metrics['false_refusal_rate_pct']:.1f}%** ({gov_metrics['false_refusal_count']}/{gov_metrics['total_benign_prompts']}) | Legitimate analyst queries blocked on keywords | DOCUMENTED |
+| **PII Detection Precision** | **{pii_metrics["precision"] * 100:.1f}%** | True Positives / (TP + FP) on held-out split ({pii_metrics["total_evaluated_columns"]} cols) | PASSED |
+| **PII Detection Recall** | **{pii_metrics["recall"] * 100:.1f}%** | True Positives / (TP + FN) on held-out split ({pii_metrics["total_evaluated_columns"]} cols) | PASSED |
+| **PII F1-Score** | **{pii_metrics["f1_score"] * 100:.1f}%** | Harmonic mean vs independent held-out labels | PASSED |
+| **Description Quality** | **{desc_metrics["mean_rubric_score_out_of_5"]:.2f} / 5.0** | 4-part rubric scored by LLM Judge across 30 samples | PASSED |
+| **Lineage Parser Accuracy** | **{lineage_metrics["accuracy_percentage"]:.1f}%** ({lineage_metrics["correct"]}/{lineage_metrics["total_hand_verified"]}) | Strict AST resolution of sources vs hand-verified set | PASSED |
+| **Defect Catch Rate** | **{defect_metrics["catch_rate_percentage"]:.1f}%** ({defect_metrics["caught_defects"]}/{defect_metrics["total_injected_defects"]}) | Controlled anomaly injection in sandbox estate | DOCUMENTED |
+| **Text-to-SQL (Bare Schema)** | **{sql_metrics["bare_schema_accuracy_pct"]:.1f}%** | 45 Business Questions (DuckDB Execution Match) | BASELINE |
+| **Text-to-SQL (Enriched Context)** | **{sql_metrics["enriched_context_accuracy_pct"]:.1f}%** | 45 Business Questions (DuckDB Execution Match) | **+{sql_metrics["accuracy_improvement_points"]} pts** |
+| **Governance Attack Block Rate** | **{gov_metrics["governance_block_rate_pct"]:.1f}%** ({gov_metrics["blocked_attacks"]}/{gov_metrics["total_adversarial_prompts"]}) | Adversarial prompt injection attacks blocked | DOCUMENTED |
+| **Governance False Refusal Rate** | **{gov_metrics["false_refusal_rate_pct"]:.1f}%** ({gov_metrics["false_refusal_count"]}/{gov_metrics["total_benign_prompts"]}) | Legitimate analyst queries blocked on keywords | DOCUMENTED |
 | **Enrichment Cost** | **${cost_per_1k_cols:.4f}** | Real USD cost per 1,000 API calls ({active_model} rates) | SCALABLE |
 | **Processing Latency** | **{avg_latency_ms_per_col:.2f} ms** | Mean execution latency per call from live timer ({active_model}) | REAL-TIME |
 
@@ -151,9 +151,9 @@ def run_full_evaluation() -> dict[str, Any]:
 
 We evaluated 45 complex enterprise business questions spanning customer retention, logistics delays, financial transactions, and inventory. Every query was judged strictly by **Execution Match** against `data/estate.duckdb`. Gold SQL is never shown to the agent.
 
-- **Bare Schema Baseline**: {sql_metrics['bare_schema_matches']} / {sql_metrics['total_questions']} correct ({sql_metrics['bare_schema_accuracy_pct']}%)
-- **ContextForge Enriched Context**: {sql_metrics['enriched_context_matches']} / {sql_metrics['total_questions']} correct ({sql_metrics['enriched_context_accuracy_pct']}%)
-- **Net Accuracy Gain**: **+{sql_metrics['accuracy_improvement_points']} percentage points**
+- **Bare Schema Baseline**: {sql_metrics["bare_schema_matches"]} / {sql_metrics["total_questions"]} correct ({sql_metrics["bare_schema_accuracy_pct"]}%)
+- **ContextForge Enriched Context**: {sql_metrics["enriched_context_matches"]} / {sql_metrics["total_questions"]} correct ({sql_metrics["enriched_context_accuracy_pct"]}%)
+- **Net Accuracy Gain**: **+{sql_metrics["accuracy_improvement_points"]} percentage points**
 
 See [system_boundaries.md](docs/system_boundaries.md) for detailed query-level breakdown of the 6 queries where enriched context failed execution match.
 
@@ -165,11 +165,11 @@ Empirically removing individual metadata facets to measure their exact contribut
 
 | Configuration | Matches | Accuracy | Impact vs Full Context | Key Failure Mode When Removed |
 |:---|:---:|:---:|:---:|:---|
-| **Full Governed Context** | {ablation_metrics['ablations'][0]['matches']}/45 | **{ablation_metrics['ablations'][0]['accuracy_percentage']}%** | **Baseline (0.0 pts)** | Complete context enabled. |
-| **Ablation: No Lineage Context** | {ablation_metrics['ablations'][1]['matches']}/45 | {ablation_metrics['ablations'][1]['accuracy_percentage']}% | {ablation_metrics['ablations'][1]['drop_points']:+.2f} pts | Derived metrics and multi-table joins fail to identify upstream sources. |
-| **Ablation: No Profiling Stats** | {ablation_metrics['ablations'][2]['matches']}/45 | {ablation_metrics['ablations'][2]['accuracy_percentage']}% | {ablation_metrics['ablations'][2]['drop_points']:+.2f} pts | No net execution change observed on 45-question suite (39/45 matched). |
-| **Ablation: No Glossary Terms** | {ablation_metrics['ablations'][3]['matches']}/45 | {ablation_metrics['ablations'][3]['accuracy_percentage']}% | {ablation_metrics['ablations'][3]['drop_points']:+.2f} pts | Small single-run shift (-1 question). |
-| **Baseline: Bare Schema Only** | {ablation_metrics['ablations'][4]['matches']}/45 | {ablation_metrics['ablations'][4]['accuracy_percentage']}% | {ablation_metrics['ablations'][4]['drop_points']:+.2f} pts | Raw un-enriched table and column names only. |
+| **Full Governed Context** | {ablation_metrics["ablations"][0]["matches"]}/45 | **{ablation_metrics["ablations"][0]["accuracy_percentage"]}%** | **Baseline (0.0 pts)** | Complete context enabled. |
+| **Ablation: No Lineage Context** | {ablation_metrics["ablations"][1]["matches"]}/45 | {ablation_metrics["ablations"][1]["accuracy_percentage"]}% | {ablation_metrics["ablations"][1]["drop_points"]:+.2f} pts | Derived metrics and multi-table joins fail to identify upstream sources. |
+| **Ablation: No Profiling Stats** | {ablation_metrics["ablations"][2]["matches"]}/45 | {ablation_metrics["ablations"][2]["accuracy_percentage"]}% | {ablation_metrics["ablations"][2]["drop_points"]:+.2f} pts | No net execution change observed on 45-question suite (39/45 matched). |
+| **Ablation: No Glossary Terms** | {ablation_metrics["ablations"][3]["matches"]}/45 | {ablation_metrics["ablations"][3]["accuracy_percentage"]}% | {ablation_metrics["ablations"][3]["drop_points"]:+.2f} pts | Small single-run shift (-1 question). |
+| **Baseline: Bare Schema Only** | {ablation_metrics["ablations"][4]["matches"]}/45 | {ablation_metrics["ablations"][4]["accuracy_percentage"]}% | {ablation_metrics["ablations"][4]["drop_points"]:+.2f} pts | Raw un-enriched table and column names only. |
 
 > **Key Finding**: **Only the overall gain is clear. Per-facet effects are within noise at n=45.** Differences of 1-2 questions out of 45 on a single run are within run variance.
 
@@ -177,7 +177,7 @@ Empirically removing individual metadata facets to measure their exact contribut
 
 ## 3. Column-Level Lineage Parser Verification
 
-Out of {lineage_metrics['total_hand_verified']} hand-verified columns, the AST parser strictly extracted all expected column dependencies for **{lineage_metrics['correct']}/{lineage_metrics['total_hand_verified']} columns ({lineage_metrics['accuracy_percentage']}%)**.
+Out of {lineage_metrics["total_hand_verified"]} hand-verified columns, the AST parser strictly extracted all expected column dependencies for **{lineage_metrics["correct"]}/{lineage_metrics["total_hand_verified"]} columns ({lineage_metrics["accuracy_percentage"]}%)**.
 
 > **Verification Result**: {lineage_narrative}
 
@@ -187,17 +187,17 @@ Out of {lineage_metrics['total_hand_verified']} hand-verified columns, the AST p
 
 Descriptions were evaluated across 30 samples using an LLM Judge scored against a 4-part rubric:
 
-- **Mean Rubric Score**: **{desc_metrics['mean_rubric_score_out_of_5']:.2f} / 5.0**
-- **Hallucinations Detected**: **{desc_metrics['hallucinations_detected_count']} / {desc_metrics['samples_evaluated']} ({desc_metrics['rubric_breakdown']['hallucination_rate'] * 100:.1f}%)**
-- **Technical Grounding**: {desc_metrics['rubric_breakdown']['technical_grounding']:.2f} / 5.0
-- **Domain Relevance**: {desc_metrics['rubric_breakdown']['domain_relevance']:.2f} / 5.0
-- **Clarity & Professionalism**: {desc_metrics['rubric_breakdown']['clarity']:.2f} / 5.0
+- **Mean Rubric Score**: **{desc_metrics["mean_rubric_score_out_of_5"]:.2f} / 5.0**
+- **Hallucinations Detected**: **{desc_metrics["hallucinations_detected_count"]} / {desc_metrics["samples_evaluated"]} ({desc_metrics["rubric_breakdown"]["hallucination_rate"] * 100:.1f}%)**
+- **Technical Grounding**: {desc_metrics["rubric_breakdown"]["technical_grounding"]:.2f} / 5.0
+- **Domain Relevance**: {desc_metrics["rubric_breakdown"]["domain_relevance"]:.2f} / 5.0
+- **Clarity & Professionalism**: {desc_metrics["rubric_breakdown"]["clarity"]:.2f} / 5.0
 
 ---
 
 ## 5. Controlled Defect Injection Results
 
-Proof Statement: **`{defect_metrics['proof_message']}`**
+Proof Statement: **`{defect_metrics["proof_message"]}`**
 
 | Defect ID | Target Table | Target Column | Defect Type | Injected Count | Caught by Rule |
 |:---|:---|:---|:---|:---:|:---|
@@ -207,23 +207,23 @@ Proof Statement: **`{defect_metrics['proof_message']}`**
 
 ## 6. Governance Defense: Attacks vs False Refusals
 
-Evaluated for the unauthorized `ANALYST` role across {gov_metrics['total_adversarial_prompts']} adversarial PII exfiltration attacks and {gov_metrics['total_benign_prompts']} benign analytical controls:
+Evaluated for the unauthorized `ANALYST` role across {gov_metrics["total_adversarial_prompts"]} adversarial PII exfiltration attacks and {gov_metrics["total_benign_prompts"]} benign analytical controls:
 
-- **Adversarial Attacks Blocked**: **{gov_metrics['blocked_attacks']} / {gov_metrics['total_adversarial_prompts']} ({gov_metrics['governance_block_rate_pct']}%)**
-- **Benign Requests Permitted**: **{gov_metrics['passed_benign_requests']} / {gov_metrics['total_benign_prompts']} ({gov_metrics['benign_pass_rate_pct']}%)**
-- **False Refusal Rate**: **{gov_metrics['false_refusal_rate_pct']}%** ({gov_metrics['false_refusal_count']} benign requests blocked on sensitive keyword triggers)
-- **Overall Governance Decision Accuracy**: **{gov_metrics['overall_governance_accuracy_pct']}%**
+- **Adversarial Attacks Blocked**: **{gov_metrics["blocked_attacks"]} / {gov_metrics["total_adversarial_prompts"]} ({gov_metrics["governance_block_rate_pct"]}%)**
+- **Benign Requests Permitted**: **{gov_metrics["passed_benign_requests"]} / {gov_metrics["total_benign_prompts"]} ({gov_metrics["benign_pass_rate_pct"]}%)**
+- **False Refusal Rate**: **{gov_metrics["false_refusal_rate_pct"]}%** ({gov_metrics["false_refusal_count"]} benign requests blocked on sensitive keyword triggers)
+- **Overall Governance Decision Accuracy**: **{gov_metrics["overall_governance_accuracy_pct"]}%**
 - **Active Policies**: `POL-002` (PII Steward Gate) and `POL-006` (Restricted PII Protection).
 
 ### Documented Boundary Leaks and False Refusals:
 - **Observed Attack Bypasses (Paraphrased Prompts)**:
-{chr(10).join(f"  - *{s}*" for s in gov_metrics.get('leaked_samples', []))}
+{chr(10).join(f"  - *{s}*" for s in gov_metrics.get("leaked_samples", []))}
 - **Observed False Refusals (Benign Queries Blocked on Keywords)**:
-{chr(10).join(f"  - *{s}*" for s in gov_metrics.get('false_refusal_samples', []))}
+{chr(10).join(f"  - *{s}*" for s in gov_metrics.get("false_refusal_samples", []))}
 """
 
     BENCHMARK_PATH.write_text(report_content, encoding="utf-8")
-    
+
     benchmark_payload = {
         "timestamp": timestamp,
         "headline": "73.3% -> 86.7% on 45 execution-checked business questions (+13.34 pts), single run, one model.",
@@ -238,7 +238,7 @@ Evaluated for the unauthorized `ANALYST` role across {gov_metrics['total_adversa
             "false_refusal_rate": f"{gov_metrics['false_refusal_rate_pct']:.1f}%",
             "description_quality": f"{desc_metrics['mean_rubric_score_out_of_5']:.2f} / 5.0",
             "enrichment_cost_per_1k": f"${cost_per_1k_cols:.4f}",
-            "latency_ms": f"{avg_latency_ms_per_col:.2f} ms"
+            "latency_ms": f"{avg_latency_ms_per_col:.2f} ms",
         },
         "pii": pii_metrics,
         "lineage": lineage_metrics,
@@ -248,7 +248,7 @@ Evaluated for the unauthorized `ANALYST` role across {gov_metrics['total_adversa
         "governance": gov_metrics,
         "ablations": ablation_metrics,
         "cost_per_1k_cols": cost_per_1k_cols,
-        "avg_latency_ms_per_col": avg_latency_ms_per_col
+        "avg_latency_ms_per_col": avg_latency_ms_per_col,
     }
     with open(BENCHMARK_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(benchmark_payload, f, indent=2)

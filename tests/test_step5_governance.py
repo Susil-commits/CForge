@@ -27,7 +27,7 @@ def test_pol_001_sample_value_in_description_blocked(engine):
     proposal = {
         "description": "Customer record with email test.user@example.com in account.",
         "sample_values": ["test.user@example.com", "other@domain.com"],
-        "confidence": 0.95
+        "confidence": 0.95,
     }
     result = engine.evaluate_write_proposal(proposal)
     assert not result.passed
@@ -39,7 +39,7 @@ def test_pol_001_clean_description_allowed(engine):
     proposal = {
         "description": "General customer account entity identifier.",
         "sample_values": ["c9837248bde", "83742918a"],
-        "confidence": 0.95
+        "confidence": 0.95,
     }
     result = engine.evaluate_write_proposal(proposal)
     assert not any(v.policy_id == "POL-001" for v in result.violations)
@@ -51,7 +51,7 @@ def test_pol_002_pii_triggers_steward_approval(engine):
         "description": "Customer permanent identity token.",
         "is_pii": True,
         "pii_type": "CUSTOMER_ID",
-        "confidence": 0.95
+        "confidence": 0.95,
     }
     result = engine.evaluate_write_proposal(proposal)
     assert result.requires_approval
@@ -60,11 +60,7 @@ def test_pol_002_pii_triggers_steward_approval(engine):
 
 
 def test_pol_002_non_pii_does_not_require_steward_approval(engine):
-    proposal = {
-        "description": "Total merchandise item weight in grams.",
-        "is_pii": False,
-        "confidence": 0.95
-    }
+    proposal = {"description": "Total merchandise item weight in grams.", "is_pii": False, "confidence": 0.95}
     result = engine.evaluate_write_proposal(proposal)
     assert not result.requires_approval
     assert result.can_write
@@ -72,10 +68,7 @@ def test_pol_002_non_pii_does_not_require_steward_approval(engine):
 
 # --- Policy Case 5 & 6: POL-003 Agent Confidence Threshold ---
 def test_pol_003_low_confidence_requires_review(engine):
-    proposal = {
-        "description": "Inferred customer segment.",
-        "confidence": 0.65
-    }
+    proposal = {"description": "Inferred customer segment.", "confidence": 0.65}
     result = engine.evaluate_write_proposal(proposal)
     assert result.requires_approval
     assert not result.can_write
@@ -83,10 +76,7 @@ def test_pol_003_low_confidence_requires_review(engine):
 
 
 def test_pol_003_high_confidence_passes(engine):
-    proposal = {
-        "description": "Inferred customer segment.",
-        "confidence": 0.92
-    }
+    proposal = {"description": "Inferred customer segment.", "confidence": 0.92}
     result = engine.evaluate_write_proposal(proposal)
     assert not result.requires_approval
 
@@ -97,7 +87,7 @@ def test_pol_004_certification_blocked_on_low_quality(engine):
         "certification_status": "CERTIFIED",
         "quality_score": 0.72,
         "owner": "Data Governance Team",
-        "confidence": 0.95
+        "confidence": 0.95,
     }
     result = engine.evaluate_write_proposal(proposal)
     assert not result.passed
@@ -110,7 +100,7 @@ def test_pol_004_certification_allowed_on_high_quality(engine):
         "certification_status": "CERTIFIED",
         "quality_score": 0.94,
         "owner": "Data Governance Team",
-        "confidence": 0.95
+        "confidence": 0.95,
     }
     result = engine.evaluate_write_proposal(proposal)
     assert not any(v.policy_id == "POL-004" for v in result.violations)
@@ -118,12 +108,7 @@ def test_pol_004_certification_allowed_on_high_quality(engine):
 
 # --- Policy Case 9 & 10: POL-005 Certification Owner Mandatory ---
 def test_pol_005_certification_blocked_without_owner(engine):
-    proposal = {
-        "certification_status": "CERTIFIED",
-        "quality_score": 0.95,
-        "owner": "",
-        "confidence": 0.95
-    }
+    proposal = {"certification_status": "CERTIFIED", "quality_score": 0.95, "owner": "", "confidence": 0.95}
     result = engine.evaluate_write_proposal(proposal)
     assert not result.passed
     assert any(v.policy_id == "POL-005" for v in result.violations)
@@ -131,12 +116,7 @@ def test_pol_005_certification_blocked_without_owner(engine):
 
 # --- Policy Case 11 & 12: POL-006 Restricted PII No Public Access ---
 def test_pol_006_pii_with_public_sensitivity_blocked(engine):
-    proposal = {
-        "is_pii": True,
-        "pii_type": "CUSTOMER_ID",
-        "sensitivity_level": "PUBLIC",
-        "confidence": 0.95
-    }
+    proposal = {"is_pii": True, "pii_type": "CUSTOMER_ID", "sensitivity_level": "PUBLIC", "confidence": 0.95}
     result = engine.evaluate_write_proposal(proposal)
     assert not result.passed
     assert any(v.policy_id == "POL-006" for v in result.violations)
@@ -144,10 +124,7 @@ def test_pol_006_pii_with_public_sensitivity_blocked(engine):
 
 # --- Policy Case 13: POL-009 Prohibit Empty Descriptions ---
 def test_pol_009_empty_description_blocked(engine):
-    proposal = {
-        "description": "   ",
-        "confidence": 0.95
-    }
+    proposal = {"description": "   ", "confidence": 0.95}
     result = engine.evaluate_write_proposal(proposal)
     assert not result.passed
     assert any(v.policy_id == "POL-009" for v in result.violations)
@@ -155,11 +132,7 @@ def test_pol_009_empty_description_blocked(engine):
 
 # --- Policy Case 14: POL-010 Enforce Valid PII Taxonomy Types ---
 def test_pol_010_invalid_pii_type_blocked(engine):
-    proposal = {
-        "is_pii": True,
-        "pii_type": "UNKNOWN_CUSTOM_TAXONOMY",
-        "confidence": 0.95
-    }
+    proposal = {"is_pii": True, "pii_type": "UNKNOWN_CUSTOM_TAXONOMY", "confidence": 0.95}
     result = engine.evaluate_write_proposal(proposal)
     assert not result.passed
     assert any(v.policy_id == "POL-010" for v in result.violations)
@@ -172,7 +145,7 @@ def test_pol_011_high_null_rate_blocks_certification(engine):
         "owner": "Finance Team",
         "quality_score": 0.90,
         "null_percentage": 98.5,
-        "confidence": 0.95
+        "confidence": 0.95,
     }
     result = engine.evaluate_write_proposal(proposal)
     assert not result.passed
@@ -181,11 +154,7 @@ def test_pol_011_high_null_rate_blocks_certification(engine):
 
 # --- Policy Case 16: POL-014 Mart Quality Coverage ---
 def test_pol_014_mart_without_rules_blocked(engine):
-    proposal = {
-        "is_mart": True,
-        "quality_rules_count": 0,
-        "confidence": 0.95
-    }
+    proposal = {"is_mart": True, "quality_rules_count": 0, "confidence": 0.95}
     result = engine.evaluate_write_proposal(proposal)
     assert not result.passed
     assert any(v.policy_id == "POL-014" for v in result.violations)
@@ -198,7 +167,7 @@ def test_approval_queue_lifecycle(queue):
         asset_id="cforge.public.dim_products.weight_class",
         change_type="UPDATE_DESCRIPTION",
         proposed_by="Agent_Describer",
-        payload={"description": "Weight tier classification.", "confidence": 0.95}
+        payload={"description": "Weight tier classification.", "confidence": 0.95},
     )
     assert auto_prop.status == "AUTO_APPROVED"
 
@@ -207,7 +176,7 @@ def test_approval_queue_lifecycle(queue):
         asset_id="cforge.public.dim_customers.primary_zip",
         change_type="ADD_TAG",
         proposed_by="Agent_Classifier",
-        payload={"is_pii": True, "pii_type": "POSTAL_CODE", "confidence": 0.95}
+        payload={"is_pii": True, "pii_type": "POSTAL_CODE", "confidence": 0.95},
     )
     assert review_prop.status == "PENDING"
     assert len(queue.get_pending()) >= 1
@@ -217,7 +186,7 @@ def test_approval_queue_lifecycle(queue):
         proposal_id=review_prop.proposal_id,
         steward_name="Governance_Steward_Alice",
         decision="APPROVE",
-        notes="Confirmed Brazilian CEP postal code is PII."
+        notes="Confirmed Brazilian CEP postal code is PII.",
     )
     assert reviewed.status == "APPROVED"
     assert reviewed.reviewed_by == "Governance_Steward_Alice"
@@ -246,7 +215,7 @@ def test_tag_propagation_across_3_hops_with_reason_chain():
     edges = [
         ColumnLineageEdge("raw_olist_customers", "customer_id", "stg_customers", "customer_id", "DIRECT_COPY"),
         ColumnLineageEdge("stg_customers", "customer_id", "dim_customers", "customer_unique_id", "AGGREGATION"),
-        ColumnLineageEdge("dim_customers", "customer_unique_id", "customer_ltv", "customer_unique_id", "DIRECT_COPY")
+        ColumnLineageEdge("dim_customers", "customer_unique_id", "customer_ltv", "customer_unique_id", "DIRECT_COPY"),
     ]
     propagator = LineagePropagator(edges)
     results = propagator.propagate_tag(
@@ -254,7 +223,7 @@ def test_tag_propagation_across_3_hops_with_reason_chain():
         initial_column="customer_id",
         tag_name="PII",
         tag_value="CUSTOMER_ID",
-        max_hops=5
+        max_hops=5,
     )
 
     # Verify Hop 1, Hop 2, Hop 3 exist

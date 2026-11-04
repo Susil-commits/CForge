@@ -4,11 +4,11 @@ Exposes REST endpoints for the 4-screen UI: Lineage Graph, Asset Explorer,
 Approval Queue, Benchmark Dashboard, and Cryptographic Audit Trail.
 """
 
-from collections import defaultdict
 import json
 import os
 import threading
 import time
+from collections import defaultdict
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
@@ -33,9 +33,7 @@ from cforge.mcp.agent import TalkToDataAgent
 from cforge.mcp.server import MCPServer
 
 app = FastAPI(
-    title="ContextForge API",
-    description="Governed Metadata Enrichment Engine and Context Platform",
-    version="0.1.0"
+    title="ContextForge API", description="Governed Metadata Enrichment Engine and Context Platform", version="0.1.0"
 )
 
 # Robust CORS Configuration
@@ -86,10 +84,7 @@ mcp_server = MCPServer(store=store)
 agent = TalkToDataAgent(mcp_server=mcp_server)
 policy_engine = PolicyEngine()
 approval_queue = ApprovalQueue(
-    engine=policy_engine,
-    store=store,
-    audit_log=audit_log,
-    persistence_path=DATA_DIR / "approval_queue.json"
+    engine=policy_engine, store=store, audit_log=audit_log, persistence_path=DATA_DIR / "approval_queue.json"
 )
 
 # Seed initial approval queue items if queue is empty
@@ -98,19 +93,24 @@ if len(approval_queue.queue) == 0:
         asset_id="cforge.public.dim_customers.primary_zip",
         change_type="ADD_TAG",
         proposed_by="Agent_Classifier",
-        payload={"is_pii": True, "pii_type": "POSTAL_CODE", "confidence": 0.95, "description": "Postal code prefix"}
+        payload={"is_pii": True, "pii_type": "POSTAL_CODE", "confidence": 0.95, "description": "Postal code prefix"},
     )
     approval_queue.submit_proposal(
         asset_id="cforge.public.stg_reviews.review_comment",
         change_type="ADD_TAG",
         proposed_by="Agent_Classifier",
-        payload={"is_pii": True, "pii_type": "CONFIDENTIAL_NOTES", "confidence": 0.91, "description": "Customer comment"}
+        payload={
+            "is_pii": True,
+            "pii_type": "CONFIDENTIAL_NOTES",
+            "confidence": 0.91,
+            "description": "Customer comment",
+        },
     )
     approval_queue.submit_proposal(
         asset_id="cforge.public.fct_orders.is_delayed_delivery",
         change_type="UPDATE_DESCRIPTION",
         proposed_by="Agent_Describer",
-        payload={"description": "Derived delivery flag indicating if delivery exceeded SLA.", "confidence": 0.76}
+        payload={"description": "Derived delivery flag indicating if delivery exceeded SLA.", "confidence": 0.76},
     )
 
 
@@ -133,36 +133,36 @@ FALLBACK_ABLATIONS = [
         "matches": 39,
         "accuracy_percentage": 86.67,
         "drop_points": 0.0,
-        "description": "Complete metadata: Lineage + Profiling + Glossary + Certified Marts"
+        "description": "Complete metadata: Lineage + Profiling + Glossary + Certified Marts",
     },
     {
         "configuration": "Ablation: No Lineage Context",
         "matches": 37,
         "accuracy_percentage": 82.22,
         "drop_points": -4.45,
-        "description": "Removed column lineage graph; joins and derivations degraded."
+        "description": "Removed column lineage graph; joins and derivations degraded.",
     },
     {
         "configuration": "Ablation: No Profiling Stats",
         "matches": 39,
         "accuracy_percentage": 86.67,
         "drop_points": 0.0,
-        "description": "Removed statistical bounds; within run variance at n=45."
+        "description": "Removed statistical bounds; within run variance at n=45.",
     },
     {
         "configuration": "Ablation: No Glossary Terms",
         "matches": 38,
         "accuracy_percentage": 84.44,
         "drop_points": -2.23,
-        "description": "Removed business glossary mappings; minor drop."
+        "description": "Removed business glossary mappings; minor drop.",
     },
     {
         "configuration": "Baseline: Bare Schema Only",
         "matches": 33,
         "accuracy_percentage": 73.33,
         "drop_points": -13.34,
-        "description": "Raw un-enriched table and column names only."
-    }
+        "description": "Raw un-enriched table and column names only.",
+    },
 ]
 
 
@@ -189,7 +189,7 @@ def health_check():
         "db_latency_ms": latency_ms,
         "db_error": db_error,
         "audit_chain_verified": audit_log.verify_integrity(),
-        "audit_chain_length": len(audit_log.chain)
+        "audit_chain_length": len(audit_log.chain),
     }
 
 
@@ -203,7 +203,7 @@ def get_audit_trail():
         "integrity_verified": is_valid,
         "genesis_root": records[0]["curr_hash"] if records else None,
         "latest_hash": records[-1]["curr_hash"] if records else None,
-        "records": records[-30:]  # preview recent records
+        "records": records[-30:],  # preview recent records
     }
 
 
@@ -232,7 +232,7 @@ def get_lineage_graph():
         for r in raw_nodes:
             asset_id = str(r[0])
             has_pii = asset_id in pii_table_ids
-            
+
             # Categorize tier
             tier = "marts"
             if "raw_" in r[2]:
@@ -242,15 +242,17 @@ def get_lineage_graph():
             elif "dashboard" in str(r[0]):
                 tier = "dashboard"
 
-            nodes.append({
-                "id": asset_id,
-                "label": r[3] or r[2],
-                "asset_type": r[1],
-                "tier": tier,
-                "has_pii": has_pii,
-                "certification_status": r[4],
-                "owner": r[5]
-            })
+            nodes.append(
+                {
+                    "id": asset_id,
+                    "label": r[3] or r[2],
+                    "asset_type": r[1],
+                    "tier": tier,
+                    "has_pii": has_pii,
+                    "certification_status": r[4],
+                    "owner": r[5],
+                }
+            )
 
         # Edges from lineage_edges or model dependencies
         edges_query = "SELECT source_asset_id, target_asset_id, transformation_type FROM lineage_edges;"
@@ -264,12 +266,9 @@ def get_lineage_graph():
             if s_tbl != t_tbl and (s_tbl, t_tbl) not in seen:
                 seen.add((s_tbl, t_tbl))
                 is_pii_edge = any(n["has_pii"] for n in nodes if n["id"] == s_tbl)
-                edges.append({
-                    "source": s_tbl,
-                    "target": t_tbl,
-                    "transformation_type": tx,
-                    "is_pii_propagated": is_pii_edge
-                })
+                edges.append(
+                    {"source": s_tbl, "target": t_tbl, "transformation_type": tx, "is_pii_propagated": is_pii_edge}
+                )
 
         # Add core staging -> marts edges for visual topology
         topology_links = [
@@ -293,18 +292,13 @@ def get_lineage_graph():
             ("cforge.public.fct_orders", "dashboard.executive_revenue", "BI_CONSUMPTION"),
             ("cforge.public.customer_ltv", "dashboard.customer_retention", "BI_CONSUMPTION"),
             ("cforge.public.mart_geo_performance", "dashboard.logistics_control_tower", "BI_CONSUMPTION"),
-            ("cforge.public.dim_customers", "dashboard.customer_360", "BI_CONSUMPTION")
+            ("cforge.public.dim_customers", "dashboard.customer_360", "BI_CONSUMPTION"),
         ]
         for s, t, tx in topology_links:
             if (s, t) not in seen:
                 seen.add((s, t))
                 is_pii_edge = any(n["has_pii"] for n in nodes if n["id"] == s)
-                edges.append({
-                    "source": s,
-                    "target": t,
-                    "transformation_type": tx,
-                    "is_pii_propagated": is_pii_edge
-                })
+                edges.append({"source": s, "target": t, "transformation_type": tx, "is_pii_propagated": is_pii_edge})
 
         return {"nodes": nodes, "edges": edges}
 
@@ -348,7 +342,7 @@ def list_assets(query: str | None = None, pii_only: bool = False):
                     "is_pii": False,
                     "pii_type": "NONE",
                     "is_masked": False,
-                    "masking_policy": None
+                    "masking_policy": None,
                 }
             if tag_name == "PII":
                 table_cols[p_id][col_id]["is_pii"] = True
@@ -366,20 +360,22 @@ def list_assets(query: str | None = None, pii_only: bool = False):
             if query and query.lower() not in r[2].lower() and query.lower() not in (r[4] or "").lower():
                 continue
 
-            assets.append({
-                "asset_id": a_id,
-                "name": r[2],
-                "display_name": r[3] or r[2].replace("_", " ").title(),
-                "description": r[4] or f"Materialized table {r[2]} within ContextForge data estate.",
-                "owner": r[6],
-                "certification_status": r[7],
-                "quality_score": r[8],
-                "version": r[9],
-                "total_columns": len(cols),
-                "pii_columns_count": len(pii_cols),
-                "pii_columns": pii_cols,
-                "columns": cols[:8]  # preview first 8
-            })
+            assets.append(
+                {
+                    "asset_id": a_id,
+                    "name": r[2],
+                    "display_name": r[3] or r[2].replace("_", " ").title(),
+                    "description": r[4] or f"Materialized table {r[2]} within ContextForge data estate.",
+                    "owner": r[6],
+                    "certification_status": r[7],
+                    "quality_score": r[8],
+                    "version": r[9],
+                    "total_columns": len(cols),
+                    "pii_columns_count": len(pii_cols),
+                    "pii_columns": pii_cols,
+                    "columns": cols[:8],  # preview first 8
+                }
+            )
 
         return {"total": len(assets), "assets": assets}
 
@@ -397,10 +393,7 @@ def get_asset_context_endpoint(asset_id: str, role: str = "ANALYST"):
 def get_approval_queue():
     """List all proposals in the steward approval queue."""
     pending = approval_queue.get_pending()
-    return {
-        "pending_count": len(pending),
-        "queue": [p.model_dump() for p in pending]
-    }
+    return {"pending_count": len(pending), "queue": [p.model_dump() for p in pending]}
 
 
 @app.post("/api/approval-queue/{proposal_id}/review")
@@ -418,7 +411,7 @@ def review_proposal(proposal_id: str, req: ReviewRequest, request: Request):
             proposal_id=proposal_id,
             steward_name=req.steward_name,
             decision=req.decision,
-            notes=req.notes or "Decision recorded via Governance UI"
+            notes=req.notes or "Decision recorded via Governance UI",
         )
         return {"status": "SUCCESS", "proposal": reviewed.model_dump()}
     except KeyError:
@@ -436,10 +429,13 @@ def get_eval_benchmark():
         try:
             bench_data = json.loads(BENCHMARK_JSON_PATH.read_text(encoding="utf-8"))
             return {
-                "headline": bench_data.get("headline", "Accuracy went from 73.33% to 86.67% (+13.34 pts) when agent had governed metadata context."),
+                "headline": bench_data.get(
+                    "headline",
+                    "Accuracy went from 73.33% to 86.67% (+13.34 pts) when agent had governed metadata context.",
+                ),
                 "metrics": bench_data.get("metrics", {}),
                 "ablations": bench_data.get("ablations") or FALLBACK_ABLATIONS,
-                "markdown_report": content
+                "markdown_report": content,
             }
         except Exception:
             pass
@@ -458,10 +454,10 @@ def get_eval_benchmark():
             "false_refusal_rate": "13.0% (3/23)",
             "description_quality": "4.53 / 5.0",
             "enrichment_cost_per_1k": "$0.1024",
-            "latency_ms": "6607.16 ms"
+            "latency_ms": "6607.16 ms",
         },
         "ablations": FALLBACK_ABLATIONS,
-        "markdown_report": content
+        "markdown_report": content,
     }
 
 
@@ -472,7 +468,7 @@ def chat_with_data(req: ChatRequest, request: Request):
     if not chat_limiter.is_allowed(client_ip):
         raise HTTPException(
             status_code=429,
-            detail=f"Rate limit exceeded. ContextForge allows up to {RATE_LIMIT_CHAT_PER_MIN} queries per minute per IP."
+            detail=f"Rate limit exceeded. ContextForge allows up to {RATE_LIMIT_CHAT_PER_MIN} queries per minute per IP.",
         )
 
     # Role enforcement & authentication gate

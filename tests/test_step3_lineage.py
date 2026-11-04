@@ -68,12 +68,12 @@ def test_lineage_tag_propagation_and_reason_chain():
         initial_column="customer_id",
         tag_name="PII",
         tag_value="CUSTOMER_ID",
-        max_hops=5
+        max_hops=5,
     )
 
     assert len(propagated) > 0, "Expected downstream propagated tags"
     targets = {f"{p.target_table}.{p.target_column}" for p in propagated}
-    
+
     # stg_customers.customer_id should be in downstream
     assert "stg_customers.customer_id" in targets
 

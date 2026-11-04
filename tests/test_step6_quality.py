@@ -9,8 +9,20 @@ def test_quality_runner_on_clean_estate():
     """Verify quality runner computes high scores and approves certification on valid tables."""
     runner = QualityRunner()
     rules = [
-        SuggestedRule(rule_type="NOT_NULL", parameters={"column": "order_id"}, severity="ERROR", confidence=0.99, rationale="Primary key not null"),
-        SuggestedRule(rule_type="RANGE_CHECK", parameters={"column": "payment_amount", "min": 0.0, "max": 100000.0}, severity="WARNING", confidence=0.95, rationale="Positive amount")
+        SuggestedRule(
+            rule_type="NOT_NULL",
+            parameters={"column": "order_id"},
+            severity="ERROR",
+            confidence=0.99,
+            rationale="Primary key not null",
+        ),
+        SuggestedRule(
+            rule_type="RANGE_CHECK",
+            parameters={"column": "payment_amount", "min": 0.0, "max": 100000.0},
+            severity="WARNING",
+            confidence=0.95,
+            rationale="Positive amount",
+        ),
     ]
     report = runner.evaluate_table_quality("fct_order_payments", rules)
 
@@ -27,7 +39,13 @@ def test_certification_gate_blocks_failing_table():
     runner = QualityRunner()
     # Define an impossible rule to simulate a failure
     impossible_rule = [
-        SuggestedRule(rule_type="RANGE_CHECK", parameters={"column": "payment_amount", "min": 10000.0, "max": 20000.0}, severity="ERROR", confidence=0.99, rationale="Impossible bound")
+        SuggestedRule(
+            rule_type="RANGE_CHECK",
+            parameters={"column": "payment_amount", "min": 10000.0, "max": 20000.0},
+            severity="ERROR",
+            confidence=0.99,
+            rationale="Impossible bound",
+        )
     ]
     report = runner.evaluate_table_quality("fct_order_payments", impossible_rule)
 

@@ -13,7 +13,9 @@ from cforge.llm.client import LLMAuthenticationError, LLMClient
 
 class ClassificationResult(BaseModel):
     is_pii: bool = Field(description="Whether the column contains Personally Identifiable Information.")
-    pii_type: str = Field(description="Specific PII classification category: CUSTOMER_ID, PERSON_NAME, EMAIL, PHONE_NUMBER, POSTAL_CODE, PHYSICAL_ADDRESS, FINANCIAL, CONFIDENTIAL_NOTES, NONE.")
+    pii_type: str = Field(
+        description="Specific PII classification category: CUSTOMER_ID, PERSON_NAME, EMAIL, PHONE_NUMBER, POSTAL_CODE, PHYSICAL_ADDRESS, FINANCIAL, CONFIDENTIAL_NOTES, NONE."
+    )
     sensitivity_level: str = Field(description="Data sensitivity: PUBLIC, INTERNAL, CONFIDENTIAL, RESTRICTED.")
     confidence: float = Field(ge=0.0, le=1.0, description="Confidence score.")
     evidence: list[str] = Field(description="Grounded evidence supporting classification.")
@@ -53,7 +55,9 @@ class HeuristicClassifierAgent:
             confidence = 0.98
             evidence.append("Regex pattern and column identifier indicate electronic mail contact.")
             regulations.extend(["LGPD", "GDPR"])
-        elif any(k in col_clean for k in ["phone", "fax", "tel"]) or ("PHONE_PATTERN" in patterns and not any(k in col_clean for k in ["id", "count", "num"])):
+        elif any(k in col_clean for k in ["phone", "fax", "tel"]) or (
+            "PHONE_PATTERN" in patterns and not any(k in col_clean for k in ["id", "count", "num"])
+        ):
             is_pii = True
             pii_type = "PHONE_NUMBER"
             sensitivity = "RESTRICTED"
@@ -124,7 +128,7 @@ class HeuristicClassifierAgent:
             sensitivity_level=sensitivity,
             confidence=confidence,
             evidence=evidence,
-            regulatory_domains=list(set(regulations))
+            regulatory_domains=list(set(regulations)),
         )
 
 
@@ -174,9 +178,7 @@ Upstream Tags: {upstream_tags or []}
 Classify this column adhering to the schema.
 """
         response = self.client.generate_structured(
-            system_prompt=self.SYSTEM_PROMPT,
-            user_prompt=user_prompt,
-            response_model=ClassificationResult
+            system_prompt=self.SYSTEM_PROMPT, user_prompt=user_prompt, response_model=ClassificationResult
         )
         return response.parsed
 
@@ -193,7 +195,7 @@ class ClassifierAgent:
     def classify(self, profile: ColumnProfile, upstream_tags: list[str] | None = None) -> ClassificationResult:
         if self.mode == "heuristic":
             return self.heuristic_agent.classify(profile, upstream_tags)
-        
+
         if self.mode == "llm":
             return self.llm_agent.classify(profile, upstream_tags)
 

@@ -47,10 +47,16 @@ BENCHMARK_COLUMNS = [
 
 
 class DescriptionJudgeEvaluation(BaseModel):
-    technical_grounding_score: float = Field(ge=1.0, le=5.0, description="1-5 score on data type fidelity, nulls, uniqueness, and bounds.")
-    domain_relevance_score: float = Field(ge=1.0, le=5.0, description="1-5 score on business domain relevance in e-commerce/operations.")
+    technical_grounding_score: float = Field(
+        ge=1.0, le=5.0, description="1-5 score on data type fidelity, nulls, uniqueness, and bounds."
+    )
+    domain_relevance_score: float = Field(
+        ge=1.0, le=5.0, description="1-5 score on business domain relevance in e-commerce/operations."
+    )
     clarity_score: float = Field(ge=1.0, le=5.0, description="1-5 score on concise, production-ready phrasing.")
-    hallucination_detected: bool = Field(description="True if description asserts unobserved facts not supported by profile.")
+    hallucination_detected: bool = Field(
+        description="True if description asserts unobserved facts not supported by profile."
+    )
     overall_score: float = Field(ge=1.0, le=5.0, description="Composite score (1.0 to 5.0).")
     justification: str = Field(description="Step-by-step judge rationale.")
 
@@ -92,7 +98,10 @@ Candidate Description to Judge: "{candidate_description}"
 Evaluate this description and return your judgment adhering to the schema.
 """
         from cforge.llm.cache import LLMDiskCache
-        cache_key = LLMDiskCache.compute_key(self.client.model, self.SYSTEM_PROMPT, user_prompt, DescriptionJudgeEvaluation.model_json_schema())
+
+        cache_key = LLMDiskCache.compute_key(
+            self.client.model, self.SYSTEM_PROMPT, user_prompt, DescriptionJudgeEvaluation.model_json_schema()
+        )
         cached = self.client.cache.get(cache_key)
         if cached and cached.parsed_json:
             try:
@@ -103,9 +112,7 @@ Evaluate this description and return your judgment adhering to the schema.
         if use_llm:
             try:
                 resp = self.client.generate_structured(
-                    system_prompt=self.SYSTEM_PROMPT,
-                    user_prompt=user_prompt,
-                    response_model=DescriptionJudgeEvaluation
+                    system_prompt=self.SYSTEM_PROMPT, user_prompt=user_prompt, response_model=DescriptionJudgeEvaluation
                 )
                 return resp.parsed
             except (LLMAuthenticationError, Exception):
@@ -114,7 +121,24 @@ Evaluate this description and return your judgment adhering to the schema.
         # Deterministic evaluation based on profile grounding and rubric
         is_hallucinating = False
         grounding = 4.6 if (data_type.lower() in candidate_description.lower() or "id" in column.lower()) else 4.3
-        relevance = 4.8 if any(w in candidate_description.lower() for w in ["identifier", "currency", "amount", "timestamp", "attribute", "metric", "customer", "order", "price"]) else 4.2
+        relevance = (
+            4.8
+            if any(
+                w in candidate_description.lower()
+                for w in [
+                    "identifier",
+                    "currency",
+                    "amount",
+                    "timestamp",
+                    "attribute",
+                    "metric",
+                    "customer",
+                    "order",
+                    "price",
+                ]
+            )
+            else 4.2
+        )
         clarity = 4.8 if len(candidate_description) > 25 else 3.8
         overall = round((grounding + relevance + clarity) / 3.0, 2)
         return DescriptionJudgeEvaluation(
@@ -123,13 +147,14 @@ Evaluate this description and return your judgment adhering to the schema.
             clarity_score=clarity,
             hallucination_detected=is_hallucinating,
             overall_score=overall,
-            justification="Deterministic evaluation grounded in column data type and schema statistics."
+            justification="Deterministic evaluation grounded in column data type and schema statistics.",
         )
 
 
 def evaluate_description_quality(use_llm: bool = False) -> dict[str, Any]:
     """Score descriptions across 30 benchmark columns using the LLM Judge rubric."""
     from cforge.enrichment.describer import HeuristicDescriberAgent
+
     profiler = EstateProfiler()
     describer = HeuristicDescriberAgent()
     judge = DescriptionLLMJudge()
@@ -186,5 +211,5 @@ def evaluate_description_quality(use_llm: bool = False) -> dict[str, Any]:
             "domain_relevance": avg_relevance,
             "clarity": avg_clarity,
             "hallucination_rate": hallucination_rate,
-        }
+        },
     }

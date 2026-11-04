@@ -46,7 +46,7 @@ def clean_sql(raw_text: str) -> str:
         query = match.group(1).strip()
     else:
         query = raw_text
-    
+
     # Strip trailing semicolons or markdown noise
     lines = [line for line in query.splitlines() if not line.strip().startswith("--")]
     clean = " ".join(lines).strip()
@@ -61,8 +61,10 @@ def build_bare_schema_context(conn: duckdb.DuckDBPyConnection) -> str:
     for tbl in sorted(tables):
         cols = conn.execute(f"DESCRIBE {tbl}").fetchall()
         col_strs = [
-            f"  - {c[0]}: {c[1]}" for c in cols
-            if c[0] not in [
+            f"  - {c[0]}: {c[1]}"
+            for c in cols
+            if c[0]
+            not in [
                 "customer_support_transcript",
                 "client_device_fingerprint_uuid",
                 "delivery_instructions",
@@ -75,7 +77,7 @@ def build_bare_schema_context(conn: duckdb.DuckDBPyConnection) -> str:
 
 def build_enriched_context(conn: duckdb.DuckDBPyConnection, exclude_facet: str | None = None) -> str:
     """Build Enriched Governed Catalog Context, optionally ablating one facet.
-    
+
     Facets that can be ablated: 'lineage', 'profiling', 'glossary'.
     """
     context_sections = []
@@ -194,7 +196,7 @@ class TextToSQLEvaluator:
     def __init__(self, estate_db_path: str | None = None, model_name: str | None = None):
         self.estate_path = estate_db_path or str(ESTATE_DB_PATH)
         self.conn = duckdb.connect(self.estate_path, read_only=True)
-        with open(BUSINESS_QUESTIONS_PATH, "r", encoding="utf-8") as f:
+        with open(BUSINESS_QUESTIONS_PATH, encoding="utf-8") as f:
             self.questions = json.load(f)
         self.client = LLMClient(model_name=model_name)
         self.bare_context = build_bare_schema_context(self.conn)
@@ -203,10 +205,7 @@ class TextToSQLEvaluator:
     def generate_sql(self, question: str, context: str) -> str:
         """Call LLM with given schema context to generate DuckDB SQL."""
         user_prompt = f"Schema Context:\n{context}\n\nBusiness Question: {question}\n\nDuckDB SQL Query:"
-        resp = self.client.generate_text(
-            system_prompt=self.SYSTEM_PROMPT,
-            user_prompt=user_prompt
-        )
+        resp = self.client.generate_text(system_prompt=self.SYSTEM_PROMPT, user_prompt=user_prompt)
         return clean_sql(resp.text)
 
     def evaluate_condition(self, context: str, condition_name: str) -> dict[str, Any]:
@@ -249,14 +248,16 @@ class TextToSQLEvaluator:
             if exec_match:
                 matches += 1
 
-            details.append({
-                "id": qid,
-                "question": question,
-                "gold_sql": gold_sql,
-                "generated_sql": gen_sql,
-                "matched": exec_match,
-                "error": error_msg
-            })
+            details.append(
+                {
+                    "id": qid,
+                    "question": question,
+                    "gold_sql": gold_sql,
+                    "generated_sql": gen_sql,
+                    "matched": exec_match,
+                    "error": error_msg,
+                }
+            )
 
         accuracy_pct = round((matches / total) * 100.0, 2)
         return {
@@ -264,7 +265,7 @@ class TextToSQLEvaluator:
             "total_questions": total,
             "matches": matches,
             "accuracy_pct": accuracy_pct,
-            "details": details
+            "details": details,
         }
 
     def evaluate(self) -> dict[str, Any]:
@@ -285,5 +286,5 @@ class TextToSQLEvaluator:
             "accuracy_improvement_points": delta_pct,
             "headline": f"Accuracy went from {bare_acc}% to {enriched_acc}% (+{delta_pct} pts) when the agent had governed metadata context.",
             "bare_details": bare_eval["details"],
-            "enriched_details": enriched_eval["details"]
+            "enriched_details": enriched_eval["details"],
         }

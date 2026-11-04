@@ -17,36 +17,51 @@ def populated_store(tmp_path_factory):
 def test_asset_creation_and_versioned_history(populated_store):
     """Verify that updating an asset creates a new version and appends to history log."""
     test_asset_id = "cforge.public.test_custom_table"
-    populated_store.upsert_asset({
-        "asset_id": test_asset_id,
-        "asset_type": "TABLE",
-        "name": "test_custom_table",
-        "description": "Initial description",
-        "certification_status": "DRAFT",
-        "owner": "Data Eng"
-    }, changed_by="Agent_1", reason="Initial creation")
+    populated_store.upsert_asset(
+        {
+            "asset_id": test_asset_id,
+            "asset_type": "TABLE",
+            "name": "test_custom_table",
+            "description": "Initial description",
+            "certification_status": "DRAFT",
+            "owner": "Data Eng",
+        },
+        changed_by="Agent_1",
+        reason="Initial creation",
+    )
 
     # Verify version 1
-    asset_v1 = populated_store.conn.execute("SELECT version, description FROM assets WHERE asset_id = ?", (test_asset_id,)).fetchone()
+    asset_v1 = populated_store.conn.execute(
+        "SELECT version, description FROM assets WHERE asset_id = ?", (test_asset_id,)
+    ).fetchone()
     assert asset_v1[0] == 1
     assert asset_v1[1] == "Initial description"
 
     # Update asset
-    populated_store.upsert_asset({
-        "asset_id": test_asset_id,
-        "description": "Enriched description with business context",
-        "certification_status": "CERTIFIED",
-        "owner": "Finance Governance"
-    }, changed_by="Steward_Alice", reason="Steward approval")
+    populated_store.upsert_asset(
+        {
+            "asset_id": test_asset_id,
+            "description": "Enriched description with business context",
+            "certification_status": "CERTIFIED",
+            "owner": "Finance Governance",
+        },
+        changed_by="Steward_Alice",
+        reason="Steward approval",
+    )
 
     # Verify version 2
-    asset_v2 = populated_store.conn.execute("SELECT version, description, certification_status FROM assets WHERE asset_id = ?", (test_asset_id,)).fetchone()
+    asset_v2 = populated_store.conn.execute(
+        "SELECT version, description, certification_status FROM assets WHERE asset_id = ?", (test_asset_id,)
+    ).fetchone()
     assert asset_v2[0] == 2
     assert asset_v2[1] == "Enriched description with business context"
     assert asset_v2[2] == "CERTIFIED"
 
     # Verify immutable history entries
-    history_rows = populated_store.conn.execute("SELECT version, change_type, changed_by, reason FROM asset_history WHERE asset_id = ? ORDER BY version", (test_asset_id,)).fetchall()
+    history_rows = populated_store.conn.execute(
+        "SELECT version, change_type, changed_by, reason FROM asset_history WHERE asset_id = ? ORDER BY version",
+        (test_asset_id,),
+    ).fetchall()
     assert len(history_rows) == 2
     assert history_rows[0][0] == 1
     assert history_rows[0][1] == "CREATE"
@@ -102,10 +117,10 @@ def test_metadata_lakehouse_export_and_proof_query(populated_store, tmp_path):
     # Execute the proof query: "which certified tables contain PII and are consumed by dashboards?"
     results = lakehouse.query_certified_tables_with_pii_consumed_by_dashboards()
     assert len(results) > 0, "Proof query returned 0 rows"
-    
+
     table_names = {r["table_name"] for r in results}
     # certified marts like dim_customers, fct_orders, customer_ltv should appear
-    assert ("dim_customers" in table_names or "fct_orders" in table_names or "customer_ltv" in table_names)
+    assert "dim_customers" in table_names or "fct_orders" in table_names or "customer_ltv" in table_names
 
     for r in results:
         assert r["certification_status"] == "CERTIFIED"

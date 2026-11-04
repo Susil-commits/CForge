@@ -32,7 +32,7 @@ class ApprovalQueue:
         engine: PolicyEngine | None = None,
         store: Any | None = None,
         audit_log: ImmutableAuditLog | None = None,
-        persistence_path: Path | None = None
+        persistence_path: Path | None = None,
     ):
         self.engine = engine or PolicyEngine()
         self.store = store
@@ -60,17 +60,14 @@ class ApprovalQueue:
         except Exception:
             self.queue = {}
 
-    def submit_proposal(self, asset_id: str, change_type: str,
-                        proposed_by: str, payload: dict[str, Any]) -> ChangeProposal:
+    def submit_proposal(
+        self, asset_id: str, change_type: str, proposed_by: str, payload: dict[str, Any]
+    ) -> ChangeProposal:
         """Submit a proposal, evaluate policies, and either auto-approve or queue for review."""
         eval_result = self.engine.evaluate_write_proposal(payload)
-        
+
         proposal = ChangeProposal(
-            asset_id=asset_id,
-            change_type=change_type,
-            proposed_by=proposed_by,
-            payload=payload,
-            evaluation=eval_result
+            asset_id=asset_id, change_type=change_type, proposed_by=proposed_by, payload=payload, evaluation=eval_result
         )
 
         if eval_result.can_write:
@@ -110,7 +107,7 @@ class ApprovalQueue:
                         tag_value=tag_val,
                         confidence=conf,
                         source=proposal.proposed_by,
-                        reason=notes or f"Steward approved change from {proposal.proposed_by}"
+                        reason=notes or f"Steward approved change from {proposal.proposed_by}",
                     )
                 elif proposal.change_type == "UPDATE_DESCRIPTION":
                     new_desc = proposal.payload.get("description")
@@ -118,34 +115,35 @@ class ApprovalQueue:
                         self.store.upsert_asset(
                             {"asset_id": proposal.asset_id, "description": new_desc},
                             changed_by=steward_name,
-                            reason=notes
+                            reason=notes,
                         )
                 elif proposal.change_type == "CHANGE_CERTIFICATION":
                     cert = proposal.payload.get("certification_status", "CERTIFIED")
                     self.store.upsert_asset(
                         {"asset_id": proposal.asset_id, "certification_status": cert},
                         changed_by=steward_name,
-                        reason=notes
+                        reason=notes,
                     )
             except Exception:
                 pass
 
         if self.audit_log is not None:
             try:
-                evaluated_policies = [v.policy_id for v in proposal.evaluation.violations] if proposal.evaluation else ["POL-002"]
+                evaluated_policies = (
+                    [v.policy_id for v in proposal.evaluation.violations] if proposal.evaluation else ["POL-002"]
+                )
                 self.audit_log.append(
                     actor=steward_name,
                     asset_id=proposal.asset_id,
                     action=f"PROPOSAL_{proposal.status}",
                     policies_evaluated=evaluated_policies,
                     before_state={"status": "PENDING"},
-                    after_state={"status": proposal.status, "payload": proposal.payload}
+                    after_state={"status": proposal.status, "payload": proposal.payload},
                 )
             except Exception:
                 pass
 
-    def review_proposal(self, proposal_id: str, steward_name: str,
-                        decision: str, notes: str) -> ChangeProposal:
+    def review_proposal(self, proposal_id: str, steward_name: str, decision: str, notes: str) -> ChangeProposal:
         """Steward decision: approve or reject a pending proposal."""
         if proposal_id not in self.queue:
             raise KeyError(f"Proposal {proposal_id} not found in queue.")
@@ -163,14 +161,16 @@ class ApprovalQueue:
             proposal.reviewed_at = datetime.now(timezone.utc)
             proposal.review_notes = notes
             if self.audit_log is not None:
-                evaluated_policies = [v.policy_id for v in proposal.evaluation.violations] if proposal.evaluation else ["POL-002"]
+                evaluated_policies = (
+                    [v.policy_id for v in proposal.evaluation.violations] if proposal.evaluation else ["POL-002"]
+                )
                 self.audit_log.append(
                     actor=steward_name,
                     asset_id=proposal.asset_id,
                     action="PROPOSAL_REJECTED",
                     policies_evaluated=evaluated_policies,
                     before_state={"status": "PENDING"},
-                    after_state={"status": "REJECTED", "notes": notes}
+                    after_state={"status": "REJECTED", "notes": notes},
                 )
 
         self._save()

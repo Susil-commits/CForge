@@ -24,14 +24,18 @@ class HeuristicDescriberAgent:
 
     def describe(self, profile: ColumnProfile, lineage_upstream: list[str] | None = None) -> DescriptionResult:
         """Generate structured business description grounded in statistical heuristics."""
-        table = profile.table_name.lower()
+        _table = profile.table_name.lower()
         col = profile.column_name.lower()
         data_type = profile.data_type
         evidence: list[str] = []
 
-        evidence.append(f"Data type is {data_type} with {profile.total_rows} total rows and {profile.null_percentage}% nulls.")
-        evidence.append(f"Distinct cardinality: {profile.distinct_count} unique values (cardinality ratio: {profile.cardinality_ratio}).")
-        
+        evidence.append(
+            f"Data type is {data_type} with {profile.total_rows} total rows and {profile.null_percentage}% nulls."
+        )
+        evidence.append(
+            f"Distinct cardinality: {profile.distinct_count} unique values (cardinality ratio: {profile.cardinality_ratio})."
+        )
+
         if profile.is_unique:
             evidence.append("Column values are 100% unique across all non-null records (candidate key).")
         if profile.detected_patterns:
@@ -39,7 +43,9 @@ class HeuristicDescriberAgent:
         if lineage_upstream:
             evidence.append(f"Upstream lineage derives directly from: {', '.join(lineage_upstream)}.")
         if profile.neighbor_columns:
-            evidence.append(f"Neighboring columns in table {profile.table_name}: {', '.join(profile.neighbor_columns[:4])}.")
+            evidence.append(
+                f"Neighboring columns in table {profile.table_name}: {', '.join(profile.neighbor_columns[:4])}."
+            )
 
         desc = ""
         reasoning = ""
@@ -54,7 +60,25 @@ class HeuristicDescriberAgent:
                 desc = "Foreign key reference identifier associating records with upstream entity."
                 reasoning = "Column contains 'id' with non-unique distribution indicating relational foreign key."
                 confidence = 0.92
-        elif any(t in col for t in ["price", "amount", "revenue", "spend", "value", "freight", "total", "brl", "cost", "gmv", "ticket"]) or "NUMERIC_CURRENCY_PATTERN" in profile.detected_patterns:
+        elif (
+            any(
+                t in col
+                for t in [
+                    "price",
+                    "amount",
+                    "revenue",
+                    "spend",
+                    "value",
+                    "freight",
+                    "total",
+                    "brl",
+                    "cost",
+                    "gmv",
+                    "ticket",
+                ]
+            )
+            or "NUMERIC_CURRENCY_PATTERN" in profile.detected_patterns
+        ):
             desc = "Monetary currency value representing transaction amount in Brazilian Real (BRL)."
             reasoning = f"Numeric data type {data_type} with column name or patterns denoting financial currency."
             confidence = 0.94
@@ -75,12 +99,7 @@ class HeuristicDescriberAgent:
             reasoning = f"Grounded in table schema context with {profile.distinct_count} discrete values."
             confidence = 0.88
 
-        return DescriptionResult(
-            description=desc,
-            confidence=confidence,
-            evidence=evidence,
-            reasoning=reasoning
-        )
+        return DescriptionResult(description=desc, confidence=confidence, evidence=evidence, reasoning=reasoning)
 
 
 class LLMDescriberAgent:
@@ -117,9 +136,7 @@ Upstream Lineage Derivations: {lineage_upstream or []}
 Generate the structured business description adhering to the schema.
 """
         response = self.client.generate_structured(
-            system_prompt=self.SYSTEM_PROMPT,
-            user_prompt=user_prompt,
-            response_model=DescriptionResult
+            system_prompt=self.SYSTEM_PROMPT, user_prompt=user_prompt, response_model=DescriptionResult
         )
         return response.parsed
 
@@ -136,7 +153,7 @@ class DescriberAgent:
     def describe(self, profile: ColumnProfile, lineage_upstream: list[str] | None = None) -> DescriptionResult:
         if self.mode == "heuristic":
             return self.heuristic_agent.describe(profile, lineage_upstream)
-        
+
         if self.mode == "llm":
             return self.llm_agent.describe(profile, lineage_upstream)
 

@@ -127,5 +127,57 @@
     "reviewed_at": "2026-11-04T06:04:39.786126Z",
     "review_notes": "Verified by steward in catalog mutation test",
     "created_at": "2026-11-04T06:04:39.779256Z"
+  },
+  "30242a0a-bd85-4832-9704-749ab086026c": {
+    "proposal_id": "30242a0a-bd85-4832-9704-749ab086026c",
+    "asset_id": "cforge.public.dim_customers.primary_zip",
+    "change_type": "ADD_TAG",
+    "proposed_by": "Agent_Classifier",
+    "payload": {
+      "is_pii": true,
+      "pii_type": "POSTAL_CODE",
+      "confidence": 0.95,
+      "description": "Postal code prefix"
+    },
+    "status": "APPROVED",
+    "evaluation": {
+      "passed": true,
+      "can_write": false,
+      "requires_approval": true,
+      "approval_reasons": [
+        "Asset contains PII; steward sign-off required before active write."
+      ],
+      "violations": [],
+      "policies_checked_count": 15
+    },
+    "reviewed_by": "Test_Steward",
+    "reviewed_at": "2026-11-04T06:56:16.575993Z",
+    "review_notes": "Approved in unit test",
+    "created_at": "2026-11-04T06:56:16.560795Z"
+  },
+  "9b9d2cda-11e7-490f-b819-16784f497c46": {
+    "proposal_id": "9b9d2cda-11e7-490f-b819-16784f497c46",
+    "asset_id": "cforge.public.stg_products.product_category_name",
+    "change_type": "ADD_TAG",
+    "proposed_by": "Agent_Classifier",
+    "payload": {
+      "is_pii": false,
+      "tag_name": "DOMAIN",
+      "tag_value": "ECOMMERCE_CATALOG",
+      "confidence": 0.99
+    },
+    "status": "APPROVED",
+    "evaluation": {
+      "passed": true,
+      "can_write": true,
+      "requires_approval": false,
+      "approval_reasons": [],
+      "violations": [],
+      "policies_checked_count": 15
+    },
+    "reviewed_by": "Senior_Data_Steward",
+    "reviewed_at": "2026-11-04T06:56:16.991648Z",
+    "review_notes": "Verified by steward in catalog mutation test",
+    "created_at": "2026-11-04T06:56:16.950564Z"
   }
 }

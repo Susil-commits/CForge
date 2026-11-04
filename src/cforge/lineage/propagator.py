@@ -11,10 +11,16 @@ from cforge.lineage.parser import ColumnLineageEdge
 
 
 class PropagatedTag:
-    def __init__(self, target_table: str, target_column: str,
-                 tag_name: str, tag_value: str,
-                 confidence: float, hop_count: int,
-                 reason_chain: list[str]):
+    def __init__(
+        self,
+        target_table: str,
+        target_column: str,
+        tag_name: str,
+        tag_value: str,
+        confidence: float,
+        hop_count: int,
+        reason_chain: list[str],
+    ):
         self.target_table = target_table
         self.target_column = target_column
         self.tag_name = tag_name
@@ -33,7 +39,7 @@ class PropagatedTag:
             "confidence": round(self.confidence, 3),
             "hop_count": self.hop_count,
             "reason_chain": " -> ".join(self.reason_chain),
-            "reason_steps": self.reason_chain
+            "reason_steps": self.reason_chain,
         }
 
 
@@ -51,23 +57,24 @@ class LineagePropagator:
                 self.downstream[src_key] = []
             self.downstream[src_key].append(edge)
 
-    def propagate_tag(self, initial_table: str, initial_column: str,
-                      tag_name: str = "PII", tag_value: str = "CONFIDENTIAL",
-                      initial_confidence: float = 1.0, max_hops: int = 6) -> list[PropagatedTag]:
+    def propagate_tag(
+        self,
+        initial_table: str,
+        initial_column: str,
+        tag_name: str = "PII",
+        tag_value: str = "CONFIDENTIAL",
+        initial_confidence: float = 1.0,
+        max_hops: int = 6,
+    ) -> list[PropagatedTag]:
         """Trace tag downstream along column-level lineage graph."""
         root_key = f"{initial_table}.{initial_column}"
         propagated_results: list[PropagatedTag] = []
         visited: set[str] = {root_key}
 
         # Queue contains: (current_key, current_table, current_col, current_conf, hop_count, chain)
-        queue = deque([(
-            root_key,
-            initial_table,
-            initial_column,
-            initial_confidence,
-            0,
-            [f"{root_key} [{tag_name}:{tag_value}]"]
-        )])
+        queue = deque(
+            [(root_key, initial_table, initial_column, initial_confidence, 0, [f"{root_key} [{tag_name}:{tag_value}]"])]
+        )
 
         while queue:
             curr_key, curr_tbl, curr_col, curr_conf, hops, chain = queue.popleft()
@@ -78,7 +85,7 @@ class LineagePropagator:
             outgoing = self.downstream.get(curr_key, [])
             for edge in outgoing:
                 target_key = f"{edge.target_table}.{edge.target_column}"
-                
+
                 # Confidence adjustment based on transformation
                 factor = 0.98 if edge.transformation_type == "DIRECT_COPY" else 0.90
                 next_conf = curr_conf * factor
@@ -92,19 +99,12 @@ class LineagePropagator:
                     tag_value=tag_value,
                     confidence=next_conf,
                     hop_count=next_hops,
-                    reason_chain=next_chain
+                    reason_chain=next_chain,
                 )
                 propagated_results.append(prop)
 
                 if target_key not in visited:
                     visited.add(target_key)
-                    queue.append((
-                        target_key,
-                        edge.target_table,
-                        edge.target_column,
-                        next_conf,
-                        next_hops,
-                        next_chain
-                    ))
+                    queue.append((target_key, edge.target_table, edge.target_column, next_conf, next_hops, next_chain))
 
         return propagated_results

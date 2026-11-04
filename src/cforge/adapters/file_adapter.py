@@ -20,12 +20,7 @@ class FileJsonAdapter(BaseCatalogAdapter):
 
     def _ensure_file(self):
         if not self.file_path.exists():
-            initial_data = {
-                "assets": [],
-                "tags": [],
-                "glossary": [],
-                "lineage": []
-            }
+            initial_data = {"assets": [], "tags": [], "glossary": [], "lineage": []}
             self.file_path.write_text(json.dumps(initial_data, indent=2), encoding="utf-8")
 
     def _read_data(self) -> dict[str, Any]:

@@ -76,9 +76,7 @@ class LLMDiskCache:
     def get(self, cache_key: str) -> CachedResponse | None:
         """Retrieve cached response if available."""
         with self._get_connection() as conn:
-            cursor = conn.execute(
-                "SELECT * FROM llm_cache WHERE cache_key = ?", (cache_key,)
-            )
+            cursor = conn.execute("SELECT * FROM llm_cache WHERE cache_key = ?", (cache_key,))
             row = cursor.fetchone()
             if not row:
                 return None
@@ -99,7 +97,7 @@ class LLMDiskCache:
                 output_tokens=row["output_tokens"],
                 latency_ms=row["latency_ms"],
                 cost_usd=row["cost_usd"],
-                created_at=row["created_at"]
+                created_at=row["created_at"],
             )
 
     def get_by_prompt(self, system_prompt: str, user_prompt: str) -> CachedResponse | None:
@@ -107,8 +105,7 @@ class LLMDiskCache:
         prompt_hash = hashlib.sha256(f"{system_prompt.strip()}||{user_prompt.strip()}".encode()).hexdigest()
         with self._get_connection() as conn:
             cursor = conn.execute(
-                "SELECT * FROM llm_cache WHERE prompt_hash = ? ORDER BY created_at DESC LIMIT 1",
-                (prompt_hash,)
+                "SELECT * FROM llm_cache WHERE prompt_hash = ? ORDER BY created_at DESC LIMIT 1", (prompt_hash,)
             )
             row = cursor.fetchone()
             if not row:
@@ -130,7 +127,7 @@ class LLMDiskCache:
                 output_tokens=row["output_tokens"],
                 latency_ms=row["latency_ms"],
                 cost_usd=row["cost_usd"],
-                created_at=row["created_at"]
+                created_at=row["created_at"],
             )
 
     def set(
@@ -144,7 +141,7 @@ class LLMDiskCache:
         input_tokens: int,
         output_tokens: int,
         latency_ms: float,
-        cost_usd: float
+        cost_usd: float,
     ) -> None:
         """Save response and telemetry to disk cache."""
         prompt_hash = hashlib.sha256(f"{system_prompt}||{user_prompt}".encode()).hexdigest()
@@ -161,10 +158,19 @@ class LLMDiskCache:
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                 (
-                    cache_key, model, prompt_hash, system_prompt, user_prompt,
-                    response_text, parsed_str, input_tokens, output_tokens,
-                    round(latency_ms, 2), round(cost_usd, 6), now_utc
-                )
+                    cache_key,
+                    model,
+                    prompt_hash,
+                    system_prompt,
+                    user_prompt,
+                    response_text,
+                    parsed_str,
+                    input_tokens,
+                    output_tokens,
+                    round(latency_ms, 2),
+                    round(cost_usd, 6),
+                    now_utc,
+                ),
             )
             conn.commit()
 
@@ -193,5 +199,5 @@ class LLMDiskCache:
                 "total_output_tokens": row["total_output_tokens"],
                 "total_tokens": row["total_input_tokens"] + row["total_output_tokens"],
                 "total_cost_usd": round(row["total_cost_usd"], 6),
-                "avg_latency_ms": round(row["avg_latency_ms"], 2)
+                "avg_latency_ms": round(row["avg_latency_ms"], 2),
             }

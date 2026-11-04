@@ -50,8 +50,9 @@ class MultiAgentOrchestrator:
         self.quality_proposer = QualityProposerAgent()
         self.reconciler = EnrichmentReconciler()
 
-    def enrich_column(self, table_name: str, column_name: str,
-                      upstream_lineage: list[str] | None = None) -> AssetEnrichmentTelemetry:
+    def enrich_column(
+        self, table_name: str, column_name: str, upstream_lineage: list[str] | None = None
+    ) -> AssetEnrichmentTelemetry:
         """Execute all 5 agents and reconciler for a single column with telemetry."""
         start_time = time.perf_counter()
 
@@ -86,7 +87,7 @@ class MultiAgentOrchestrator:
             output_tokens=output_tokens,
             cost_usd=round(cost_usd, 6),
             latency_ms=round(elapsed_ms, 2),
-            reconciled=reconciled
+            reconciled=reconciled,
         )
 
     def enrich_estate(self, max_workers: int = 8, limit_tables: list[str] | None = None) -> EstateEnrichmentSummary:
@@ -94,7 +95,7 @@ class MultiAgentOrchestrator:
         start_time = time.perf_counter()
         conn = duckdb.connect(self.profiler.db_path, read_only=True)
         all_tables = [r[0] for r in conn.execute("SHOW TABLES").fetchall()]
-        
+
         target_tables = limit_tables if limit_tables else all_tables
         tasks: list[tuple] = []
         for t in target_tables:
@@ -104,10 +105,7 @@ class MultiAgentOrchestrator:
 
         telemetries: list[AssetEnrichmentTelemetry] = []
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_col = {
-                executor.submit(self.enrich_column, t, c): (t, c)
-                for t, c in tasks
-            }
+            future_to_col = {executor.submit(self.enrich_column, t, c): (t, c) for t, c in tasks}
             for future in as_completed(future_to_col):
                 telemetry = future.result()
                 telemetries.append(telemetry)
@@ -131,5 +129,5 @@ class MultiAgentOrchestrator:
             queued_for_review_count=queued,
             reconciliation_flags_count=flags_count,
             summary_message=summary_msg,
-            telemetry=telemetries
+            telemetry=telemetries,
         )

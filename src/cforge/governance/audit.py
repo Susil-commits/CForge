@@ -36,19 +36,21 @@ class ImmutableAuditLog:
 
     def _genesis(self):
         genesis_hash = hashlib.sha256(b"CFORGE_GENESIS_ROOT").hexdigest()
-        self.chain.append(AuditRecord(
-            record_id=0,
-            prev_hash="0" * 64,
-            curr_hash=genesis_hash,
-            timestamp=datetime.now(timezone.utc).isoformat(),
-            actor="SYSTEM_BOOTSTRAP",
-            asset_id="cforge.root",
-            action="GENESIS",
-            policy_ids_evaluated=[],
-            before_state=None,
-            after_state={"status": "INITIALIZED"},
-            diff={"genesis": True}
-        ))
+        self.chain.append(
+            AuditRecord(
+                record_id=0,
+                prev_hash="0" * 64,
+                curr_hash=genesis_hash,
+                timestamp=datetime.now(timezone.utc).isoformat(),
+                actor="SYSTEM_BOOTSTRAP",
+                asset_id="cforge.root",
+                action="GENESIS",
+                policy_ids_evaluated=[],
+                before_state=None,
+                after_state={"status": "INITIALIZED"},
+                diff={"genesis": True},
+            )
+        )
 
     def _save(self):
         if not self.persistence_path:
@@ -73,10 +75,15 @@ class ImmutableAuditLog:
             self._genesis()
             self._save()
 
-    def append(self, actor: str, asset_id: str, action: str,
-               policies_evaluated: list[str],
-               before_state: dict[str, Any] | None,
-               after_state: dict[str, Any]) -> AuditRecord:
+    def append(
+        self,
+        actor: str,
+        asset_id: str,
+        action: str,
+        policies_evaluated: list[str],
+        before_state: dict[str, Any] | None,
+        after_state: dict[str, Any],
+    ) -> AuditRecord:
         """Append an immutable audit entry with SHA-256 hash chaining."""
         prev_record = self.chain[-1]
         rec_id = len(self.chain)
@@ -99,7 +106,7 @@ class ImmutableAuditLog:
             "asset_id": asset_id,
             "action": action,
             "policies": sorted(policies_evaluated),
-            "diff": diff
+            "diff": diff,
         }
 
         serialized = json.dumps(payload, sort_keys=True)
@@ -116,7 +123,7 @@ class ImmutableAuditLog:
             policy_ids_evaluated=policies_evaluated,
             before_state=before_state,
             after_state=after_state,
-            diff=diff
+            diff=diff,
         )
         self.chain.append(record)
         self._save()
@@ -138,7 +145,7 @@ class ImmutableAuditLog:
                 "asset_id": curr.asset_id,
                 "action": curr.action,
                 "policies": sorted(curr.policy_ids_evaluated),
-                "diff": curr.diff
+                "diff": curr.diff,
             }
             recomputed = hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
             if recomputed != curr.curr_hash:

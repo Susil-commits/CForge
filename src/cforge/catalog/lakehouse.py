@@ -42,7 +42,7 @@ class MetadataLakehouse:
             if p_file.exists():
                 escaped = str(p_file).replace("\\", "/")
                 conn.execute(f"CREATE OR REPLACE VIEW {tbl} AS SELECT * FROM read_parquet('{escaped}');")
-        
+
         return conn.execute(sql_query).fetchall()
 
     def query_certified_tables_with_pii_consumed_by_dashboards(self) -> list[dict[str, Any]]:
@@ -111,12 +111,14 @@ class MetadataLakehouse:
         results = self.query(sql)
         output = []
         for r in results:
-            output.append({
-                "table_name": r[0],
-                "certification_status": r[1],
-                "owner": r[2],
-                "column_name": r[3],
-                "pii_type": r[4],
-                "consumed_by_dashboard": r[5]
-            })
+            output.append(
+                {
+                    "table_name": r[0],
+                    "certification_status": r[1],
+                    "owner": r[2],
+                    "column_name": r[3],
+                    "pii_type": r[4],
+                    "consumed_by_dashboard": r[5],
+                }
+            )
         return output
