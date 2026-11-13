@@ -173,8 +173,11 @@ class LLMClient:
         schema = response_model.model_json_schema()
         cache_key = LLMDiskCache.compute_key(target_model, system_prompt, user_prompt, schema)
 
-        # 1. Check persistent disk cache
+        # 1. Check persistent disk cache (exact key, then prompt hash fallback)
         cached = self.cache.get(cache_key)
+        if cached is None:
+            cached = self.cache.get_by_prompt(system_prompt, user_prompt)
+
         if cached is not None and cached.parsed_json is not None:
             try:
                 parsed_obj = response_model.model_validate(cached.parsed_json)
@@ -293,6 +296,9 @@ class LLMClient:
         cache_key = LLMDiskCache.compute_key(target_model, system_prompt, user_prompt, None)
 
         cached = self.cache.get(cache_key)
+        if cached is None:
+            cached = self.cache.get_by_prompt(system_prompt, user_prompt)
+
         if cached is not None:
             return TextLLMResponse(
                 text=cached.response_text,

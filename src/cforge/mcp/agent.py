@@ -55,6 +55,15 @@ class TalkToDataAgent:
         self.estate_path = estate_db_path or str(ESTATE_DB_PATH)
         self.client = LLMClient(model_name=model_name)
 
+    def _get_estate_conn(self) -> duckdb.DuckDBPyConnection:
+        """Connect to estate DuckDB safely, falling back if an in-process connection exists."""
+        if not ENABLE_DUCKDB_EXTERNAL_ACCESS:
+            try:
+                return duckdb.connect(self.estate_path, read_only=True, config={"enable_external_access": "false"})
+            except duckdb.ConnectionException:
+                pass
+        return duckdb.connect(self.estate_path, read_only=True)
+
     def ask(self, question: str, caller_role: str = "ANALYST", policy_only: bool = False) -> AgentResponse:
         """Answer a natural language business question using live MCP catalog tools and LLM SQL generation."""
         q_lower = question.lower()
@@ -187,8 +196,7 @@ class TalkToDataAgent:
             resp = self.client.generate_text(system_prompt=self.SYSTEM_PROMPT, user_prompt=user_prompt)
             candidate_sql = clean_sql_output(resp.text)
             # Verify executable against DuckDB with external access disabled for sandboxing
-            duckdb_cfg = {"enable_external_access": "false"} if not ENABLE_DUCKDB_EXTERNAL_ACCESS else {}
-            conn = duckdb.connect(self.estate_path, read_only=True, config=duckdb_cfg)
+            conn = self._get_estate_conn()
             try:
                 conn.execute(candidate_sql)
                 sql = candidate_sql
@@ -236,8 +244,7 @@ class TalkToDataAgent:
                 explanation = "Queried core fact table 'fct_orders' for high-level order fulfillment status."
 
         # Step 5: Execute query and format result
-        duckdb_cfg = {"enable_external_access": "false"} if not ENABLE_DUCKDB_EXTERNAL_ACCESS else {}
-        conn = duckdb.connect(self.estate_path, read_only=True, config=duckdb_cfg)
+        conn = self._get_estate_conn()
         try:
             cursor = conn.execute(sql)
             cols = [desc[0] for desc in cursor.description]
