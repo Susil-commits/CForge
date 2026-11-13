@@ -15,18 +15,20 @@ from cforge.llm.cache import LLMDiskCache
 
 T = TypeVar("T", bound=BaseModel)
 
-# Model pricing in USD per 1,000,000 tokens
+# Model pricing in USD per 1,000,000 tokens (Standard Google Gemini, Anthropic, OpenAI rates)
 MODEL_PRICING = {
-    # Google Gemini Models (Fast, high-quality, economical)
-    "gemini-3.5-flash-lite": {"input": 0.075, "output": 0.30},
-    "gemini-3.1-flash-lite": {"input": 0.075, "output": 0.30},
-    "gemini-2.5-flash-lite": {"input": 0.075, "output": 0.30},
-    "gemini-flash-lite-latest": {"input": 0.075, "output": 0.30},
-    "gemini-3.8-flash": {"input": 0.15, "output": 0.60},
-    "gemini-2.5-flash": {"input": 0.075, "output": 0.30},
+    # Google Gemini Production Models (Primary)
+    "gemini-2.0-flash": {"input": 0.10, "output": 0.40},
+    "gemini-2.0-flash-lite": {"input": 0.075, "output": 0.30},
     "gemini-1.5-flash": {"input": 0.075, "output": 0.30},
     "gemini-1.5-pro": {"input": 1.25, "output": 5.00},
+    # Forward-compatible preview and experimental aliases
+    "gemini-2.5-flash": {"input": 0.075, "output": 0.30},
     "gemini-2.5-pro": {"input": 1.25, "output": 5.00},
+    "gemini-3.1-flash-lite": {"input": 0.075, "output": 0.30},
+    "gemini-3.5-flash-lite": {"input": 0.075, "output": 0.30},
+    "gemini-3.8-flash": {"input": 0.15, "output": 0.60},
+    "gemini-flash-lite-latest": {"input": 0.075, "output": 0.30},
     # Anthropic Claude Models
     "claude-3-5-sonnet-20241022": {"input": 3.00, "output": 15.00},
     "claude-3-5-sonnet": {"input": 3.00, "output": 15.00},
@@ -37,7 +39,7 @@ MODEL_PRICING = {
     "gpt-4o-mini": {"input": 0.15, "output": 0.60},
     "gpt-4o": {"input": 2.50, "output": 10.00},
 }
-DEFAULT_MODEL = "gemini-3.1-flash-lite"
+DEFAULT_MODEL = "gemini-2.0-flash"
 
 
 class LLMAuthenticationError(Exception):
@@ -100,7 +102,7 @@ class LLMClient:
         elif configured_model:
             self.model = configured_model
         elif gemini_key:
-            self.model = "gemini-3.1-flash-lite"
+            self.model = "gemini-2.0-flash"
         elif anthropic_key:
             self.model = "claude-3-5-haiku-20241022"
         else:

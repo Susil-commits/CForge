@@ -163,3 +163,14 @@ def test_api_proposal_approval_mutates_catalog(client):
         assert tag is not None
         assert tag[0] == "DOMAIN"
         assert tag[1] == "ECOMMERCE_CATALOG"
+
+
+def test_api_governance_policies(client):
+    res = client.get("/api/governance/policies")
+    assert res.status_code == 200
+    data = res.json()
+    assert "policies" in data
+    assert data["total_policies"] >= 5
+    ids = [p["id"] for p in data["policies"]]
+    assert "POL-001" in ids
+    assert "POL-002" in ids

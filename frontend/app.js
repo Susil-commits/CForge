@@ -691,11 +691,30 @@ window.handleDecision = async (id, decision) => {
 };
 
 // ── Screen 5: Policy Registry ─────────────────────────────────────────────────
-function initPolicyRegistry() {
+async function initPolicyRegistry() {
   const container = document.getElementById('policy-container');
   if (!container) return;
 
-  container.innerHTML = POLICIES.map(p => `
+  let policyList = POLICIES;
+  try {
+    const res = await fetch('/api/governance/policies');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.policies && data.policies.length > 0) {
+        policyList = data.policies.map(p => ({
+          id: p.id,
+          name: p.name,
+          desc: p.description || p.desc || p.name,
+          hits: p.hits || 0,
+          status: p.enforcement_level || "ACTIVE"
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn("Using fallback policies:", err);
+  }
+
+  container.innerHTML = policyList.map(p => `
     <div class="policy-card">
       <div class="policy-id">${p.id}</div>
       <div class="policy-body">

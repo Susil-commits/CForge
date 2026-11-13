@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-04 07:03:20 UTC",
+  "timestamp": "2026-11-13 05:02:22 UTC",
   "headline": "73.3% -> 86.7% on 45 execution-checked business questions (+13.34 pts), single run, one model.",
   "metrics": {
     "text_to_sql_lift": "+13.34 pts",

@@ -7,11 +7,12 @@
 *Agents enrich a real data estate, policies gate what they can write, humans approve the risky stuff, and an empirical benchmark measures AI accuracy gains.*
 
 [![CI Pipeline](https://github.com/Susil-commits/CForge/actions/workflows/ci.yml/badge.svg)](https://github.com/Susil-commits/CForge/actions)
-[![Tests Passing](https://img.shields.io/badge/tests-63%2F63%20passed-success)](tests/)
+[![Tests Passing](https://img.shields.io/badge/tests-66%2F66%20passed-success)](tests/)
 [![Accuracy Uplift](https://img.shields.io/badge/Text--to--SQL%20Lift-%2B13.34%20pts-blueviolet)](results/benchmark.md)
 [![PII Governance](https://img.shields.io/badge/Governance-Attacks%20blocked%2087.0%25%20%7C%20False%20refusals%2013.0%25-brightgreen)](src/cforge/governance/policies.yaml)
 [![Datasets](https://img.shields.io/badge/Data%20Estate-Real%20public%20data%20%2B%20synthetic%20adversarial%20columns-orange)](data/raw/)
-[![Cloud Backend](https://img.shields.io/badge/Backend-Supabase%20PostgreSQL%20Live-emerald)](https://supabase.com)
+[![Protocol](https://img.shields.io/badge/Protocol-Model%20Context%20Protocol%20(MCP)-blue)](src/cforge/mcp/)
+[![Storage](https://img.shields.io/badge/Storage-DuckDB%20Embedded%20Engine-yellow)](src/cforge/catalog/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey)](LICENSE)
 
 <br/>
@@ -213,15 +214,35 @@ Olist and Northwind are real public datasets. The columns `delivery_instructions
 - Failing tables are blocked from `CERTIFIED` status.
 - [`src/cforge/quality/injector.py`](src/cforge/quality/injector.py) tests rule coverage against synthetic anomalies: caught 5 of 8 injected defects with 0 false positives (caught schema/boundary anomalies, missed 3 relational and cross-temporal defects).
 
-### 7. Model Context Protocol (MCP) Server
-- [`src/cforge/mcp/server.py`](src/cforge/mcp/server.py) implements the MCP tool standard:
-  - `search_assets(query, asset_type)`
-  - `get_asset_context(asset_id, caller_role)`
-  - `get_lineage(asset_id, direction)`
-  - `get_policies()`
-  - `get_quality(asset_id)`
-- Role-based masking redacts PII (`[CONFIDENTIAL_POSTAL_CODE]`, `[RESTRICTED_CUSTOMER_ID]`) for role `ANALYST`, unmasking only for `COMPLIANCE_STEWARD`.
+### 7. Model Context Protocol (MCP) Server & Wire Protocol
+- ContextForge implements the **Model Context Protocol (MCP)** specification via two complementary tiers:
+  1. **In-Process Context Gateway** ([`src/cforge/mcp/server.py`](src/cforge/mcp/server.py)): Python-native context gateway and schema provider exposing MCP tool contracts:
+     - `search_assets(query, asset_type, limit)`: Multi-term semantic token scoring with certified mart boosts
+     - `get_asset_context(asset_id, caller_role)`: Dynamic schema + profiling context with role-based PII masking
+     - `get_lineage(asset_id, direction, max_depth)`: Upstream and downstream AST-derived dependency graphs
+     - `get_policies(policy_id)`: Active governance rules as code
+     - `get_quality(table_name)`: Data health and validation state
+  2. **Official JSON-RPC 2.0 Stdio Wire Server** ([`src/cforge/mcp/stdio_server.py`](src/cforge/mcp/stdio_server.py)): Standards-compliant stdio wire transport supporting `initialize`, `tools/list`, and `tools/call`. Any standard MCP host (Claude Desktop, Cursor, Continue.dev, Atlan Agent Gateway) can connect directly:
+     ```json
+     {
+       "mcpServers": {
+         "contextforge": {
+           "command": "python",
+           "args": ["-m", "cforge.mcp.stdio_server"],
+           "cwd": "/path/to/CForge"
+         }
+       }
+     }
+     ```
+- **Role-based masking**: Redacts sensitive columns (`[CONFIDENTIAL_POSTAL_CODE]`, `[RESTRICTED_CUSTOMER_ID]`) for role `ANALYST`, dynamically unmasking only for verified `COMPLIANCE_STEWARD` callers.
 - [`TalkToDataAgent`](src/cforge/mcp/agent.py) cites policies (`POL-002`, `POL-006`) when refusing unauthorized data queries.
+
+### Production Architecture & Scale Roadmap
+- **Catalog Persistence**: The current prototype uses **DuckDB** for embedded analytical storage and Parquet exports to allow reproducible, single-command evaluation without cloud dependencies. In an enterprise production deployment, the catalog storage layer maps cleanly to:
+  - **PostgreSQL**: For transactional asset registration, approval queue states, and ACID catalog updates.
+  - **OpenSearch / Elasticsearch**: For distributed semantic vector search, BM25 hybrid ranking, and full-text metadata discovery across 100k+ assets.
+  - **Redis / API Gateway**: For distributed token-bucket rate limiting and session caching across horizontal replicas.
+- **Lineage Ingestion**: Currently ingests dbt-style SQL transformation models via AST parsing; production architecture integrates native push webhooks for dbt Cloud, Apache Airflow (`OpenLineage`), and Apache Spark query execution plans.
 
 ### 8. Evaluation Harness (`make eval`)
 - Evaluates 45 business questions with gold SQL, 94 held-out columns, and 23 adversarial prompts alongside 23 benign control prompts.

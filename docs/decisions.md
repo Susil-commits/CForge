@@ -41,7 +41,7 @@ This document tracks major design tradeoffs, decisions, and rationale across all
 ## ADR 005: Model Context Protocol (MCP) as the Unified Integration Boundary
 - **Status**: Accepted
 - **Context**: Modern AI assistants and "Talk to Data" agents need governed access to catalog metadata, schema lineage, and active policies without leaking sensitive records.
-- **Decision**: Expose ContextForge tools (`search_assets`, `get_asset_context`, `get_lineage`, `get_policies`, `get_quality`) via an MCP server standard, with built-in role-based masking and policy enforcement.
+- **Decision**: Expose ContextForge tools (`search_assets`, `get_asset_context`, `get_lineage`, `get_policies`, `get_quality`) via both an in-process MCP context gateway (`cforge.mcp.server`) and an official JSON-RPC 2.0 stdio wire transport (`cforge.mcp.stdio_server`), with built-in role-based masking and policy enforcement. External MCP hosts (Claude Desktop, Cursor, Atlan Agent Gateways) can connect directly via stdio.
 - **Tradeoff**: Strict policy enforcement intercepts queries from unauthorized roles and refuses or masks PII fields; this slightly constrains exploratory SQL but guarantees governance compliance.
 
 ---

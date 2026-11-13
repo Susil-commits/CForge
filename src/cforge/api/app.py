@@ -4,8 +4,8 @@ Exposes REST endpoints for the 4-screen UI: Lineage Graph, Asset Explorer,
 Approval Queue, Benchmark Dashboard, and Cryptographic Audit Trail.
 """
 
+import asyncio
 import json
-import os
 import threading
 import time
 from collections import defaultdict
@@ -168,7 +168,6 @@ FALLBACK_ABLATIONS = [
 
 @app.get("/api/health")
 def health_check():
-    supabase_configured = bool(os.getenv("SUPABASE_DB_URL"))
     t0 = time.perf_counter()
     db_healthy = True
     db_error = None
@@ -184,7 +183,9 @@ def health_check():
         "status": "healthy" if db_healthy else "degraded",
         "service": "ContextForge Engine",
         "version": "0.1.0",
-        "cloud_backend": "Supabase PostgreSQL (Live)" if supabase_configured else "DuckDB Local",
+        "storage_engine": "DuckDB Embedded Analytical Engine",
+        "architecture": "Single-Node Governed Metastore (Production Target: PostgreSQL + OpenSearch)",
+        "cloud_backend": "DuckDB Local Store",
         "db_healthy": db_healthy,
         "db_latency_ms": latency_ms,
         "db_error": db_error,
@@ -204,6 +205,15 @@ def get_audit_trail():
         "genesis_root": records[0]["curr_hash"] if records else None,
         "latest_hash": records[-1]["curr_hash"] if records else None,
         "records": records[-30:],  # preview recent records
+    }
+
+
+@app.get("/api/governance/policies")
+def get_policies_endpoint():
+    """Returns active enterprise governance policies as code."""
+    return {
+        "total_policies": len(policy_engine.policies),
+        "policies": policy_engine.policies,
     }
 
 
@@ -462,8 +472,8 @@ def get_eval_benchmark():
 
 
 @app.post("/api/chat")
-def chat_with_data(req: ChatRequest, request: Request):
-    """Interactive Talk-to-Data endpoint with rate limiting and role verification."""
+async def chat_with_data(req: ChatRequest, request: Request):
+    """Interactive Talk-to-Data endpoint with rate limiting, role verification, and async thread execution."""
     client_ip = request.client.host if request.client else "127.0.0.1"
     if not chat_limiter.is_allowed(client_ip):
         raise HTTPException(
@@ -482,7 +492,8 @@ def chat_with_data(req: ChatRequest, request: Request):
             effective_role = "ANALYST"
             auth_warning = "Compliance Steward access requires valid steward token. Defaulted to ANALYST role with PII masking enforced."
 
-    res = agent.ask(req.question, caller_role=effective_role)
+    # Run blocking LLM generation and DuckDB evaluation off the event loop
+    res = await asyncio.to_thread(agent.ask, req.question, caller_role=effective_role)
     out = res.model_dump()
     if auth_warning:
         out["auth_warning"] = auth_warning

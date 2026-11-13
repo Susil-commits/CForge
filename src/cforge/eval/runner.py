@@ -67,7 +67,7 @@ def run_full_evaluation() -> dict[str, Any]:
 
     # 8. Pull Cost & Latency from Real API / Disk Cache Telemetry (Filtered by Active Model)
     cache = LLMDiskCache(LLM_CACHE_PATH)
-    active_model = os.getenv("CFORGE_LLM_MODEL", "gemini-3.1-flash-lite")
+    active_model = os.getenv("CFORGE_LLM_MODEL", "gemini-2.0-flash")
     cache_stats = cache.stats(model=active_model)
     if cache_stats["total_entries"] == 0:
         cache_stats = cache.stats()

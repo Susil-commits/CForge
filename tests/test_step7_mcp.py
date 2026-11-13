@@ -77,3 +77,45 @@ def test_talk_to_data_agent_answers_business_question(agent):
     assert res.data_result is not None
     assert len(res.data_result) > 0
     assert any("search_assets" in t for t in res.tools_called)
+
+
+def test_mcp_tool_definitions(mcp):
+    """Verify standard Model Context Protocol tool schema discovery."""
+    tools = mcp.get_tool_definitions()
+    assert len(tools) >= 5
+    tool_names = [t["name"] for t in tools]
+    assert "search_assets" in tool_names
+    assert "get_asset_context" in tool_names
+    assert "get_lineage" in tool_names
+    for t in tools:
+        assert "inputSchema" in t
+        assert t["inputSchema"]["type"] == "object"
+
+
+def test_mcp_stdio_jsonrpc_protocol(mcp):
+    """Verify JSON-RPC 2.0 stdio server handling of initialize, tools/list, and tools/call."""
+    from cforge.mcp.stdio_server import MCPStdioServer
+
+    server = MCPStdioServer(mcp_server=mcp)
+
+    # 1. Initialize
+    init_req = {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
+    init_res = server.handle_request(init_req)
+    assert init_res["result"]["serverInfo"]["name"] == "contextforge-mcp"
+    assert "tools" in init_res["result"]["capabilities"]
+
+    # 2. Tools list
+    list_req = {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
+    list_res = server.handle_request(list_req)
+    assert len(list_res["result"]["tools"]) >= 5
+
+    # 3. Tools call
+    call_req = {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {"name": "search_assets", "arguments": {"query": "customer", "limit": 3}},
+    }
+    call_res = server.handle_request(call_req)
+    assert "content" in call_res["result"]
+    assert len(call_res["result"]["content"]) > 0
